@@ -1,32 +1,33 @@
-package bank
+package actors.sampels.bank
 
 import actors._
+import org.scalatest.{PropSpec, Matchers}
 
-trait Bank extends ActorSystem {
-  def Customer: Actor
+class ShowAccountSpec
+  extends PropSpec
+  with Matchers {
 
-  val CTM = new Actor {
-    val init: Behaviour = {
-      case "card" =>
-        Customer ! "Welcome"
-        self ! "timeout"
-        become(mainScreen)
-    }
+  val model = new ShowAccount
+  val result = model.check
 
-    val mainScreen: Behaviour = {
-      case "Account" =>
-        Customer ! "card"
-      case "timeout" =>
-        Customer ! "card"
-    }
-  }
+  import model._
+  import result._
 
+  result should be(1)
 }
 
+/**
+ * Following scenario:
+ * * A customer insert his card into CTM
+ * * Sees a welcome screen and want to see his account
+ * * He dies happy if he have some money
+ *
+ * He could always miss a screen but never his rejected card.
+ */
 class ShowAccount extends Bank with ModelChecking {
 
   val Customer = new Actor {
-    override def creation = {
+    override def creation() = {
       CTM ! "card"
     }
 
@@ -37,6 +38,7 @@ class ShowAccount extends Bank with ModelChecking {
       case "card" =>
         become(dead)
     }
+
     val waiting: Behaviour = {
       case "You have some money" =>
         CTM ! "Ok"
@@ -44,6 +46,7 @@ class ShowAccount extends Bank with ModelChecking {
       case "card" =>
         become(dead)
     }
+
     val leaving: Behaviour = {
       case "Welcome" =>
         CTM ! "Exit"
@@ -53,5 +56,3 @@ class ShowAccount extends Bank with ModelChecking {
   }
 
 }
-
-

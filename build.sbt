@@ -1,17 +1,15 @@
-name := """h2"""
+name := """modelchecker"""
 
 organization := "example"
 
 version := "0.1.0-SNAPSHOT"
 
-scalaVersion := "2.11.4"
-
-crossScalaVersions := Seq("2.10.4", "2.11.2")
+scalaVersion := "2.11.6"
 
 libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "2.2.3" % "test",
-  "org.scalacheck" %% "scalacheck" % "1.12.1" % "test",
+  "com.chuusai" %% "shapeless" % "2.1.0",
+  "org.scalatest" %% "scalatest" % "2.2.4" % "test",
+  "org.scalacheck" %% "scalacheck" % "1.12.2" % "test",
   "com.assembla.scala-incubator" %% "graph-core" % "1.9.1"
 )
 
-initialCommands := "import example._"

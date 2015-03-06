@@ -6,7 +6,9 @@ import scalax.collection._
 trait ModelChecking extends ActorSystem {
 
   type Queues = Map[Actor, List[Message]]
-  type State = Map[Actor, (Behaviour, Queues)]
+  type SystemState = Map[Actor, ActorState]
+  type ActorState = (Behaviour, Queues)
+
   val EmptyQueues: Queues = Map.empty[Actor, List[Message]]
 
   def check = {
@@ -18,25 +20,25 @@ trait ModelChecking extends ActorSystem {
     (nodes.size, edges.size)
   }
 
-  def initialState: State = {
-    val emptyState: State = Map.empty
+  def initialState: SystemState = {
+    val emptyState: SystemState = Map.empty
     initialActors.foldLeft(emptyState){
       case (state, actor) => applyEffects(state, actor.processCreation)
     }
   }
 
-  private def applyEffects(state: State, effects: Effects): State = {
+  private def applyEffects(state: SystemState, effects: Effects): SystemState = {
     val Effects(sender, behaviour, messages, actors) = effects
     val (_, queues: Queues) = state.getOrElse(sender, (behaviour, Nil))
 
-    val localEffects: State =
+    val localEffects: SystemState =
       state + (effects.of ->(behaviour, queues))
 
     val newActors =
       localEffects ++ actors.map(actor => actor ->(actor.init, EmptyQueues))
 
-    val newMessages: State = messages.foldLeft(newActors) {
-      case (state: State, (message, to)) =>
+    val newMessages: SystemState = messages.foldLeft(newActors) {
+      case (state: SystemState, (message, to)) =>
         val (toBehaviour, toQueues) = state(to)
         val newFromQueue = toQueues.getOrElse(sender, Nil) :+ message
         state + (to ->(toBehaviour, toQueues + (sender -> newFromQueue)))
@@ -45,12 +47,12 @@ trait ModelChecking extends ActorSystem {
     newMessages
   }
 
-  def graph: Graph[State, DiEdge] =
-    recGraph(List(initialState), Graph.empty[State, DiEdge], Set.empty)
+  def graph: Graph[SystemState, DiEdge] =
+    recGraph(List(initialState), Graph.empty[SystemState, DiEdge], Set.empty)
 
-  private def envolve(state: State): List[State] = {
+  private def evolve(state: SystemState): List[SystemState] = {
     import scala.collection.mutable.ListBuffer
-    val buffer = ListBuffer.empty[State]
+    val buffer = ListBuffer.empty[SystemState]
     for (
       (actor, (behaviour, queues)) <- state;
       (from, msg :: msgs) <- queues
@@ -81,19 +83,18 @@ trait ModelChecking extends ActorSystem {
 
   //TODO: Replace this dirty trick to simulate package lost by a proper data type checked implementation
   private def unsafeMessageTransport(msg: Message): Boolean =
-    msg.headOption.map(_.isUpper).getOrElse(false)
+    msg.headOption.exists(_.isUpper)
 
+  private def init: SystemState = Map.empty
 
-  private def init: State = Map.empty
-
-  private def recGraph(unvisited: List[State], graph: Graph[State, DiEdge], visited: Set[State]): Graph[State, DiEdge] =
+  private def recGraph(unvisited: List[SystemState], graph: Graph[SystemState, DiEdge], visited: Set[SystemState]): Graph[SystemState, DiEdge] =
     unvisited match {
       case Nil =>
         graph
       case alreadyVisited :: unvisited if visited(alreadyVisited) =>
         recGraph(unvisited, graph, visited)
       case state :: unvisited if !visited(state) =>
-        val reachable = envolve(state)
+        val reachable = evolve(state)
 
         // This should be replaced by generic CTL queries
         if (reachable.isEmpty)

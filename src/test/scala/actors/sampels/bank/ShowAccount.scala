@@ -1,7 +1,10 @@
 package actors.sampels.bank
 
 import actors._
-import org.scalatest.{PropSpec, Matchers}
+import actors.modelchecking.ModelChecking
+import org.scalatest.{ PropSpec, Matchers }
+import org.scalatest.matchers.Matcher
+import org.scalatest.matchers.MatchResult
 
 class ShowAccountSpec
   extends PropSpec
@@ -13,12 +16,31 @@ class ShowAccountSpec
   import model._
   import result._
 
-  result should be(1)
+  // alwaysGlobaly(! (CTM is dead))
+  // alwaysGlobaly(! (Customer receive "You have no money"))
+
+  def accept(states: States) =
+    states should contain(initialStates.head)
+  
+  def acceptNot(states: States) =
+    states should not contain(initialStates.head)
+
+  property("The CTM shouldn't shut down") {
+    acceptNot(existsEventually(CTM is dead))
+  }
+  
+  property("The customer may leaves") {
+    accept(existsEventually(Customer is dead))
+  }
+
+  property("The customer may see his money") {
+    accept(existsEventually(Customer receive "You have some money"))
+  }
 }
 
 /**
  * Following scenario:
- * * A customer insert his card into CTM
+ * * A customer insert his card into a CTM
  * * Sees a welcome screen and want to see his account
  * * He dies happy if he have some money
  *

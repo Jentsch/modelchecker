@@ -1,23 +1,70 @@
-package actors
+package actors.modelchecking
 
-import scalax.collection.GraphEdge.DiEdge
-import scalax.collection._
+import actors.ActorSystem
+
+import scala.annotation.tailrec
 
 trait ModelChecking extends ActorSystem {
 
   type Queues = Map[Actor, List[Message]]
-  type SystemState = Map[Actor, ActorState]
   type ActorState = (Behaviour, Queues)
+  type SystemState = Map[Actor, ActorState]
+  type States = Set[SystemState]
 
   val EmptyQueues: Queues = Map.empty[Actor, List[Message]]
 
+  class Result(graph: Graph[SystemState], val initialStates: States) {
+    /** All reachable states */
+    private val omega: States = graph.nodes
+    require(! omega.isEmpty)
+
+    /**
+     * Atomic expression on actors
+     */
+    implicit class ActorExpression(val actor: Actor) {
+      
+      /** All states where the actor has the given behaviour */
+      def is (behaviour: Behaviour): States =
+        omega filter {state => state(actor)._1 == behaviour}
+      
+      /** All states where the actor could process the message in the next iteration */
+      def receive (msg: Message): States =
+        omega filter {state => 
+          val (_, queues) = state(actor)
+          queues.values.exists(_.headOption == Some(msg))
+        }
+    }
+
+    implicit class StateExpression(val self: States) {
+      // all other operations like & (and, intersection), | (or, union) and &~ (xor, diff) are already defined for sets
+      
+      def unary_! : States =
+        omega -- self
+      
+      def -> (other: States): States =
+        (! self) | other
+    }
+
+    def alwaysGlobaly(states: States): States =
+      ???
+
+    final def existsEventually(states: States): States =
+      graph withAncestors states
+
+    def assume(assumptions: States*) = {
+      assumptions forall {assumption =>
+        initialStates.subsetOf(assumption)
+      }
+    }
+
+  }
+
   def check = {
-    val g = graph
-    import g._
+    val init = List(initialState)
+    val emptyGraph = Graph.empty[SystemState]
+    val graph = Graph.explore(init)(evolve)
 
-    nodes foreach println
-
-    (nodes.size, edges.size)
+    new Result(graph, init.to[Set])
   }
 
   def initialState: SystemState = {
@@ -29,7 +76,7 @@ trait ModelChecking extends ActorSystem {
 
   private def applyEffects(state: SystemState, effects: Effects): SystemState = {
     val Effects(sender, behaviour, messages, actors) = effects
-    val (_, queues: Queues) = state.getOrElse(sender, (behaviour, Nil))
+    val (_, queues: Queues) = state.getOrElse(sender, (behaviour, Map.empty))
 
     val localEffects: SystemState =
       state + (effects.of ->(behaviour, queues))
@@ -46,9 +93,6 @@ trait ModelChecking extends ActorSystem {
 
     newMessages
   }
-
-  def graph: Graph[SystemState, DiEdge] =
-    recGraph(List(initialState), Graph.empty[SystemState, DiEdge], Set.empty)
 
   private def evolve(state: SystemState): List[SystemState] = {
     import scala.collection.mutable.ListBuffer
@@ -86,22 +130,5 @@ trait ModelChecking extends ActorSystem {
     msg.headOption.exists(_.isUpper)
 
   private def init: SystemState = Map.empty
-
-  private def recGraph(unvisited: List[SystemState], graph: Graph[SystemState, DiEdge], visited: Set[SystemState]): Graph[SystemState, DiEdge] =
-    unvisited match {
-      case Nil =>
-        graph
-      case alreadyVisited :: unvisited if visited(alreadyVisited) =>
-        recGraph(unvisited, graph, visited)
-      case state :: unvisited if !visited(state) =>
-        val reachable = evolve(state)
-
-        // This should be replaced by generic CTL queries
-        if (reachable.isEmpty)
-          println("Terminal state found")
-        val newGraph = graph ++ reachable.map(target => DiEdge(state, target))
-        val newUnvisited = reachable.filterNot(visited) ::: unvisited
-        recGraph(newUnvisited, newGraph, visited + state)
-    }
 
 }

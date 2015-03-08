@@ -9,6 +9,9 @@ trait ActorSystem {
 
   protected def initialActors = initial
 
+  /** Use this Behaviour to become dead */
+  val dead: Behaviour = { (any: Any) => ()}
+
   /**
    * Actor
    *
@@ -35,9 +38,6 @@ trait ActorSystem {
      * Override this method create helper actors, send initial messages, or update the initial behaviour.
      */
     def creation(): Unit = { }
-
-    /** Use this Behaviour to become dead */
-    val dead: Behaviour = { (any: Any) => ()}
 
     final protected[actors] def processCreation: Effects =
       effectsOf(init) {

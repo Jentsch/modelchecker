@@ -16,25 +16,35 @@ class ShowAccountSpec
   import model._
   import result._
 
-  // alwaysGlobaly(! (CTM is dead))
-  // alwaysGlobaly(! (Customer receive "You have no money"))
+  println("States: " + result.graph.nodes.size)
 
   def accept(states: States) =
     states should contain(initialStates.head)
-  
+
   def acceptNot(states: States) =
-    states should not contain(initialStates.head)
+    states should not contain (initialStates.head)
 
   property("The CTM shouldn't shut down") {
-    acceptNot(existsEventually(CTM is dead))
+    acceptNot(alwaysGlobally(!(CTM is dead)))
   }
-  
+
   property("The customer may leaves") {
     accept(existsEventually(Customer is dead))
   }
 
   property("The customer may see his money") {
     accept(existsEventually(Customer receive "You have some money"))
+  }
+
+  property("The customer doesn't his account until he ask for it") {
+    accept(
+      !(Customer receive "You have some money") existsUntil (CTM receive "Account"))
+  }
+
+  property("The customer could see the main screen after seeing his account") {
+    accept(
+      alwaysGlobally((Customer receive "You have some money") ->
+        existsEventually(Customer receive "Welcome")))
   }
 }
 

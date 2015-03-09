@@ -13,7 +13,7 @@ trait ModelChecking extends ActorSystem {
 
   val EmptyQueues: Queues = Map.empty[Actor, List[Message]]
 
-  class Result(graph: Graph[SystemState], val initialStates: States) {
+  class Result(val graph: Graph[SystemState], val initialStates: States) {
     /** All reachable states */
     private val omega: States = graph.nodes
     require(! omega.isEmpty)
@@ -43,6 +43,9 @@ trait ModelChecking extends ActorSystem {
       
       def -> (other: States): States =
         (! self) | other
+        
+      def existsUntil (other: States) =
+        graph.withAncestors(other, self)
     }
 
     def alwaysGlobaly(states: States): States =
@@ -50,6 +53,13 @@ trait ModelChecking extends ActorSystem {
 
     final def existsEventually(states: States): States =
       graph withAncestors states
+    final def EF(states: States) =
+      existsEventually(states)
+      
+    final def alwaysGlobally(states: States): States =
+      EF(!states)
+    final def AG(states: States) =
+      alwaysGlobally(states)
 
     def assume(assumptions: States*) = {
       assumptions forall {assumption =>

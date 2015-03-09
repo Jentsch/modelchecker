@@ -12,20 +12,24 @@ import scalax.collection.{ Graph => XGraph }
 final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge]) {
   import wrapped._
 
-  def withAncestors(nodes: Set[E]): Set[E] =
+  def withAncestors(nodes: Set[E], filter: E => Boolean = (x => true)): Set[E] = {
+    
+    //TODO: create a generic search for `withAncestorsRec` and `explore`
+    def withAncestorsRec(unvisited: Set[NodeT], nodes: Set[NodeT] = Set.empty[NodeT]): Set[NodeT] = {
+      if (unvisited.isEmpty)
+        nodes
+      else {
+        val nodes2 = nodes + unvisited.head
+        val succs = unvisited.head.diPredecessors.filter { filter }
+        val unvisited2 =
+          (unvisited.drop(1) ++ succs).
+            filterNot(nodes2)
+        withAncestorsRec(unvisited2, nodes2)
+      }
+    }
+
     withAncestorsRec(nodesOf(nodes)).map { _.value }
 
-  //TODO: create a generic depth first search for `withAncestorsRec` and `explore`
-  private def withAncestorsRec(unvisited: Set[NodeT], nodes: Set[NodeT] = Set.empty[NodeT]): Set[NodeT] = {
-    if (unvisited.isEmpty)
-      nodes
-    else {
-      val nodes2 = nodes + unvisited.head
-      val unvisited2 =
-        (unvisited.head.diPredecessors ++ unvisited.drop(1)).
-          filterNot(nodes2)
-      withAncestorsRec(unvisited2, nodes2)
-    }
   }
 
   private def nodesOf(values: Set[E]): Set[NodeT] =

@@ -36,7 +36,7 @@ class ShowAccountSpec
     accept(existsEventually(Customer receive "You have some money"))
   }
 
-  property("The customer doesn't his account until he ask for it") {
+  property("The customer doesn't see his account until he ask for it") {
     accept(
       !(Customer receive "You have some money") existsUntil (CTM receive "Account"))
   }
@@ -45,6 +45,18 @@ class ShowAccountSpec
     accept(
       alwaysGlobally((Customer receive "You have some money") ->
         existsEventually(Customer receive "Welcome")))
+  }
+
+  property("After returning the card the CTM shouldn't show the account") {
+    accept(alwaysGlobally(
+      (Customer receive "card") ->
+        alwaysGlobally(!(Customer receive "You have some money"))))
+  }
+
+  property("The customer could see the account infinitly many times") {
+    accept(alwaysGlobally(
+      (Customer is Customer.init) -> existsEventually(Customer is Customer.waiting) &
+        (Customer is Customer.waiting) -> existsEventually(Customer is Customer.init)))
   }
 }
 
@@ -65,7 +77,7 @@ class ShowAccount extends Bank with ModelChecking {
 
     val init: Behaviour = {
       case "Welcome" =>
-        CTM ! "Account"
+        CTM ! choose("Exit", "Account")
         become(waiting)
       case "card" =>
         become(dead)
@@ -74,14 +86,7 @@ class ShowAccount extends Bank with ModelChecking {
     val waiting: Behaviour = {
       case "You have some money" =>
         CTM ! "Ok"
-        become(leaving)
-      case "card" =>
-        become(dead)
-    }
-
-    val leaving: Behaviour = {
-      case "Welcome" =>
-        CTM ! "Exit"
+        become(init)
       case "card" =>
         become(dead)
     }

@@ -21,7 +21,7 @@ trait ActorSystem {
   trait Actor {
     /**
      * Sends a message to the actor.
-     * The sender will be only transmitted iff it part of the message.
+     * The sender will be only transmitted iff it is part of the message.
      */
     def !(message: Message): Unit =
       effects.set(effects.get.copy(messages = effects.get.messages :+ (message -> this)))

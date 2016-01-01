@@ -2,23 +2,21 @@ package actors.modelchecking
 
 import actors.ActorSystem
 
-import scala.annotation.tailrec
-
-trait ModelChecking extends ActorSystem with Choose {
+trait ModelChecking extends ActorSystem {
 
   type Queues = Map[Actor, List[Message]]
   type ActorState = (Behaviour, Queues)
   type SystemState = Map[Actor, ActorState]
   type States = Set[SystemState]
 
-  val EmptyQueues: Queues = Map.empty[Actor, List[Message]]
+  val pathTraverser = new PathTraverser
 
-  private val effects = new ThreadLocal[Effects]
+  val EmptyQueues: Queues = Map.empty[Actor, List[Message]]
 
   class Result(val graph: Graph[SystemState], val initialStates: States) {
     /** All reachable states */
     private val omega: States = graph.nodes
-    require(!omega.isEmpty)
+    require(omega.nonEmpty)
 
     /**
      * Atomic expression on actors
@@ -73,7 +71,6 @@ trait ModelChecking extends ActorSystem with Choose {
 
   def check = {
     val init = List(initialState)
-    val emptyGraph = Graph.empty[SystemState]
     val graph = Graph.explore(init)(evolve)
 
     new Result(graph, init.to[Set])
@@ -116,7 +113,7 @@ trait ModelChecking extends ActorSystem with Choose {
       (actor, (behaviour, queues)) <- state;
       (from, msg :: msgs) <- queues
     ) {
-      reset()
+      pathTraverser.reset()
 
       do {
         val effects = actor.process(behaviour, msg)
@@ -139,15 +136,21 @@ trait ModelChecking extends ActorSystem with Choose {
 
         if (unsafeMessageTransport(msg))
           buffer += state + (actor -> (behaviour, queues + (from -> msgs)))
-      } while (chooseNext());
+      } while (pathTraverser.chooseNext())
     }
     buffer.toList
   }
 
-  //TODO: Replace this dirty trick to simulate package lost by a proper data type checked implementation
+  /**
+    * Choose none deterministic one of the given options
+    */
+  def choose[T](head: T, tail: T*): T = {
+    pathTraverser.choose(head +: tail)
+  }
+
+  //TODO: Replace this dirty trick to simulate package lost by a proper data type checked implementation or
+  // configuration
   private def unsafeMessageTransport(msg: Message): Boolean =
     msg.headOption.exists(_.isUpper)
-
-  private def init: SystemState = Map.empty
 
 }

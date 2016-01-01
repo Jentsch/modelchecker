@@ -1,26 +1,34 @@
 package actors.modelchecking
 
+import scala.annotation.tailrec
+
 /**
- * Usage:
- * {{{
+ * Helper trait to traverse every possible code path.
  *
+ * Internal usage:
+ * {{{
  * reset()
  *
  * do {
- *   if (choose(true, false)) {
- *     println(1, 2, 3)
+ *   if (choose(true :: false :: Nil)) {
+ *     println(choose(1 ::  2 :: 3 :: Nil)
  *   } else {
- *     println("Hello " + choose("world", "homer"))
+ *     println("Hello " + choose("world" :: "homer" :: Nil))
  *   }
  * } while (chooseNext())
  * }}}
  *
- * Should produce the lines:
- * ```1, 2, 3, Hello world, Hello home```
+ * Should produce the lines (maybe not in this order):
+ * ```
+ * 1
+ * 2
+ * 3
+ * Hello world
+ * Hello home
+ * ```
  *
- * To concurrent threads doesn't influence each other.
  */
-trait Choose {
+private[modelchecking] final class PathTraverser {
 
   private lazy val _counts = new ThreadLocal[Seq[Int]]
   private def counts: Seq[Int] = _counts.get
@@ -46,24 +54,19 @@ trait Choose {
     counts != Nil
   }
 
+  @tailrec
   private def generateNext(choose: Seq[Int]): Seq[Int] = choose match {
     case xs :+ 0 => generateNext(xs)
     case xs :+ x => xs :+ (x - 1)
     case empty   => empty
   }
 
-  /**
-   * Choose none deterministic a given option
-   */
-  protected def choose[T](head: T, tail: T*): T = {
+  def choose[T](choices: Seq[T]): T = {
     step = step + 1
     // Is this a new choice?
     if (!counts.isDefinedAt(step))
-      counts = counts :+ tail.length
+      counts = counts :+ (choices.length - 1)
 
-    if (counts(step) == 0)
-      head
-    else
-      tail(counts(step) - 1)
+    choices(counts(step))
   }
 }

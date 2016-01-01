@@ -3,11 +3,13 @@ package actors.modelchecking
 import org.scalatest.prop._
 import org.scalatest.{ Matchers, PropSpec }
 
-class ChooseSpec
+class PathTraverserSpec
   extends PropSpec
   with GeneratorDrivenPropertyChecks
-  with Matchers
-  with Choose {
+  with Matchers {
+
+  val testUnderTest = new PathTraverser
+  import testUnderTest._
 
   property("chooseNext should return false after reset") {
     reset()
@@ -16,27 +18,27 @@ class ChooseSpec
 
   property("chooseNext should return true after a call of choose") {
     reset()
-    choose(1, 2)
+    choose(1 :: 2 :: Nil)
     chooseNext() should be(true)
   }
 
   property("chooseNext should return false after a none choise") {
     reset()
-    choose(1)
+    choose(1 :: Nil)
     chooseNext() should be(false)
   }
 
   property("the example should be correct") {
     var result = Set.empty[String]
-    def println(msg: String) =
-      result = result + msg
+    def println(msg: Any) =
+      result = result + msg.toString
 
     reset()
     do {
-      if (choose(true, false)) {
-        println(choose("1", "2", "3"))
+      if (choose(true :: false :: Nil)) {
+        println(choose(1 :: 2 :: 3 :: Nil))
       } else {
-        println("Hello " + choose("world", "homer"))
+        println("Hello " + choose("world" :: "homer" :: Nil))
       }
     } while (chooseNext())
 

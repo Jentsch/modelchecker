@@ -10,7 +10,7 @@ Echte™ Software zeichnet unter anderem folgendes aus:
 
 1. Sie ist lauffähig
 2. kann vorhandene Programmbibliotheken einbinden
-3. verwaltet komplexe Datenstrukturen zusammen gesetzten aus: Integer-Derivaten (long, char, bool ...), Algebraischen Datentypen
+3. verwaltet komplexe Datenstrukturen
 4. es gibt mindestens eine etablierte Lösungen für asynchrone Datenverarbeitung, von der ausgegangen werden kann, dass sie sich spezifikationsgemäß verhält. Beispiele wäre unter anderen: Transaktionen, Pipes, Aktoren, Monitore, Futures
 5. Sie hat eine modularen Aufbau.
 6. Es kann eine Problemdomäne geben, die außerhalb der Informatik liegt.
@@ -28,7 +28,7 @@ Nun könnten folgende (nicht testbaren) Anforderungen könnten von Interesse sei
 
 ## Umsetzung
 
-In diesem Projekt wird versucht die Anforderung mittels eines Aktorenmodells zu erfüllen. Die gleiche Idee wird auch von Rebecca und McErlang umgesetzt. Auf der JVM wurde vergleichbares bisher nicht untersucht.
+In diesem Projekt wird versucht die Anforderung mittels eines Aktorenmodells zu erfüllen. Die gleiche Idee wird auch von Rebecca und McErlang umgesetzt. Mir ist nicht bekannt, dass vergleichbarees auf der JVM untersucht wurde.
 
 ## Einführung
 
@@ -45,40 +45,3 @@ Die Implementierung hierfür ist noch nicht laufähig.
 Zusätzlich zu den Basis Funktionen stehen den Aktoren eine ```choose(...)``` für nicht deterministische Entscheidungen zur Verfügung.
 
 Das System selbst stellt eine ```check``` Funktion bereit, die dass Ergebnis zurückgibt. Das Ergebniss-Objekt stellt wiederum weitere Methoden zur Überprüfung von CTL-Eigenschaften bereit. Als atomare Aussagen stehen die Zustände/ das Verhalten der Aktoren zur Verfügung als auch dem Empfang von Nachrichten. Die Datei ```ShowAccount.scala``` zeigt einige Beispiele.
-
-### Systemkomposition
-
-Es werden Traits verwendet, um die Verschiedenen Systemmodelle zu verwalten. Es sollte eine gemeinse Basis geben, die direkt von ```ActorSystem``` erbt. In dieser werden all Systemkomponenten und Abhänigkeiten notiert.
-
-Beispiel:
-```scala
-trait AbstractSystem extends ActorSystem {
-  def configuration: Actor
-  def database: Actor
-  def mainService: Actor
-  def helper: Actor
-  def userInterface: Actor
-}
-
-trait SystemImplementation extends AbstractSystem {
-  lazy val mainService = ???
-  lazy val help = ???
-}
-
-object RunningSystem extends SystemImplementation with IntegratedSystem {
-  lazy val configuration = LocalJSON("/opt/system/config.json")
-  lazy val database = MySQL("mysql.company.com", "user", "password")
-  lazy val userInterface = HTTP_Server(Templates)
-}
-
-object CheckSystem extends SystemImplementation with ModelChecking {
-  lazy val configuration = ???
-  lazy val database = new Actor {
-    def init: Behaviour = {
-      case "SELECT * FROM users" =>
-        mainService ! choose(List.empty, List("John"), List("John", "Sven"))
-    }
-  override lazy val helper = DeadActor
-}
-```
-Mit ```CheckSystem``` kann anschließend die Anwendung gemodelcheckt werden.

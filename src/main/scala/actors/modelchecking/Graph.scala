@@ -1,10 +1,10 @@
 package actors.modelchecking
 
 import scala.annotation.tailrec
-import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 import scalax.collection.Graph._
 import scalax.collection.GraphEdge.DiEdge
-import scalax.collection.{ Graph => XGraph }
+import scalax.collection.{Graph => XGraph}
 
 /**
  * Directed graph
@@ -12,7 +12,7 @@ import scalax.collection.{ Graph => XGraph }
 final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge]) {
   import wrapped._
 
-  def withAncestors(nodes: Set[E], filter: E => Boolean = (x => true)): Set[E] = {
+  def withAncestors(nodes: Set[E], filter: E => Boolean = x => true): Set[E] = {
     
     //TODO: create a generic search for `withAncestorsRec` and `explore`
     def withAncestorsRec(unvisited: Set[NodeT], nodes: Set[NodeT] = Set.empty[NodeT]): Set[NodeT] = {
@@ -52,14 +52,15 @@ final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge]) {
 }
 
 object Graph {
-  def empty[E: TypeTag] =
+  def empty[E: ClassTag] =
     new Graph[E](XGraph.empty[E, DiEdge])
 
-  def apply[E: TypeTag](pairs: (E, E)*): Graph[E] =
+  def apply[E: ClassTag](pairs: (E, E)*): Graph[E] =
     empty ++ pairs
 
-  def explore[E: TypeTag](init: Traversable[E])(successors: E => Traversable[E]): Graph[E] = {
+  def explore[E: ClassTag](init: Traversable[E])(successors: E => Traversable[E]): Graph[E] = {
 
+    @tailrec
     def depthFirstSearch(unvisited: List[E], visited: Set[E], graph: XGraph[E, DiEdge]): Graph[E] =
       unvisited match {
         case Nil =>

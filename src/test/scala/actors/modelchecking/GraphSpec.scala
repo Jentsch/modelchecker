@@ -1,11 +1,9 @@
 package actors.modelchecking
 
-import org.scalatest.prop._
-import org.scalatest.{ Matchers, PropSpec }
+import org.scalatest.{Matchers, PropSpec}
 
 class GraphSpec
   extends PropSpec
-  with GeneratorDrivenPropertyChecks
   with Matchers {
 
   property("Empty graphs") {

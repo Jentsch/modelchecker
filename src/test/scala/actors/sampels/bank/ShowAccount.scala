@@ -1,10 +1,7 @@
 package actors.sampels.bank
 
-import actors._
 import actors.modelchecking.ModelChecking
-import org.scalatest.{ PropSpec, Matchers }
-import org.scalatest.matchers.Matcher
-import org.scalatest.matchers.MatchResult
+import org.scalatest.{Matchers, PropSpec}
 
 class ShowAccountSpec
   extends PropSpec
@@ -21,11 +18,8 @@ class ShowAccountSpec
   def accept(states: States) =
     states should contain(initialStates.head)
 
-  def acceptNot(states: States) =
-    states should not contain (initialStates.head)
-
   property("The CTM shouldn't shut down") {
-    acceptNot(alwaysGlobally(!(CTM is dead)))
+    accept(!alwaysGlobally(!(CTM is dead)))
   }
 
   property("The customer may leaves") {
@@ -83,7 +77,7 @@ class ShowAccount extends Bank with ModelChecking {
         become(dead)
     }
 
-    val waiting: Behaviour = {
+    lazy val waiting: Behaviour = {
       case "You have some money" =>
         CTM ! "Ok"
         become(init)

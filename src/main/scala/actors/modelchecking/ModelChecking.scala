@@ -31,7 +31,7 @@ trait ModelChecking extends ActorSystem {
       def receive(msg: Message): States =
         omega filter { state =>
           val (_, queues) = state(actor)
-          queues.values.exists(_.headOption == Some(msg))
+          queues.values.exists(_.headOption.contains(msg))
         }
     }
 
@@ -47,9 +47,6 @@ trait ModelChecking extends ActorSystem {
       def existsUntil(other: States) =
         graph.withAncestors(other, self)
     }
-
-    def alwaysGlobaly(states: States): States =
-      ???
 
     final def existsEventually(states: States): States =
       graph withAncestors states
@@ -126,10 +123,10 @@ trait ModelChecking extends ActorSystem {
           localEffects ++ actors.map(actor => actor -> (actor.init, EmptyQueues))
 
         val newMessages = messages.foldLeft(newActors) {
-          case (state, (message, to)) =>
-            val (toBehaviour, toQueues) = state(to)
+          case (collectedState, (message, to)) =>
+            val (toBehaviour, toQueues) = collectedState(to)
             val newFromQueue = toQueues.getOrElse(actor, Nil) :+ message
-            state + (to -> (toBehaviour, toQueues + (actor -> newFromQueue)))
+            collectedState + (to ->(toBehaviour, toQueues + (actor -> newFromQueue)))
         }
 
         buffer += newMessages

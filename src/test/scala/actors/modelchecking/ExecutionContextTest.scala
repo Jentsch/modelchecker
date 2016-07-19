@@ -16,8 +16,9 @@ class ExecutionContextTest extends PropSpec with Matchers with EcSpec {
         x = 2
       }
 
-      x could be(5)
-      Set(0, 1, 2) should contain(x)
+      x could be(0)
+      x could be(1)
+      x could be(2)
     }
   }
 

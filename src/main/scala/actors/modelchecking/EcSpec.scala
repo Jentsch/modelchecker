@@ -10,7 +10,7 @@ import scala.concurrent.ExecutionContext
 
 trait EcSpec extends Matchers {
 
-  private var couldWasTrue = false
+  private var couldWasTrueFor = TrieMap.empty[sourcecode.Line, Boolean]
 
   /**
     *
@@ -29,10 +29,15 @@ trait EcSpec extends Matchers {
       val ec = new TestExecutionContext
       ec.run(test)
     }
-    couldWasTrue should be(true)
+    couldWasTrueFor.foreach {
+      case (pos, false) =>
+        println("Line: " + pos)
+        assert(false)
+      case _ =>
+    }
   }
 
-  implicit class TestWords[T](value: T) {
+  implicit class TestWords[T](value: T)(implicit pos: sourcecode.Line) {
     /**
       * This method enables syntax such as the following:
       *
@@ -41,7 +46,7 @@ trait EcSpec extends Matchers {
       * ```
       **/
     def could(rightMatcherX1: Matcher[T]) {
-      couldWasTrue |= rightMatcherX1(value).matches
+      couldWasTrueFor(pos) = couldWasTrueFor.getOrElse(pos, false) | rightMatcherX1(value).matches
     }
 
   }
@@ -90,5 +95,6 @@ trait EcSpec extends Matchers {
 
     override def reportFailure(cause: Throwable): Unit = throw cause
   }
+
 
 }

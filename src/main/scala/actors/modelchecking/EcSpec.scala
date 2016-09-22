@@ -3,14 +3,20 @@ package actors.modelchecking
 import java.util.concurrent.Semaphore
 
 import org.scalatest.Matchers
-import org.scalatest.matchers.Matcher
+import org.scalatest.exceptions.TestFailedException
+import org.scalatest.matchers.{MatchFailed, Matcher}
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.ExecutionContext
+import scala.language.experimental.macros
+import scala.reflect.macros.blackbox
 
 trait EcSpec extends Matchers {
 
-  private var couldWasTrueFor = TrieMap.empty[sourcecode.Line, Boolean]
+  protected implicit val ecSpecSelf: EcSpec = this
+
+  private val couldWasTrueFor =
+    TrieMap.empty[Int, Option[TestFailedException]]
 
   /**
     *
@@ -20,7 +26,19 @@ trait EcSpec extends Matchers {
     * }
     * ```
     *
-    * It's possible that not every computation is done after returning to the test
+    * It's possible that not every computation is done after returning to the test.
+    *
+    * The tests written with this method can detect race conditions if all side effects of a single action happens in
+    * an atomic way and that semantic hold even with the jvm memory model.
+    *
+    * Ok:
+    * {{{
+    *   @volatile var x = 1
+    *
+    *   Future { x = 2 }
+    *   Future { x = 3 }
+    * }}}
+    * Without the volatile annotation tests would be ok but the runtime semantic isn't covered by the tests.
     *
     * @param test the test code to rum
     */
@@ -30,26 +48,15 @@ trait EcSpec extends Matchers {
       ec.run(test)
     }
     couldWasTrueFor.foreach {
-      case (pos, false) =>
-        println("Line: " + pos)
-        assert(false)
+      case (pos, Some(matchResult)) =>
+        throw matchResult
+
       case _ =>
     }
   }
 
-  implicit class TestWords[T](value: T)(implicit pos: sourcecode.Line) {
-    /**
-      * This method enables syntax such as the following:
-      *
-      * ```
-      * result could be (3)
-      * ```
-      **/
-    def could(rightMatcherX1: Matcher[T]) {
-      couldWasTrueFor(pos) = couldWasTrueFor.getOrElse(pos, false) | rightMatcherX1(value).matches
-    }
-
-  }
+  implicit def toCouldTestWord[T](value: T): EcSpec.CouldTestWord[T] =
+  macro EcSpec.ToCouldTestWordImpl[T]
 
   private class TestExecutionContext extends ExecutionContext {
     self =>
@@ -71,7 +78,7 @@ trait EcSpec extends Matchers {
     def createStoppedThread(runnable: Runnable): (String, Semaphore) = {
       val stopSignal = new Semaphore(0)
 
-      val thread: Thread {def run(): Unit} = new Thread {
+      val thread: Thread = new Thread {
         override def run(): Unit = {
           stopSignal.acquire()
           runnable.run()
@@ -87,7 +94,8 @@ trait EcSpec extends Matchers {
       if (waitingList.isEmpty) {
         finalStop.release()
       } else {
-        val name: String = waitingList.keys.toList.apply(scala.util.Random.nextInt(waitingList.size))
+        val name: String = waitingList.keys.toList
+          .apply(scala.util.Random.nextInt(waitingList.size))
         val Some(chosen) = waitingList.remove(name)
         chosen.release()
       }
@@ -96,5 +104,48 @@ trait EcSpec extends Matchers {
     override def reportFailure(cause: Throwable): Unit = throw cause
   }
 
+}
+
+object EcSpec {
+  def ToCouldTestWordImpl[T: c.WeakTypeTag](c: blackbox.Context)(
+    value: c.Expr[T]): c.Expr[CouldTestWord[T]] = {
+    import c.universe._
+
+    val line = c.enclosingPosition.line
+    val fileContent = new String(value.tree.pos.source.content)
+    val start = value.tree.pos.start
+    val txt = fileContent.slice(start, start + 1)
+
+    val tree =
+      q"""new actors.modelchecking.EcSpec.CouldTestWord[Int]($value, $txt, $line)"""
+
+    c.Expr[CouldTestWord[T]](tree)
+  }
+
+  class CouldTestWord[T](value: T, valRep: String, pos: Int) {
+
+    /**
+      * This method enables syntax such as the following:
+      *
+      * ```
+      * result could be (3)
+      * ```
+      **/
+    def could(rightMatcher: Matcher[T])(implicit ctx: EcSpec) {
+      rightMatcher(value) match {
+        case MatchFailed(failureMessage) =>
+          ctx.couldWasTrueFor.getOrElseUpdate(
+            pos,
+            Some(
+              new TestFailedException(
+                valRep + " couldn't " + rightMatcher.toString(),
+                13)))
+        case _ =>
+          ()
+          ctx.couldWasTrueFor(pos) = None
+      }
+    }
+
+  }
 
 }

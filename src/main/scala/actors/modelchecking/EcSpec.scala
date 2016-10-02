@@ -7,9 +7,10 @@ import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.{MatchFailed, Matcher}
 
 import scala.collection.concurrent.TrieMap
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
+import scala.util.control.NonFatal
 
 trait EcSpec extends Matchers {
 
@@ -43,7 +44,7 @@ trait EcSpec extends Matchers {
     * @param test the test code to rum
     */
   def everyPossiblePath(test: ExecutionContext => Unit) = {
-    for (_ <- 1 to 100) {
+    for (_ <- 1 to 300) {
       val ec = new TestExecutionContext
       ec.run(test)
     }
@@ -55,16 +56,59 @@ trait EcSpec extends Matchers {
     }
   }
 
+  /**
+    * Checks if a value only increase over time.
+    *
+    * {{{
+    * import java.util.concurrent.atomic.AtomicInteger
+    * val x = new AtomicInteger(0)
+    *
+    * Future { x.incrementAndGet }
+    * Future { x.incrementAndGet }
+    * // Future { x.decrementAndGet }
+    *
+    * x.value should increase
+    *
+    * }}}
+    */
+  def increase[T: Ordering]: TimeWord[T] = new TimeWord[T] {
+    override def apply(t: => T)(implicit ec: ExecutionContext): Unit = {
+      Future {
+        t
+      }.foreach { t1 =>
+        val t2 = t
+
+        t1 should be <= t2
+      }
+    }
+  }
+
   implicit def toCouldTestWord[T](value: T): EcSpec.CouldTestWord[T] =
   macro EcSpec.ToCouldTestWordImpl[T]
+
+  /**
+    * Properties about a term `t` and it's behaviour over time.
+    */
+  trait TimeWord[T] {
+    def apply(t: => T)(implicit ec: ExecutionContext): Unit
+  }
+
+  implicit class TimeWordShould[T](t: => T) {
+    def should(timeWord: TimeWord[T])(implicit ec: ExecutionContext): Unit = {
+      timeWord(t)
+    }
+  }
 
   private class TestExecutionContext extends ExecutionContext {
     self =>
     val waitingList = TrieMap.empty[String, Semaphore]
     val finalStop = new Semaphore(0)
+    var foundException = Option.empty[Throwable]
 
     def run(test: ExecutionContext => Unit): Unit = {
       test(self)
+
+      foundException.foreach(throw _)
     }
 
     override def execute(runnable: Runnable): Unit = {
@@ -81,7 +125,12 @@ trait EcSpec extends Matchers {
       val thread: Thread = new Thread {
         override def run(): Unit = {
           stopSignal.acquire()
-          runnable.run()
+          try {
+            runnable.run()
+          } catch {
+            case NonFatal(thrown) =>
+              foundException = Some(thrown)
+          }
           chooseNextThread()
         }
       }

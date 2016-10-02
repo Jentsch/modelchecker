@@ -16,6 +16,8 @@ class ExecutionContextTest extends PropSpec with Matchers with EcSpec {
         x = 2
       }
 
+      new TimeWordShould(x) should increase(implicitly[Ordering[Int]])
+
       x could be(0)
       x could be(1)
       x could be(2)

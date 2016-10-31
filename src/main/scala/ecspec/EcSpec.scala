@@ -1,23 +1,25 @@
-package actors.modelchecking
-
-import java.util.concurrent.Semaphore
+package ecspec
 
 import org.scalatest.Matchers
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.{MatchFailed, Matcher}
 
-import scala.collection.concurrent.TrieMap
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
-import scala.util.control.NonFatal
 
+/**
+  * Add this trait to your test class to use the `everyPossiblePath` method.
+  *
+  * @see #everyPossiblePath
+  */
 trait EcSpec extends Matchers {
 
   protected implicit val ecSpecSelf: EcSpec = this
 
   private val couldWasTrueFor =
-    TrieMap.empty[Int, Option[TestFailedException]]
+    mutable.Map.empty[Int, Option[TestFailedException]]
 
   /**
     *
@@ -44,10 +46,9 @@ trait EcSpec extends Matchers {
     * @param test the test code to rum
     */
   def everyPossiblePath(test: ExecutionContext => Unit) = {
-    for (_ <- 1 to 300) {
-      val ec = new TestExecutionContext
-      ec.run(test)
-    }
+    val ec = new TestExecutionContext
+    ec.testEveryPath(test)
+
     couldWasTrueFor.foreach {
       case (pos, Some(matchResult)) =>
         throw matchResult
@@ -99,60 +100,6 @@ trait EcSpec extends Matchers {
     }
   }
 
-  private class TestExecutionContext extends ExecutionContext {
-    self =>
-    val waitingList = TrieMap.empty[String, Semaphore]
-    val finalStop = new Semaphore(0)
-    var foundException = Option.empty[Throwable]
-
-    def run(test: ExecutionContext => Unit): Unit = {
-      test(self)
-
-      foundException.foreach(throw _)
-    }
-
-    override def execute(runnable: Runnable): Unit = {
-      waitingList += createStoppedThread(runnable)
-      val ownSemaphore = new Semaphore(0)
-      waitingList += (Thread.currentThread().getName -> ownSemaphore)
-      chooseNextThread()
-      ownSemaphore.acquire()
-    }
-
-    def createStoppedThread(runnable: Runnable): (String, Semaphore) = {
-      val stopSignal = new Semaphore(0)
-
-      val thread: Thread = new Thread {
-        override def run(): Unit = {
-          stopSignal.acquire()
-          try {
-            runnable.run()
-          } catch {
-            case NonFatal(thrown) =>
-              foundException = Some(thrown)
-          }
-          chooseNextThread()
-        }
-      }
-      thread.start()
-
-      thread.getName -> stopSignal
-    }
-
-    def chooseNextThread() = {
-      if (waitingList.isEmpty) {
-        finalStop.release()
-      } else {
-        val name: String = waitingList.keys.toList
-          .apply(scala.util.Random.nextInt(waitingList.size))
-        val Some(chosen) = waitingList.remove(name)
-        chosen.release()
-      }
-    }
-
-    override def reportFailure(cause: Throwable): Unit = throw cause
-  }
-
 }
 
 object EcSpec {
@@ -166,7 +113,7 @@ object EcSpec {
     val txt = fileContent.slice(start, start + 1)
 
     val tree =
-      q"""new actors.modelchecking.EcSpec.CouldTestWord[Int]($value, $txt, $line)"""
+      q"""new ecspec.EcSpec.CouldTestWord[Int]($value, $txt, $line)"""
 
     c.Expr[CouldTestWord[T]](tree)
   }

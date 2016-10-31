@@ -1,4 +1,4 @@
-package actors.modelchecking
+package ecspec
 
 import org.scalatest.{Matchers, PropSpec}
 
@@ -15,8 +15,6 @@ class ExecutionContextTest extends PropSpec with Matchers with EcSpec {
       Future {
         x = 2
       }
-
-      new TimeWordShould(x) should increase(implicitly[Ordering[Int]])
 
       x could be(0)
       x could be(1)

@@ -7,6 +7,7 @@ import org.scalatest.matchers.{MatchFailed, Matcher}
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.experimental.macros
+import scala.language.implicitConversions
 import scala.reflect.macros.blackbox
 
 /**
@@ -14,7 +15,7 @@ import scala.reflect.macros.blackbox
   *
   * @see #everyPossiblePath
   */
-trait EcSpec extends Matchers {
+trait EcSpec extends Matchers with ExecutionContextOps {
 
   protected implicit val ecSpecSelf: EcSpec = this
 
@@ -85,7 +86,7 @@ trait EcSpec extends Matchers {
   }
 
   implicit def toCouldTestWord[T](value: T): EcSpec.CouldTestWord[T] =
-  macro EcSpec.ToCouldTestWordImpl[T]
+    macro EcSpec.ToCouldTestWordImpl[T]
 
   /**
     * Properties about a term `t` and it's behaviour over time.
@@ -104,7 +105,7 @@ trait EcSpec extends Matchers {
 
 object EcSpec {
   def ToCouldTestWordImpl[T: c.WeakTypeTag](c: blackbox.Context)(
-    value: c.Expr[T]): c.Expr[CouldTestWord[T]] = {
+      value: c.Expr[T]): c.Expr[CouldTestWord[T]] = {
     import c.universe._
 
     val line = c.enclosingPosition.line
@@ -127,7 +128,7 @@ object EcSpec {
       * result could be (3)
       * ```
       **/
-    def could(rightMatcher: Matcher[T])(implicit ctx: EcSpec) {
+    def could(rightMatcher: Matcher[T])(implicit ctx: EcSpec): Unit = {
       rightMatcher(value) match {
         case MatchFailed(failureMessage) =>
           ctx.couldWasTrueFor.getOrElseUpdate(
@@ -136,9 +137,11 @@ object EcSpec {
               new TestFailedException(
                 valRep + " couldn't " + rightMatcher.toString(),
                 13)))
-        case _ =>
           ()
+        case _ =>
           ctx.couldWasTrueFor(pos) = None
+
+          ()
       }
     }
 

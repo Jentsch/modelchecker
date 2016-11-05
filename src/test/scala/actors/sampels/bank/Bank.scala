@@ -4,8 +4,6 @@ import actors._
 
 /** Basic model of CTM */
 trait Bank extends ActorSystem {
-  def Customer: Actor
-
   val CTM = new Actor {
     val init: Behaviour = {
       case "card" =>
@@ -26,7 +24,7 @@ trait Bank extends ActorSystem {
       case _ =>
         ()
     }
-    
+
     val waiting: Behaviour = {
       case "Ok" =>
         become(mainScreen)
@@ -37,5 +35,7 @@ trait Bank extends ActorSystem {
         ()
     }
   }
+
+  def Customer: Actor
 
 }

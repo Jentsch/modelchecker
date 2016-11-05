@@ -21,9 +21,23 @@ private[ecspec] class Traverser {
   private var currentDepth = 0
 
   /**
+    * Remove and return 'randomly' one element of the given mutable sequence.
+    */
+  def removeOne[E](choices: mutable.Buffer[E]): E = {
+    assert(choices.nonEmpty)
+    val choiceIndex = choose(choices.indices)
+    val choice = choices(choiceIndex)
+    choices.remove(choiceIndex)
+
+    choice
+  }
+
+  /**
     * Choose 'randomly' one option
     */
   def choose[E](choices: Seq[E]): E = {
+    assert(choices.nonEmpty)
+
     val choiceIndex = path.lift(currentDepth).getOrElse {
       val max = choices.length - 1
       path.append(max)

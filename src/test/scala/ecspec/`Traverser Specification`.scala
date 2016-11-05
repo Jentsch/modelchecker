@@ -2,11 +2,13 @@ package ecspec
 
 import org.specs2._
 
+import scala.collection.mutable
+
 object `Traverser Specification` extends Specification {
   def is =
     s2"""
 
-The traverser offers after initialisation two methods:
+The traverser offers after initialisation two main methods:
 
 - `choose` requires a not empty sequence and return one element 'randomly'
 - `hasMoreOptions` returns true if an other run of the code block reveals new options
@@ -29,6 +31,27 @@ do {
 
    should see all possible outcomes $allPossibleOutcomes
    (1, 2, 1A, 1B, 2A, 2B)
+
+## removeOne
+
+When working with mutable collections the `removeOne` method
+take on out of the given sequence and returns it.
+
+In the example
+```
+val traverser = new Traverser
+
+var visit = Set.empty[String]
+
+do {
+  val buffer = collection.mutable.Buffer(1, 2)
+
+  println(traverser.removeOne(buffer)
+  println(traverser.removeOne(buffer)
+} while (traverser.hasMoreOptions)
+```
+
+the output is: 1, 2 and 2, 1 $printAllOutcomes
 """
 
   def allPossibleOutcomes = {
@@ -46,6 +69,20 @@ do {
     } while (traverser.hasMoreOptions)
 
     visit must beEqualTo(Set("1", "2", "1A", "1B", "2A", "2B"))
+  }
+
+  def printAllOutcomes = {
+    val traverser = new Traverser
+
+    var visit = Set.empty[(Int, Int)]
+
+    do {
+      val buffer = mutable.Buffer(1, 2)
+
+      visit = visit + ((traverser.removeOne(buffer), traverser.removeOne(buffer)))
+    } while (traverser.hasMoreOptions)
+
+    visit must beEqualTo(Set((1, 2), (2, 1)))
   }
 
 }

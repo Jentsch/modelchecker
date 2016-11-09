@@ -18,7 +18,6 @@ project/plugins/project/
 .cache
 .classpath
 .project
-project/
 
 # Idea specific
 .idea/

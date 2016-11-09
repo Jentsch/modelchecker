@@ -1,8 +1,8 @@
-lazy val root = (project in file(".")).configs(Examples)
-
-name := """modelchecker"""
+name := "modelchecker"
 
 organization := "example"
+
+homepage := Some(url("http://jentsch.berlin/modelchecker/"))
 
 version := "0.1.0-SNAPSHOT"
 
@@ -30,4 +30,16 @@ libraryDependencies ++= Seq(
 
 scalacOptions in Test ++= Seq("-Yrangepos")
 
-lazy val Examples = config("examples").extend(Runtime)
+ghpages.settings
+
+git.remoteRepo := "git@github.com:Jentsch/modelchecker.git"
+
+enablePlugins(SiteScaladocPlugin)
+
+tutSettings
+
+val tutWebFolder = settingKey[String]("tutWebFolder")
+
+tutWebFolder := "tut"
+
+addMappingsToSiteDir(tut, tutWebFolder)

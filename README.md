@@ -1,5 +1,7 @@
 # Modelchecker (Alles noch in Arbeit)
 
+Website: [http://jentsch.berlin/modelchecker/]
+
 Prototyp eines Modelcheckers
 
 ## Ziele
@@ -33,7 +35,7 @@ In diesem Projekt wird versucht die Anforderung mittels eines Aktorenmodells zu 
 ## Einführung
 
 Es gibt zwei verschieden Actor-Systeme: Integrated and Model Checking. Sie teilen sich beide die Grundfunktionalitäten von Aktoren.
-  
+
 ### Integrated System
 
 Dies sind lauffähige Anwendungen, die Zugriff auf das Netzwerk und die Festplatte haben. Dieser Zugriff wird mittels IO-Aktoren geregelt.

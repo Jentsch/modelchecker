@@ -1,6 +1,6 @@
 # Modelchecker (Alles noch in Arbeit)
 
-Website: [http://jentsch.berlin/modelchecker/]
+[Website](http://jentsch.berlin/modelchecker/)
 
 Prototyp eines Modelcheckers
 

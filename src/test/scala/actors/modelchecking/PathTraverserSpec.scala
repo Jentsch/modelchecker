@@ -2,9 +2,7 @@ package actors.modelchecking
 
 import org.scalatest.{Matchers, PropSpec}
 
-class PathTraverserSpec
-  extends PropSpec
-  with Matchers {
+class PathTraverserSpec extends PropSpec with Matchers {
 
   val testUnderTest = new PathTraverser
   import testUnderTest._

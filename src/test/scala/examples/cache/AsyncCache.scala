@@ -8,9 +8,7 @@ class AsyncCache[I, O](
 ) extends (I => Future[O]) {
   override def apply(key: I): Future[O] = f(key)
 
-  def refresh(): Unit = {
-
-  }
+  def refresh(): Unit = {}
 }
 
 object AsyncCache {

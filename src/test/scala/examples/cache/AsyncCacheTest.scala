@@ -7,5 +7,4 @@ class AsyncCacheTest extends FlatSpec with EcSpec {
 
   behavior of "async cache"
 
-
 }

@@ -25,8 +25,8 @@ class ExecutionContextTest extends PropSpec with Matchers with EcSpec {
       x could be(1)
       x could be(2)
 
-      // Would fail:
-      // x could be > (10)
+    // Would fail:
+    // x could be > (10)
     }
   }
 

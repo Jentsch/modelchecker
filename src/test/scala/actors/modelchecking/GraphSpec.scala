@@ -2,9 +2,7 @@ package actors.modelchecking
 
 import org.scalatest.{Matchers, PropSpec}
 
-class GraphSpec
-  extends PropSpec
-  with Matchers {
+class GraphSpec extends PropSpec with Matchers {
 
   property("Empty graphs") {
     Graph.empty.nodes shouldBe empty
@@ -35,7 +33,8 @@ class GraphSpec
       set.map(set - _)
     }
     subSets should be(
-      Graph(Set(1, 2, 3) -> Set(1, 2),
+      Graph(
+        Set(1, 2, 3) -> Set(1, 2),
         Set(1, 2, 3) -> Set(1, 3),
         Set(1, 2, 3) -> Set(2, 3),
         Set(1, 2) -> Set(1),
@@ -46,7 +45,8 @@ class GraphSpec
         Set(2, 3) -> Set(3),
         Set(1) -> Set(),
         Set(2) -> Set(),
-        Set(3) -> Set()))
+        Set(3) -> Set()
+      ))
   }
 
 }

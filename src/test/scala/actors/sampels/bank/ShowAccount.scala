@@ -3,19 +3,15 @@ package actors.sampels.bank
 import actors.modelchecking.ModelChecking
 import org.scalatest.{Matchers, PropSpec}
 
-class ShowAccountSpec
-  extends PropSpec
-  with Matchers {
+class ShowAccountSpec extends PropSpec with Matchers {
 
-  val model = new ShowAccount
-  val result = model.check
+  private val model = new ShowAccount
+  private val result = model.check
 
   import model._
   import result._
 
-  println("States: " + result.graph.nodes.size)
-
-  def accept(states: States) =
+  private def accept(states: States) =
     states should contain(initialStates.head)
 
   property("The CTM shouldn't shut down") {
@@ -42,29 +38,32 @@ class ShowAccountSpec
   }
 
   property("After returning the card the CTM shouldn't show the account") {
-    accept(alwaysGlobally(
-      (Customer receive "card") ->
+    accept(
+      alwaysGlobally((Customer receive "card") ->
         alwaysGlobally(!(Customer receive "You have some money"))))
   }
 
   property("The customer could see the account infinitly many times") {
-    accept(alwaysGlobally(
-      (Customer is Customer.init) -> existsEventually(Customer is Customer.waiting) &
-        (Customer is Customer.waiting) -> existsEventually(Customer is Customer.init)))
+    accept(
+      alwaysGlobally(
+        (Customer is Customer.init) -> existsEventually(
+          Customer is Customer.waiting) &
+          (Customer is Customer.waiting) -> existsEventually(
+            Customer is Customer.init)))
   }
 }
 
 /**
- * Following scenario:
- * * A customer insert his card into a CTM
- * * Sees a welcome screen and want to see his account
- * * He dies happy if he have some money
- *
- * He could always miss a screen but never his rejected card.
- */
+  * Following scenario:
+  * * A customer insert his card into a CTM
+  * * Sees a welcome screen and want to see his account
+  * * He dies happy if he have some money
+  *
+  * He could always miss a screen but never his rejected card.
+  */
 class ShowAccount extends Bank with ModelChecking {
 
-  val Customer = new Actor {
+  object Customer extends Actor {
     override def creation() = {
       CTM ! "card"
     }
@@ -85,5 +84,8 @@ class ShowAccount extends Bank with ModelChecking {
         become(dead)
     }
   }
+
+  // required to initialize the object
+  require(Customer != null)
 
 }

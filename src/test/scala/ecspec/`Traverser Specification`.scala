@@ -79,7 +79,7 @@ the output is: 1, 2 and 2, 1 $printAllOutcomes
     do {
       val buffer = mutable.Buffer(1, 2)
 
-      visit = visit + ((traverser.removeOne(buffer), traverser.removeOne(buffer)))
+      visit += ((traverser.removeOne(buffer), traverser.removeOne(buffer)))
     } while (traverser.hasMoreOptions)
 
     visit must beEqualTo(Set((1, 2), (2, 1)))

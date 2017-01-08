@@ -7,3 +7,7 @@ script:
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y pandoc

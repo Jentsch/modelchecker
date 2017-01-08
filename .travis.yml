@@ -1,13 +1,15 @@
 language: scala
 scala:
-  - 2.11.8
+  - 2.12.1
+jdk:
+  - oraclejdk8
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y pandoc
+
 script:
   - sbt clean scalafmtTest test
 
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
-
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y pandoc

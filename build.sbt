@@ -22,10 +22,8 @@ scalacOptions ++= Seq(
 
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.1",
-  "org.scala-graph" %% "graph-core" % "1.11.4",
-  "com.typesafe.akka" %% "akka-actor" % "2.4.16",
-  "org.specs2" %% "specs2-core" % "3.8.6" % Test,
-  "org.specs2" %% "specs2-html" % "3.8.6" % Test
+  "org.specs2" %% "specs2-core" % "3.8.9" % Test,
+  "org.specs2" %% "specs2-html" % "3.8.9" % Test
 )
 
 // (testOptions in Test) += Tests.Argument(TestFrameworks.Specs2, "html")

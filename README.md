@@ -6,6 +6,8 @@ Prototype of a explicit state model checker based upon the Scala ExecutionContex
 
 ## Development
 
+[![Build Status](https://travis-ci.org/Jentsch/modelchecker.svg?branch=master)](https://travis-ci.org/Jentsch/modelchecker)
+
 This is a plain sbt project. Use `sbt test` to execute all tests.
 
 ## Documentation

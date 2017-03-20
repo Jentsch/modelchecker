@@ -1,6 +1,6 @@
-name := "modelchecker"
+name := "scala-modelchecker"
 
-organization := "example"
+organization := "jentsch.berlin"
 
 homepage := Some(url("http://jentsch.berlin/modelchecker/"))
 

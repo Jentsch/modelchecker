@@ -45,11 +45,3 @@ ghpages.settings
 git.remoteRepo := "git@github.com:Jentsch/modelchecker.git"
 
 enablePlugins(SiteScaladocPlugin)
-
-tutSettings
-
-val tutWebFolder = settingKey[String]("tutWebFolder")
-
-tutWebFolder := "tut"
-
-addMappingsToSiteDir(tut, tutWebFolder)

@@ -26,7 +26,7 @@ libraryDependencies ++= Seq(
   "org.specs2" %% "specs2-html" % "3.8.9" % Test
 )
 
-// (testOptions in Test) += Tests.Argument(TestFrameworks.Specs2, "html")
+(testOptions in Test) += Tests.Argument(TestFrameworks.Specs2, "html")
 
 siteSourceDirectory := target.value / "specs2-reports"
 

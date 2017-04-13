@@ -3,12 +3,9 @@ scala:
   - 2.12.1
 jdk:
   - oraclejdk8
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y pandoc
 
 script:
-  - sbt clean scalafmtTest test
+  - sbt clean testGen/gen test
 
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm

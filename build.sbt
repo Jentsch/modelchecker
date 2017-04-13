@@ -4,9 +4,12 @@ organization := "jentsch.berlin"
 
 homepage := Some(url("http://jentsch.berlin/modelchecker/"))
 
+licenses := Seq("MIT" -> url("https://choosealicense.com/licenses/mit/"))
+
 version := "0.1.0-SNAPSHOT"
 
 scalaVersion := "2.12.1"
+
 scalacOptions ++= Seq(
   "-unchecked",
   "-feature",
@@ -21,22 +24,30 @@ scalacOptions ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "3.0.1",
-  "org.specs2" %% "specs2-core" % "3.8.9" % Test,
-  "org.specs2" %% "specs2-html" % "3.8.9" % Test
+  "org.scalatest" %% "scalatest" % "3.0.1"
 )
 
-// (testOptions in Test) += Tests.Argument(TestFrameworks.Specs2, "html")
-
-siteSourceDirectory := target.value / "specs2-reports"
-
-makeSite ~= { (f) =>
-  val tests = test in Test
-
-  f
-}
-
 scalacOptions in Test ++= Seq("-Yrangepos")
+
+val gen = TaskKey[Unit]("gen")
+
+val testGen = project
+  .in(file("testGen"))
+  .settings(
+    scalaVersion := "2.12.1",
+    libraryDependencies ++= Seq(
+      "org.scalameta" %% "scalameta" % "1.7.0",
+      "org.scalameta" %% "contrib" % "1.7.0",
+      "com.github.pathikrit" %% "better-files" % "3.0.0"
+    ),
+    gen := runTask(Compile, "GenerateTests").value
+  )
+
+sourceDirectory in Test := target.value / "genTest"
+
+compile := {
+  Def.sequential(gen in testGen, compile).value
+}
 
 ghpages.settings
 

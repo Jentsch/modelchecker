@@ -5,11 +5,14 @@ import scala.collection.mutable
 /**
   * {{{
   *   val trav = new Traverser
+  *   var out = Set.empty[Int]
   *
   *   do {
   *     val c: Int = trav.choose(Seq(1, 2, 3))
-  *     println(c)
+  *     out += c
   *   } while(trav.hasMoreOptions)
+  *
+  *   out should be(Set(1, 2, 3))
   * }}}
   *
   * Should produce the output 1, 2, 3 (not separated by commas but in multiple lines)
@@ -22,9 +25,24 @@ private[ecspec] class Traverser {
 
   /**
     * Remove and return 'randomly' one element of the given mutable sequence.
+    *
+    * {{{
+    *   val trav = new Traverser
+    *
+    *   do {
+    *     val original = List(1, 2, 3)
+    *     val choices = original.to[collection.mutable.Buffer]
+    *
+    *     val chosen = trav.removeOne(choices)
+    *
+    *     choices should have length 2
+    *
+    *     original diff choices should be(List(chosen))
+    *   } while(trav.hasMoreOptions)
+    * }}}
     */
   def removeOne[E](choices: mutable.Buffer[E]): E = {
-    assert(choices.nonEmpty)
+    require(choices.nonEmpty, "choices available")
     val choiceIndex = choose(choices.indices)
     val choice = choices(choiceIndex)
     choices.remove(choiceIndex)

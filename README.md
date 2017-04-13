@@ -1,6 +1,6 @@
 # Model checker (Work in progress)
 
-[Website](http://jentsch.berlin/modelchecker/)
+[Website](http://jentsch.berlin/modelchecker/latest/api/ecspec/index.html)
 
 Prototype of a explicit state model checker based upon the Scala ExecutionContext.
 

@@ -11,11 +11,40 @@ import scala.language.implicitConversions
 import scala.reflect.macros.blackbox
 
 /**
-  * Add this trait to your test class to use the `everyPossiblePath` method.
+  * Add this trait to your test class to use the [[#everyInterleaving]] method.
   *
-  * @see #everyPossiblePath
+  * Typical usage should look like:
+  * {{{
+  *   class MyObjectSpec extends FlatSpec with Matchers with EcSpec {
+  *     "Increment" should "not be an atomic action" in everyInterleaving { implicit ec =>
+  *       // the main code is executed by thread 0
+  *       @volatile var x = 0
+  *
+  *       ec.execute { () => // thread 1
+  *         val t = x
+  *         pass()
+  *         x = t + 1
+  *       }
+  *
+  *       ec.execute { () => // thread 2
+  *         val t = x
+  *         pass()
+  *         x = t + 1
+  *       }
+  *
+  *       x should be >= 0 // Invariant of this code x is 0, 1, or 2
+  *       x should be <= 2
+  *
+  *       x could be(0) // Thread 0 can be done before Thread 1 or 2 even start
+  *       x could be(1) // in case of an interleaving x can be actual 1
+  *       x could be(2) // No interleaving
+  *     }
+  *   }
+  * }}}
+  *
+  * @see #everyInterleaving
   */
-trait EcSpec extends Matchers with ExecutionContextOps {
+trait EcSpec extends ExecutionContextOps { self: Matchers =>
 
   protected implicit val ecSpecSelf: EcSpec = this
 
@@ -23,13 +52,6 @@ trait EcSpec extends Matchers with ExecutionContextOps {
     mutable.Map.empty[Int, Option[TestFailedException]]
 
   /**
-    *
-    * ```
-    * "test" in everyPossiblePath { implicit ec =>
-    * ...TestCode...
-    * }
-    * ```
-    *
     * It's possible that not every computation is done after returning to the test.
     *
     * The tests written with this method can detect race conditions if all side effects of a single action happens in
@@ -37,16 +59,21 @@ trait EcSpec extends Matchers with ExecutionContextOps {
     *
     * Ok:
     * {{{
+    * import scala.concurrent.Future
+    * import ecspec.EcSpec._
+    *
+    * everyInterleaving { implicit ec =>
     *   @volatile var x = 1
     *
     *   Future { x = 2 }
     *   Future { x = 3 }
+    * }
     * }}}
     * Without the volatile annotation tests would be ok but the runtime semantic isn't covered by the tests.
     *
     * @param test the test code to rum
     */
-  def everyPossiblePath(test: ExecutionContext => Unit) = {
+  def everyInterleaving(test: ExecutionContext => Unit): Unit = {
     val ec = new TestExecutionContext
     ec.testEveryPath(test)
 
@@ -62,14 +89,19 @@ trait EcSpec extends Matchers with ExecutionContextOps {
     * Checks if a value only increase over time.
     *
     * {{{
+    * import scala.concurrent.Future
     * import java.util.concurrent.atomic.AtomicInteger
-    * val x = new AtomicInteger(0)
+    * import ecspec.EcSpec._
     *
-    * Future { x.incrementAndGet }
-    * Future { x.incrementAndGet }
-    * // Future { x.decrementAndGet }
+    * everyInterleaving { implicit ec =>
+    *   val x = new AtomicInteger(0)
     *
-    * x.value should increase
+    *   Future { x.incrementAndGet }
+    *   Future { x.incrementAndGet }
+    *   // Future { x.decrementAndGet } would break this test
+    *
+    *   x.get should increase
+    * }
     *
     * }}}
     */
@@ -95,6 +127,11 @@ trait EcSpec extends Matchers with ExecutionContextOps {
     def apply(t: => T)(implicit ec: ExecutionContext): Unit
   }
 
+  /**
+    * Add a should that accepts [[TimeWord]], properties about state over time.
+    *
+    * @see ecspec.EcSpec#increase
+    */
   implicit class TimeWordShould[T](t: => T) {
     def should(timeWord: TimeWord[T])(implicit ec: ExecutionContext): Unit = {
       timeWord(t)
@@ -103,7 +140,10 @@ trait EcSpec extends Matchers with ExecutionContextOps {
 
 }
 
-object EcSpec {
+/**
+  * Instead of mixin the EcSpec trait you can also do a wildcard import of this object.
+  */
+object EcSpec extends Matchers with EcSpec{
   def ToCouldTestWordImpl[T: c.WeakTypeTag](c: blackbox.Context)(
       value: c.Expr[T]): c.Expr[CouldTestWord[T]] = {
     import c.universe._

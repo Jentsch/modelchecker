@@ -9,17 +9,17 @@ import scala.util.control.NonFatal
 /**
   * Fake execution context for EcSpec.
   */
-private[ecspec] class TestExecutionContext extends ExecutionContext { self =>
+class TestExecutionContext extends ExecutionContext { self =>
 
-  private val waitingList = mutable.Buffer[Semaphore]()
-  private val finalStop = new Semaphore(0)
-  private val traverser = new Traverser
+  private[this] val waitingList = mutable.Buffer[Semaphore]()
+  private[this] val finalStop = new Semaphore(0)
+  private[this] val traverser = new Traverser
 
   /**
-    * If atomic is set no thread switch happens
+    * If atomic is set no thread switch happens.
     */
-  var atomic = false
-  var foundException = Option.empty[Throwable]
+  private[ecspec] var atomic = false
+  private[ecspec] var foundException = Option.empty[Throwable]
 
   def testEveryPath(test: (ExecutionContext) => Unit): Unit = {
     var stateSpaceSize = 0
@@ -46,7 +46,58 @@ private[ecspec] class TestExecutionContext extends ExecutionContext { self =>
       pass()
   }
 
-  /** Allows to pass the control to an other thread */
+  /**
+    * Allows to pass the control explicitly to an other random thread.
+    *
+    * With pass:
+    * {{{
+    * var observedInterleaving = false
+    * val testEC = new TestExecutionContext
+    * import testEC._
+    *
+    * testEveryPath{ implicit ec =>
+    *   var x = true
+    *
+    *   ec.execute { () =>
+    *     x = false
+    *     pass()
+    *     // The other thread below can now interleave this thread
+    *     // and set x to true
+    *     observedInterleaving |= x
+    *   }
+    *
+    *   ec.execute { () =>
+    *     x = true
+    *   }
+    * }
+    *
+    * observedInterleaving should be(true)
+    * }}}
+    *
+    * In comparison without pass:
+    * {{{
+    * var observedInterleaving = false
+    * val testEC = new TestExecutionContext
+    * import testEC._
+    *
+    * testEveryPath{ implicit ec =>
+    *   var x = true
+    *
+    *   ec.execute { () =>
+    *     x = false
+    *     // no interleaving possible x is always false
+    *     observedInterleaving |= x
+    *   }
+    *
+    *   ec.execute { () =>
+    *     x = true
+    *   }
+    * }
+    *
+    * observedInterleaving should be(false)
+    * }}}
+    *
+    */
   def pass(): Unit = {
     val ownSemaphore = new Semaphore(0)
     waitingList += ownSemaphore
@@ -54,7 +105,27 @@ private[ecspec] class TestExecutionContext extends ExecutionContext { self =>
     ownSemaphore.acquire()
   }
 
-  private def createStoppedThread(runnable: Runnable): (Semaphore) = {
+  /**
+    * Creates a thread that is locked by a semaphore. The caller can start the thread by releasing the
+    * semaphore once. After that the semaphore as no more meaning.
+    *
+    * {{{
+    *   val tec = new TestExecutionContext
+    *
+    *   val run = new java.util.concurrent.atomic.AtomicInteger(0)
+    *   val sem = tec.createStoppedThread{ () => run.set(1) }
+    *   Thread.sleep(100)
+    *
+    *   run.get should be(0)
+    *
+    *   sem.release
+    *   Thread.sleep(100)
+    *
+    *   run.get should be(1)
+    * }}}
+    * @return
+    */
+  private[ecspec] def createStoppedThread(runnable: Runnable): Semaphore = {
     val startSignal = new Semaphore(0)
 
     val thread: Thread = new Thread {
@@ -83,4 +154,8 @@ private[ecspec] class TestExecutionContext extends ExecutionContext { self =>
   }
 
   override def reportFailure(cause: Throwable): Unit = throw cause
+}
+
+object TestExecutionContext {
+  def apply(): TestExecutionContext = new TestExecutionContext
 }

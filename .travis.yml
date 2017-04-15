@@ -5,7 +5,7 @@ jdk:
   - oraclejdk8
 
 script:
-  - sbt clean testGen/gen test
+  - sbt clean test
 
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm

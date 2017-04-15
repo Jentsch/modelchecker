@@ -8,7 +8,21 @@ Prototype of a explicit state model checker based upon the Scala ExecutionContex
 
 [![Build Status](https://travis-ci.org/Jentsch/modelchecker.svg?branch=master)](https://travis-ci.org/Jentsch/modelchecker)
 
-This is a plain sbt project. Use `sbt test` to execute all tests.
+Use `sbt test` to execute all tests. Notice that the code snippets from scaladoc are used to test functionality. For those tests ScalaTest with FlatSpec an Matchers is used.
+
+An example:
+
+```scala
+/**
+  * My little class. 
+  * {{{
+  *   MyClass.x should be(1)
+  * }}}
+  */
+object MyObject {
+  val x = 1
+}
+```
 
 ## Documentation
 

@@ -45,9 +45,7 @@ val testGen = project
 
 sourceDirectory in Test := target.value / "genTest"
 
-compile := {
-  Def.sequential(gen in testGen, compile).value
-}
+(compile in Test) := (compile in Test).dependsOn(gen in testGen).value
 
 ghpages.settings
 

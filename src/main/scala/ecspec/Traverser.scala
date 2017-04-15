@@ -37,7 +37,7 @@ private[ecspec] class Traverser {
     *
     *     choices should have length 2
     *
-    *     original diff choices should be(List(chosen))
+    *     original diff choices should contain only(chosen)
     *   } while(trav.hasMoreOptions)
     * }}}
     */

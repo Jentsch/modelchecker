@@ -8,6 +8,12 @@ import scala.util.control.NonFatal
 
 /**
   * Fake execution context for EcSpec.
+  *
+  * Invariant: either two threads a running an within this class active (handling semaphores) or one threads
+  * runs provided test code.
+  *
+  * Every interaction between threads is modelled with semaphores to ensure the synchronisation of variables by the JVM (happens before).
+  * See [[https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Semaphore.html Semaphore-API]]
   */
 class TestExecutionContext extends ExecutionContext { self =>
 
@@ -110,7 +116,7 @@ class TestExecutionContext extends ExecutionContext { self =>
     * semaphore once. After that the semaphore as no more meaning.
     *
     * {{{
-    *   val tec = new TestExecutionContext
+    *   val tec = TestExecutionContext()
     *
     *   val run = new java.util.concurrent.atomic.AtomicInteger(0)
     *   val sem = tec.createStoppedThread{ () => run.set(1) }
@@ -123,7 +129,6 @@ class TestExecutionContext extends ExecutionContext { self =>
     *
     *   run.get should be(1)
     * }}}
-    * @return
     */
   private[ecspec] def createStoppedThread(runnable: Runnable): Semaphore = {
     val startSignal = new Semaphore(0)

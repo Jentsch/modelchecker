@@ -35,6 +35,7 @@ val testGen = project
   .in(file("testGen"))
   .settings(
     scalaVersion := "2.12.1",
+    description := "Generates tests out of scaladoc code snippets",
     libraryDependencies ++= Seq(
       "org.scalameta" %% "scalameta" % "1.7.0",
       "org.scalameta" %% "contrib" % "1.7.0",

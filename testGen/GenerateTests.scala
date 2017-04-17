@@ -58,7 +58,7 @@ object GenerateTests extends App {
     comments.leading(tree).foreach { doc =>
       val parsed = ScaladocParser.parseScaladoc(doc)
 
-      val cases = parsed.get.collect {
+      val cases = parsed.getOrElse(Seq.empty).collect {
         case DocToken(CodeBlock, _, Some(code)) => code
       }
 

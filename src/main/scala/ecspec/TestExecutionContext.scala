@@ -7,14 +7,14 @@ import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 
 /**
-  * Fake execution context for EcSpec.
-  *
-  * Invariant: either two threads a running an within this class active (handling semaphores) or one threads
-  * runs provided test code.
-  *
-  * Every interaction between threads is modelled with semaphores to ensure the synchronisation of variables by the JVM (happens before).
-  * See [[https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Semaphore.html Semaphore-API]]
+  * Fake execution context for [[EcSpec]].
   */
+/* Invariant: either two threads a running an within this class active (handling semaphores) or one threads
+ * runs provided test code.
+ *
+ * Every interaction between threads is modelled with semaphores to ensure the synchronisation of variables by the JVM (happens before).
+ * See [[https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Semaphore.html Semaphore-API]]
+ */
 class TestExecutionContext extends ExecutionContext { self =>
 
   private[this] val waitingList = mutable.Buffer[Semaphore]()
@@ -162,5 +162,9 @@ class TestExecutionContext extends ExecutionContext { self =>
 }
 
 object TestExecutionContext {
+
+  /**
+    * Factory method to create a fresh test execution context
+    */
   def apply(): TestExecutionContext = new TestExecutionContext
 }

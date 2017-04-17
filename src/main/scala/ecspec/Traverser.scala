@@ -44,11 +44,10 @@ private[ecspec] class Traverser {
     * {{{
     *   val trav = new Traverser
     *
-    *   a[RuntimeException] should be thrownBy trav.removeOne(collection.mutable.Buffer.empty)
+    *   a[IllegalArgumentException] should be thrownBy trav.removeOne(collection.mutable.Buffer.empty)
     * }}}
     */
   def removeOne[E](choices: mutable.Buffer[E]): E = {
-    require(choices.nonEmpty, "choices available")
     val choiceIndex = choose(choices.indices)
     val choice = choices(choiceIndex)
     choices.remove(choiceIndex)
@@ -60,13 +59,13 @@ private[ecspec] class Traverser {
     * Choose 'randomly' one option
     */
   def choose[E](choices: Seq[E]): E = {
-    assert(choices.nonEmpty)
+    require(choices.nonEmpty, "no choices available")
 
-    val choiceIndex = path.lift(currentDepth).getOrElse {
+    val choiceIndex = path.applyOrElse(currentDepth, { _: Int =>
       val max = choices.length - 1
       path.append(max)
       max
-    }
+    })
 
     currentDepth += 1
 

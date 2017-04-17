@@ -40,6 +40,12 @@ private[ecspec] class Traverser {
     *     original diff choices should contain only(chosen)
     *   } while(trav.hasMoreOptions)
     * }}}
+    *
+    * {{{
+    *   val trav = new Traverser
+    *
+    *   a[RuntimeException] should be thrownBy trav.removeOne(collection.mutable.Buffer.empty)
+    * }}}
     */
   def removeOne[E](choices: mutable.Buffer[E]): E = {
     require(choices.nonEmpty, "choices available")

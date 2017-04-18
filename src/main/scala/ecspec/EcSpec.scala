@@ -143,7 +143,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
 /**
   * Instead of mixin the EcSpec trait you can also do a wildcard import of this object.
   */
-object EcSpec extends Matchers with EcSpec{
+object EcSpec extends Matchers with EcSpec {
   def ToCouldTestWordImpl[T: c.WeakTypeTag](c: blackbox.Context)(
       value: c.Expr[T]): c.Expr[CouldTestWord[T]] = {
     import c.universe._

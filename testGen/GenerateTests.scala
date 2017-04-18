@@ -63,9 +63,8 @@ object GenerateTests extends App {
       }
 
       cases.foreach { code =>
-        if (! seenCodes(code.hashCode)) {
-          writer.println(
-            s"""
+        if (!seenCodes(code.hashCode)) {
+          writer.println(s"""
              |  it should "match doc ${code.hashCode}" in {
              |    $code
              |  }

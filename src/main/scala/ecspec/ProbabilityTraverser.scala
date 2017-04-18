@@ -1,7 +1,7 @@
 package ecspec
 
 /**
-  * A traverser that tracks the probability of the current state.
+  * A traverser that tracks the probability of the current state. Probability is modeled as a Double in the range of 0.0 ... 1.0.
   *
   * {{{
   *   val trav = new ProbabilityTraverser
@@ -24,7 +24,11 @@ package ecspec
   *
   * }}}
   */
-private[ecspec] class ProbabilityTraverser extends TrackingTraverser(1.0)(_ * _) {
+private[ecspec] class ProbabilityTraverser
+    extends TrackingTraverser(1.0)(_ * _) {
 
+  /**
+    * Probability the end up in the current state. Should be between 0.0 and 1.0 where zero means impossible and one a 100 % certainty.
+    */
   def probability: Double = state
 }

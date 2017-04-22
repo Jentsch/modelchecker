@@ -46,7 +46,7 @@ import scala.reflect.macros.blackbox
   */
 trait EcSpec extends ExecutionContextOps { self: Matchers =>
 
-  protected implicit val ecSpecSelf: EcSpec = this
+  implicit val ecContext: EcSpec = this
 
   private val couldWasTrueFor =
     mutable.Map.empty[Int, Option[TestFailedException]]
@@ -154,7 +154,7 @@ object EcSpec extends Matchers with EcSpec {
     val txt = fileContent.slice(start, start + 1)
 
     val tree =
-      q"""new ecspec.EcSpec.CouldTestWord[Int]($value, $txt, $line)"""
+      q"""new ecspec.EcSpec.CouldTestWord[${weakTypeOf[T]}]($value, $txt, $line)"""
 
     c.Expr[CouldTestWord[T]](tree)
   }

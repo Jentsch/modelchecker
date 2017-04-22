@@ -44,7 +44,7 @@ val testGen = project
     gen := runTask(Compile, "GenerateTests").value
   )
 
-sourceDirectory in Test := target.value / "genTest"
+managedSources in Test ++= (target.value / "genTest" ** "*.scala").get
 
 (compile in Test) := (compile in Test).dependsOn(gen in testGen).value
 

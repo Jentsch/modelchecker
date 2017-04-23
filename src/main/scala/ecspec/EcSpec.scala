@@ -76,10 +76,10 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
   def everyInterleaving(test: ExecutionContext => Unit): Unit = {
     TestExecutionContext().testEveryPath(test)
 
-    throwExceptionForNeverSatisfiedCouldTests
+    throwExceptionForNeverSatisfiedCouldTests()
   }
 
-  private def throwExceptionForNeverSatisfiedCouldTests: Unit =
+  private def throwExceptionForNeverSatisfiedCouldTests(): Unit =
     couldWasTrueFor.values.flatten.headOption
       .foreach {
         throw _
@@ -171,7 +171,7 @@ object EcSpec extends Matchers with EcSpec {
       **/
     def could(rightMatcher: Matcher[T])(implicit ctx: EcSpec): Unit = {
       rightMatcher(value) match {
-        case MatchFailed(failureMessage) =>
+        case MatchFailed(_) =>
           ctx.couldWasTrueFor.getOrElseUpdate(
             pos,
             Some(

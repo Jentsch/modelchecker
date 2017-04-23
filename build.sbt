@@ -8,7 +8,7 @@ licenses := Seq("MIT" -> url("https://choosealicense.com/licenses/mit/"))
 
 version := "0.1.0-SNAPSHOT"
 
-scalaVersion := "2.12.1"
+scalaVersion := "2.12.2"
 
 scalacOptions ++= Seq(
   "-unchecked",
@@ -24,7 +24,7 @@ scalacOptions ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "3.0.1"
+  "org.scalatest" %% "scalatest" % "3.0.3"
 )
 
 scalacOptions in Test ++= Seq("-Yrangepos")
@@ -48,7 +48,7 @@ managedSources in Test ++= (target.value / "genTest" ** "*.scala").get
 
 (compile in Test) := (compile in Test).dependsOn(gen in testGen).value
 
-ghpages.settings
+enablePlugins(GhpagesPlugin)
 
 git.remoteRepo := "git@github.com:Jentsch/modelchecker.git"
 

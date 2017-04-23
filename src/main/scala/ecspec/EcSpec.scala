@@ -49,7 +49,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
   implicit val ecContext: EcSpec = this
 
   private val couldWasTrueFor =
-    mutable.Map.empty[Int, Option[TestFailedException]]
+    mutable.Map.empty[String, Option[TestFailedException]]
 
   /**
     * It's possible that not every computation is done after returning to the test.
@@ -74,16 +74,16 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * @param test the test code to rum
     */
   def everyInterleaving(test: ExecutionContext => Unit): Unit = {
-    val ec = new TestExecutionContext
-    ec.testEveryPath(test)
+    TestExecutionContext().testEveryPath(test)
 
-    couldWasTrueFor.foreach {
-      case (pos, Some(matchResult)) =>
-        throw matchResult
-
-      case _ =>
-    }
+    throwExceptionForNeverSatisfiedCouldTests
   }
+
+  private def throwExceptionForNeverSatisfiedCouldTests: Unit =
+    couldWasTrueFor.values.flatten.headOption
+      .foreach {
+        throw _
+      }
 
   /**
     * Checks if a value only increase over time.
@@ -148,18 +148,19 @@ object EcSpec extends Matchers with EcSpec {
       value: c.Expr[T]): c.Expr[CouldTestWord[T]] = {
     import c.universe._
 
-    val line = c.enclosingPosition.line
+    val position = c.enclosingPosition
+    val pos = position.source.path + " " + position.line.toString + ":" + position.column.toString
     val fileContent = new String(value.tree.pos.source.content)
     val start = value.tree.pos.start
     val txt = fileContent.slice(start, start + 1)
 
     val tree =
-      q"""new ecspec.EcSpec.CouldTestWord[${weakTypeOf[T]}]($value, $txt, $line)"""
+      q"""new ecspec.EcSpec.CouldTestWord[${weakTypeOf[T]}]($value, $txt, $pos)"""
 
     c.Expr[CouldTestWord[T]](tree)
   }
 
-  class CouldTestWord[T](value: T, valRep: String, pos: Int) {
+  class CouldTestWord[T](value: T, valRep: String, pos: String) {
 
     /**
       * This method enables syntax such as the following:

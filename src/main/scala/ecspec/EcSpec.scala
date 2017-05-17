@@ -138,6 +138,32 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     }
   }
 
+  /**
+    * {{{
+    * import scala.concurrent.Future
+    * import java.util.concurrent.atomic.AtomicInteger
+    * import ecspec.EcSpec.everyInterleaving
+    * import ecspec.EcSpec.WillWord
+    *
+    * everyInterleaving { implicit ec =>
+    *   val x = Future { 1 }
+    *   val y = Future { 2 }
+    *
+    *   x will be(1)
+    *
+    *   Future.firstCompletedOf(x :: y :: Nil) will (be(1) or be(2))
+    * }
+    *
+    * }}}
+    */
+  implicit class WillWord[T](t: Future[T]) {
+    def will(matcher: Matcher[T])(implicit ec: ExecutionContext) =
+      t.onComplete { result =>
+        result should be a 'success
+        result.get should matcher
+      }
+  }
+
 }
 
 /**

@@ -33,10 +33,12 @@ class TestExecutionContext extends ExecutionContext { self =>
       test(self)
       chooseNextThread()
 
-      val noOpenThreads = finalStop.tryAcquire(10, TimeUnit.SECONDS)
+      val maxSeconds = 10
+
+      val noOpenThreads = finalStop.tryAcquire(maxSeconds, TimeUnit.SECONDS)
       assert(
         noOpenThreads,
-        s"Couldn't finish the test within 1 second. Open ${waitingList.size} Threads.")
+        s"Couldn't finish the test within $maxSeconds second. Open ${waitingList.size} Threads.")
       assert(waitingList.isEmpty)
 
       stateSpaceSize += 1

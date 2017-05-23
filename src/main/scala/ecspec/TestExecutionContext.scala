@@ -20,6 +20,7 @@ class TestExecutionContext extends ExecutionContext { self =>
   private[this] val waitingList = mutable.Buffer[Semaphore]()
   private[this] val finalStop = new Semaphore(0)
   private[this] val traverser = new Traverser
+  private[this] val hooks = mutable.Buffer[() => Boolean]()
 
   /**
     * If atomic is set no thread switch happens.
@@ -27,7 +28,7 @@ class TestExecutionContext extends ExecutionContext { self =>
   private[ecspec] var atomic = false
   private[ecspec] var foundException = Option.empty[Throwable]
 
-  def testEveryPath(test: (ExecutionContext) => Unit): Unit = {
+  def testEveryPath(test: (TestExecutionContext) => Unit): Unit = {
     var stateSpaceSize = 0
     do {
       test(self)
@@ -109,6 +110,10 @@ class TestExecutionContext extends ExecutionContext { self =>
   def pass(): Unit = {
     val ownSemaphore = new Semaphore(0)
     waitingList += ownSemaphore
+    for {
+      i <- hooks.indices.reverse
+      if ! hooks(i)()
+    } hooks.remove(i)
     chooseNextThread()
     ownSemaphore.acquire()
   }
@@ -161,6 +166,9 @@ class TestExecutionContext extends ExecutionContext { self =>
   }
 
   override def reportFailure(cause: Throwable): Unit = throw cause
+
+  def hookAfterStep(hook: () => Boolean): Unit =
+    hooks += hook
 }
 
 object TestExecutionContext {

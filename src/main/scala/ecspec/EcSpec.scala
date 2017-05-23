@@ -9,6 +9,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 import scala.reflect.macros.blackbox
+import scala.util.{Failure, Success}
 
 /**
   * Add this trait to your test class to use the [[#everyInterleaving]] method.
@@ -73,7 +74,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     *
     * @param test the test code to rum
     */
-  def everyInterleaving(test: ExecutionContext => Unit): Unit = {
+  def everyInterleaving(test: TestExecutionContext => Unit): Unit = {
     TestExecutionContext().testEveryPath(test)
 
     throwExceptionForNeverSatisfiedCouldTests()
@@ -157,10 +158,16 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * }}}
     */
   implicit class WillWord[T](t: Future[T]) {
-    def will(matcher: Matcher[T])(implicit ec: ExecutionContext) =
-      t.onComplete { result =>
-        result should be a 'success
-        result.get should matcher
+    def will(matcher: Matcher[T])(implicit ec: TestExecutionContext) =
+      ec.hookAfterStep{ () =>
+        t.value match {
+          case Some(Success(s)) =>
+            s should matcher
+            false
+          case Some(Failure(f)) =>
+            throw f
+          case None => true
+        }
       }
   }
 

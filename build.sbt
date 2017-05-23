@@ -34,7 +34,7 @@ val gen = TaskKey[Unit]("gen")
 val testGen = project
   .in(file("testGen"))
   .settings(
-    scalaVersion := "2.12.1",
+    scalaVersion := "2.12.2",
     description := "Generates tests out of scaladoc code snippets",
     libraryDependencies ++= Seq(
       "org.scalameta" %% "scalameta" % "1.7.0",

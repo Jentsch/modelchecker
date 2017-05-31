@@ -1,8 +1,9 @@
 package ecspec
 
-import org.scalatest.Matchers
+import org.scalactic.source.Position
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.{MatchFailed, Matcher}
+import org.scalatest.{Informer, Matchers}
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -47,6 +48,9 @@ import scala.util.{Failure, Success}
   */
 trait EcSpec extends ExecutionContextOps { self: Matchers =>
 
+  /** Don't implement this method, but mixin the EcSpec into a FlatSpec, WordSpec etc. */
+  protected def info: Informer
+
   implicit val ecContext: EcSpec = this
 
   private val couldWasTrueFor =
@@ -74,8 +78,8 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     *
     * @param test the test code to rum
     */
-  def everyInterleaving(test: TestExecutionContext => Unit): Unit = {
-    TestExecutionContext().testEveryPath(test)
+  def everyInterleaving(test: TestExecutionContext => Unit)(implicit pos: Position): Unit = {
+    TestExecutionContext(info.apply(_, None)).testEveryPath(test)
 
     throwExceptionForNeverSatisfiedCouldTests()
   }
@@ -221,4 +225,9 @@ object EcSpec extends Matchers with EcSpec {
 
   }
 
+  override protected def info: Informer = new Informer {
+    override def apply(message: String, payload: Option[Any])(
+        implicit pos: Position): Unit =
+      println(s"$message: $payload at $pos")
+  }
 }

@@ -15,7 +15,7 @@ import scala.util.control.NonFatal
  * Every interaction between threads is modelled with semaphores to ensure the synchronisation of variables by the JVM (happens before).
  * See [[https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Semaphore.html Semaphore-API]]
  */
-class TestExecutionContext extends ExecutionContext { self =>
+class TestExecutionContext(info: String => Unit) extends ExecutionContext { self =>
 
   private[this] val waitingList = mutable.Buffer[Semaphore]()
   private[this] val finalStop = new Semaphore(0)
@@ -55,7 +55,7 @@ class TestExecutionContext extends ExecutionContext { self =>
       hooks.clear()
     } while (traverser.hasMoreOptions)
 
-    println("Final states: " + finalStates)
+    info("Final states: " + finalStates)
   }
 
   override def execute(runnable: Runnable): Unit = {
@@ -95,7 +95,7 @@ class TestExecutionContext extends ExecutionContext { self =>
     * In comparison without pass:
     * {{{
     * var observedInterleaving = false
-    * val testEC = new TestExecutionContext
+    * val testEC = TestExecutionContext()
     * import testEC._
     *
     * testEveryPath { implicit ec =>
@@ -190,5 +190,9 @@ object TestExecutionContext {
   /**
     * Factory method to create a fresh test execution context
     */
-  def apply(): TestExecutionContext = new TestExecutionContext
+  def apply(info: String => Unit): TestExecutionContext =
+    new TestExecutionContext(info)
+
+  def apply(): TestExecutionContext =
+    TestExecutionContext(println(_))
 }

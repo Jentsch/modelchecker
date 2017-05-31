@@ -78,16 +78,26 @@ object GenerateTests extends App {
         case DocToken(CodeBlock, _, Some(code)) => code
       }
 
-      cases.foreach { code =>
-        if (!seenCodes(code.hashCode)) {
-          writer.println(s"""
-             |  it should "match example in $name ${code.hashCode}" in {
+      val onlyOne = cases.size == 2
+
+      cases.zipWithIndex.foreach {
+        case (code, index) =>
+          val pos = (index + 1) match {
+            case 1 if onlyOne => ""
+            case 1 => "first "
+            case 2 => "second "
+            case 3 => "third "
+            case n => n.toString ++ "th "
+          }
+          if (!seenCodes(code.hashCode)) {
+            writer.println(s"""
+             |  it should "match ${pos}example in $name" in {
              |    $code
              |  }
            """.stripMargin)
-        }
+          }
 
-        seenCodes += code.hashCode
+          seenCodes += code.hashCode
       }
     }
 

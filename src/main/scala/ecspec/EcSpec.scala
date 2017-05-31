@@ -78,7 +78,8 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     *
     * @param test the test code to rum
     */
-  def everyInterleaving(test: TestExecutionContext => Unit)(implicit pos: Position): Unit = {
+  def everyInterleaving(test: TestExecutionContext => Unit)(
+      implicit pos: Position): Unit = {
     TestExecutionContext(info.apply(_, None)).testEveryPath(test)
 
     throwExceptionForNeverSatisfiedCouldTests()

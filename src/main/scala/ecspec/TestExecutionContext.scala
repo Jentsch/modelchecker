@@ -15,7 +15,8 @@ import scala.util.control.NonFatal
  * Every interaction between threads is modelled with semaphores to ensure the synchronisation of variables by the JVM (happens before).
  * See [[https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Semaphore.html Semaphore-API]]
  */
-class TestExecutionContext(info: String => Unit) extends ExecutionContext { self =>
+class TestExecutionContext(info: String => Unit) extends ExecutionContext {
+  self =>
 
   private[this] val waitingList = mutable.Buffer[Semaphore]()
   private[this] val finalStop = new Semaphore(0)

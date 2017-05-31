@@ -38,32 +38,39 @@ class AsyncCacheSpec extends FlatSpec with EcSpec with Matchers {
     }
   }
 
-  it should "not store failures" in everyInterleaving {
-    implicit ec =>
-      var response: Try[String] =
-        Failure(new FindException)
+  it should "not store failures" in everyInterleaving { implicit ec =>
+    var response: Try[String] =
+      Failure(new Exception)
 
-      val f = { _: Int =>
-        Future { response.get }
-      }
+    val f = { _: Int =>
+      Future { response.get }
+    }
 
-      val cache = AsyncCache(f)
+    val cache = AsyncCache(f)
 
-      atomic {
-        ec.execute(() => cache(1).onComplete { response =>
-          response could be(a[Failure[_]])
-          response could be(a[Success[_]])
-        })
+    cache(1).onComplete { r =>
+      r should be a 'failure
+      response = Success("Foo")
 
-        ec.execute(() => cache(1).onComplete { r =>
-          r should be a 'failure
-          response = Success("What ever")
+      cache(1) will be("Foo")
+    }
 
-          cache(1) will be("What ever")
-        })
+  }
 
-      }
+  it should "valuate on request" in everyInterleaving { implicit ec =>
+    val f = { _: Int =>
+      Future.firstCompletedOf(
+        List(
+          Future { "Foo" },
+          Future { throw new Exception("") }
+        ))
+    }
+
+    val cache = AsyncCache(f)
+
+    cache(1).onComplete { r =>
+      r could be(a[Failure[_]])
+      r could be(a[Success[_]])
+    }
   }
 }
-
-class FindException(val x: Int) extends RuntimeException("FindExeption: " + x.toString)

@@ -19,36 +19,44 @@ object GenerateTests extends App {
     (baseDir / "src" / "main" / "scala").listRecursively
       .filter(_.extension.contains(".scala"))
 
-  allScalaFiles.foreach { file =>
-    println(s"processing ${file.name}")
-    val source = file.contentAsString
+  val updateFiles =
+    allScalaFiles
+      .map(source =>
+        source -> outDir / (source.nameWithoutExtension + "Test.scala"))
+      .filter {
+        case (source, target) =>
+          source.lastModifiedTime isAfter target.lastModifiedTime
+      }
 
-    val parsed = source.parse[Source].get
+  updateFiles.foreach {
+    case (file, outFile) =>
+      println(s"processing ${file.name}")
+      val source = file.contentAsString
 
-    val docs: AssociatedComments = AssociatedComments(parsed.tokens)
+      val parsed = source.parse[Source].get
 
-    val topLevel = parsed.children
+      val docs: AssociatedComments = AssociatedComments(parsed.tokens)
 
-    val pack = topLevel.collectFirst { case t: Member => t }.get
+      val topLevel = parsed.children
 
-    val outFile: File = outDir / s"${file.nameWithoutExtension}Test.scala"
+      val pack = topLevel.collectFirst { case t: Member => t }.get
 
-    outFile.delete(swallowIOExceptions = true)
+      outFile.delete(swallowIOExceptions = true)
 
-    outFile.printWriter().foreach { out =>
-      out.println(s"package ${pack.name}")
-      out.println()
-      out.println("import org.scalatest._")
-      out.println()
+      outFile.printWriter().foreach { out =>
+        out.println(s"package ${pack.name}")
+        out.println()
+        out.println("import org.scalatest._")
+        out.println()
 
-      out.println(
-        s"class ${file.nameWithoutExtension}Test extends FlatSpec with Matchers {")
+        out.println(
+          s"class ${file.nameWithoutExtension}Test extends FlatSpec with Matchers {")
 
-      pack.children.foreach(writeTests(out, _, docs))
+        pack.children.foreach(writeTests(out, _, docs))
 
-      out.println("}")
+        out.println("}")
 
-    }
+      }
 
   }
 

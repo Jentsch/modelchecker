@@ -25,7 +25,8 @@ object GenerateTests extends App {
         source -> outDir / (source.nameWithoutExtension + "Test.scala"))
       .filter {
         case (source, target) =>
-          source.lastModifiedTime isAfter target.lastModifiedTime
+          !target.exists ||
+            (source.lastModifiedTime isAfter target.lastModifiedTime)
       }
 
   updateFiles.foreach {

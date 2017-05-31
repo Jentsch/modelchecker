@@ -37,8 +37,8 @@ val testGen = project
     scalaVersion := "2.12.2",
     description := "Generates tests out of scaladoc code snippets",
     libraryDependencies ++= Seq(
-      "org.scalameta" %% "scalameta" % "1.7.0",
-      "org.scalameta" %% "contrib" % "1.7.0",
+      "org.scalameta" %% "scalameta" % "1.8.0",
+      "org.scalameta" %% "contrib" % "1.8.0",
       "com.github.pathikrit" %% "better-files" % "3.0.0"
     ),
     gen := runTask(Compile, "GenerateTests").value

@@ -78,11 +78,11 @@ object GenerateTests extends App {
         case DocToken(CodeBlock, _, Some(code)) => code
       }
 
-      val onlyOne = cases.size == 2
+      val onlyOne = cases.size == 1
 
       cases.zipWithIndex.foreach {
         case (code, index) =>
-          val pos = (index + 1) match {
+          val pos = index + 1 match {
             case 1 if onlyOne => ""
             case 1 => "first "
             case 2 => "second "

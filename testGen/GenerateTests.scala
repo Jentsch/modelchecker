@@ -65,6 +65,13 @@ object GenerateTests extends App {
                  tree: Tree,
                  comments: AssociatedComments): Unit = {
     comments.leading(tree).foreach { doc =>
+      val name = tree match {
+        case Defn.Class(_, name, _, _, _) => name.value
+        case Defn.Def(_, name, _, _, _, _) => name.value
+        case Defn.Trait(_, name, _, _, _) => name.value
+        case _ => tree.getClass.getName
+      }
+
       val parsed = ScaladocParser.parseScaladoc(doc)
 
       val cases = parsed.getOrElse(Seq.empty).collect {
@@ -74,7 +81,7 @@ object GenerateTests extends App {
       cases.foreach { code =>
         if (!seenCodes(code.hashCode)) {
           writer.println(s"""
-             |  it should "match doc ${code.hashCode}" in {
+             |  it should "match example in $name ${code.hashCode}" in {
              |    $code
              |  }
            """.stripMargin)

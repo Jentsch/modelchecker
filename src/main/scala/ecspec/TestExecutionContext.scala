@@ -37,10 +37,17 @@ class TestExecutionContext extends ExecutionContext { self =>
       val maxSeconds = 60L
 
       val noOpenThreads = finalStop.tryAcquire(maxSeconds, TimeUnit.SECONDS)
-      assert(
-        noOpenThreads,
-        s"Couldn't finish the test within $maxSeconds second. Open ${waitingList.size} Threads. Discovered $finalStates final states."
-      )
+
+      if (!noOpenThreads && waitingList.nonEmpty) {
+        chooseNextThread()
+
+        val noOpenThreads2 = finalStop.tryAcquire(maxSeconds, TimeUnit.SECONDS)
+        assert(
+          noOpenThreads2,
+          s"Couldn't finish the test within $maxSeconds second. Open ${waitingList.size} Threads. Discovered $finalStates final states."
+        )
+      }
+
       assert(waitingList.isEmpty)
 
       finalStates += 1
@@ -151,8 +158,9 @@ class TestExecutionContext extends ExecutionContext { self =>
         } catch {
           case NonFatal(thrown) =>
             foundException = Some(thrown)
+        } finally {
+          chooseNextThread()
         }
-        chooseNextThread()
       }
     }
     thread.start()
@@ -169,7 +177,9 @@ class TestExecutionContext extends ExecutionContext { self =>
     }
   }
 
-  override def reportFailure(cause: Throwable): Unit = throw cause
+  override def reportFailure(cause: Throwable): Unit = {
+    foundException = Some(cause)
+  }
 
   def hookAfterStep(hook: () => Boolean): Unit =
     hooks += hook

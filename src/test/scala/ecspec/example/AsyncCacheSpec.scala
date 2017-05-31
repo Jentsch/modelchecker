@@ -6,22 +6,18 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-class AsyncCacheSpec
-    extends FlatSpec
-    with EcSpec
-    with Matchers {
+class AsyncCacheSpec extends FlatSpec with EcSpec with Matchers {
 
   behavior of "Async Cache"
 
-  it should "return same result" in everyInterleaving {
-    implicit ec =>
-      val f = { i: Int =>
-        Future { i.toString }
-      }
-      val cache = AsyncCache(f)
+  it should "return same result" in everyInterleaving { implicit ec =>
+    val f = { i: Int =>
+      Future { i.toString }
+    }
+    val cache = AsyncCache(f)
 
-      cache(1) will be("1")
-      cache(1) will be("1")
+    cache(1) will be("1")
+    cache(1) will be("1")
   }
 
   it should "cache" in everyInterleaving { implicit ec =>
@@ -45,7 +41,7 @@ class AsyncCacheSpec
   it should "not store failures" in everyInterleaving {
     implicit ec =>
       var response: Try[String] =
-        Failure(new RuntimeException(""))
+        Failure(new FindException)
 
       val f = { _: Int =>
         Future { response.get }
@@ -54,17 +50,20 @@ class AsyncCacheSpec
       val cache = AsyncCache(f)
 
       atomic {
-        cache(1).onComplete { r =>
+        ec.execute(() => cache(1).onComplete { response =>
+          response could be(a[Failure[_]])
+          response could be(a[Success[_]])
+        })
+
+        ec.execute(() => cache(1).onComplete { r =>
           r should be a 'failure
           response = Success("What ever")
 
           cache(1) will be("What ever")
-        }
+        })
 
-        cache(1).onComplete { respone =>
-          response could be(a[Failure[_]])
-          response could be(a[Success[_]])
-        }
       }
   }
 }
+
+class FindException(val x: Int) extends RuntimeException("FindExeption: " + x.toString)

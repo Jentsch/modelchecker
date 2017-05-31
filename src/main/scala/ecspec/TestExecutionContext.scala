@@ -29,24 +29,26 @@ class TestExecutionContext extends ExecutionContext { self =>
   private[ecspec] var foundException = Option.empty[Throwable]
 
   def testEveryPath(test: (TestExecutionContext) => Unit): Unit = {
-    var stateSpaceSize = 0
+    var finalStates = 0
     do {
       test(self)
       chooseNextThread()
 
-      val maxSeconds = 10
+      val maxSeconds = 60L
 
       val noOpenThreads = finalStop.tryAcquire(maxSeconds, TimeUnit.SECONDS)
       assert(
         noOpenThreads,
-        s"Couldn't finish the test within $maxSeconds second. Open ${waitingList.size} Threads.")
+        s"Couldn't finish the test within $maxSeconds second. Open ${waitingList.size} Threads. Discovered $finalStates final states."
+      )
       assert(waitingList.isEmpty)
 
-      stateSpaceSize += 1
+      finalStates += 1
       foundException.foreach(throw _)
+      hooks.clear()
     } while (traverser.hasMoreOptions)
 
-    println("State space size: " + stateSpaceSize)
+    println("Final states: " + finalStates)
   }
 
   override def execute(runnable: Runnable): Unit = {
@@ -61,7 +63,7 @@ class TestExecutionContext extends ExecutionContext { self =>
     * With pass:
     * {{{
     * var observedInterleaving = false
-    * val testEC = new TestExecutionContext
+    * val testEC = TestExecutionContext()
     * import testEC._
     *
     * testEveryPath{ implicit ec =>
@@ -89,7 +91,7 @@ class TestExecutionContext extends ExecutionContext { self =>
     * val testEC = new TestExecutionContext
     * import testEC._
     *
-    * testEveryPath{ implicit ec =>
+    * testEveryPath { implicit ec =>
     *   var x = true
     *
     *   ec.execute { () =>
@@ -112,7 +114,7 @@ class TestExecutionContext extends ExecutionContext { self =>
     waitingList += ownSemaphore
     for {
       i <- hooks.indices.reverse
-      if ! hooks(i)()
+      if !hooks(i)()
     } hooks.remove(i)
     chooseNextThread()
     ownSemaphore.acquire()
@@ -141,6 +143,7 @@ class TestExecutionContext extends ExecutionContext { self =>
     val startSignal = new Semaphore(0)
 
     val thread: Thread = new Thread {
+      this.setName("TestExecutionContext")
       override def run(): Unit = {
         startSignal.acquire()
         try {
@@ -161,7 +164,8 @@ class TestExecutionContext extends ExecutionContext { self =>
     if (waitingList.isEmpty) {
       finalStop.release()
     } else {
-      traverser.removeOne(waitingList).release()
+      val nextThread = traverser.removeOne(waitingList)
+      nextThread.release()
     }
   }
 

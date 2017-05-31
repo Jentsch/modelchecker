@@ -158,8 +158,8 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * }}}
     */
   implicit class WillWord[T](t: Future[T]) {
-    def will(matcher: Matcher[T])(implicit ec: TestExecutionContext) =
-      ec.hookAfterStep{ () =>
+    def will(matcher: Matcher[T])(implicit ec: TestExecutionContext): Unit =
+      ec.hookAfterStep { () =>
         t.value match {
           case Some(Success(s)) =>
             s should matcher

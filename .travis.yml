@@ -4,7 +4,7 @@ scala:
 jdk:
   - oraclejdk8
 script:
-  - sbt clean test scalafmtTest
+  - sbt clean test scalafmtCheck
 
 sudo: false
 cache:

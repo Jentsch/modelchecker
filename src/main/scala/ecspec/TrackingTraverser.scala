@@ -5,6 +5,7 @@ package ecspec
   * usage is similar to the normal [[Traverser]] but all chooise* methods require additional information about
   * the associated state
   *
+  * @example
   * {{{
   *   val trav = new TrackingTraverser(0)(_ + _)
   *

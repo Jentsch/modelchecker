@@ -15,8 +15,12 @@ import scala.util.{Failure, Success}
 /**
   * Add this trait to your test class to use the [[#everyInterleaving]] method.
   *
-  * Typical usage should look like:
+  * @example Typical usage should look like:
+  *
   * {{{
+  *   import org.scalatest.FlatSpec
+  *   import org.scalatest.Matchers
+  *
   *   class MyObjectSpec extends FlatSpec with Matchers with EcSpec {
   *     "Increment" should "not be an atomic action" in everyInterleaving { implicit ec =>
   *       // the main code is executed by thread 0
@@ -62,7 +66,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * The tests written with this method can detect race conditions if all side effects of a single action happens in
     * an atomic way and that semantic hold even with the jvm memory model.
     *
-    * Ok:
+    * @example Ok:
     * {{{
     * import scala.concurrent.Future
     * import ecspec.EcSpec._
@@ -94,6 +98,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
   /**
     * Checks if a value only increase over time.
     *
+    * @example
     * {{{
     * import scala.concurrent.Future
     * import java.util.concurrent.atomic.AtomicInteger
@@ -145,6 +150,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
   }
 
   /**
+    * @example
     * {{{
     * import scala.concurrent.Future
     * import java.util.concurrent.atomic.AtomicInteger

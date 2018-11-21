@@ -68,7 +68,7 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
   /**
     * Allows to pass the control explicitly to an other random thread.
     *
-    * With pass:
+    * @example With pass:
     * {{{
     * var observedInterleaving = false
     * val testEC = TestExecutionContext()
@@ -93,7 +93,7 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
     * observedInterleaving should be(true)
     * }}}
     *
-    * In comparison without pass:
+    * @example In comparison without pass:
     * {{{
     * var observedInterleaving = false
     * val testEC = TestExecutionContext()

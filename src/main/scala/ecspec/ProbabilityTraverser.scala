@@ -3,6 +3,7 @@ package ecspec
 /**
   * A traverser that tracks the probability of the current state. Probability is modeled as a Double in the range of 0.0 ... 1.0.
   *
+  * @example An example
   * {{{
   *   val trav = new ProbabilityTraverser
   *

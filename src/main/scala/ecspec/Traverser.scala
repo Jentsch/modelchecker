@@ -3,6 +3,7 @@ package ecspec
 import scala.collection.mutable
 
 /**
+  * @example
   * {{{
   *   val trav = new Traverser
   *   var out = Set.empty[Int]
@@ -26,6 +27,7 @@ private[ecspec] class Traverser {
   /**
     * Remove and return 'randomly' one element of the given mutable sequence.
     *
+    * @example
     * {{{
     *   val trav = new Traverser
     *
@@ -41,6 +43,7 @@ private[ecspec] class Traverser {
     *   } while(trav.hasMoreOptions)
     * }}}
     *
+    * @example empty buffers are an invalid argument for `removeOne`
     * {{{
     *   val trav = new Traverser
     *

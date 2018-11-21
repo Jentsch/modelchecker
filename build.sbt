@@ -34,3 +34,10 @@ enablePlugins(GhpagesPlugin)
 git.remoteRepo := "git@github.com:Jentsch/modelchecker.git"
 
 enablePlugins(SiteScaladocPlugin)
+
+enablePlugins(Example)
+
+examplePackageRef := {
+  import scala.meta._
+  q"ecspec"
+}

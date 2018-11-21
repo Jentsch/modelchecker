@@ -9,3 +9,8 @@ addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")
 addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.4")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
+
+libraryDependencies ++= Seq(
+  "org.scalameta" %% "scalameta" % "4.0.0",
+  "org.scalameta" %% "contrib" % "4.0.0",
+)

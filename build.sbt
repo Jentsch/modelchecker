@@ -29,24 +29,6 @@ libraryDependencies ++= Seq(
 
 scalacOptions in Test ++= Seq("-Yrangepos")
 
-val gen = TaskKey[Unit]("gen")
-
-val testGen = project
-  .in(file("testGen"))
-  .settings(
-    description := "Generates tests out of scaladoc code snippets",
-    libraryDependencies ++= Seq(
-      "org.scalameta" %% "scalameta" % "4.0.0",
-      "org.scalameta" %% "contrib" % "4.0.0",
-      "com.github.pathikrit" %% "better-files" % "3.0.0"
-    ),
-    gen := runTask(Compile, "GenerateTests").value
-  )
-
-managedSources in Test ++= (target.value / "genTest" ** "*.scala").get
-
-(compile in Test) := (compile in Test).dependsOn(gen in testGen).value
-
 enablePlugins(GhpagesPlugin)
 
 git.remoteRepo := "git@github.com:Jentsch/modelchecker.git"

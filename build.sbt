@@ -8,7 +8,7 @@ licenses := Seq("MIT" -> url("https://choosealicense.com/licenses/mit/"))
 
 version := "0.1.0-SNAPSHOT"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.7"
 
 scalacOptions ++= Seq(
   "-unchecked",
@@ -24,7 +24,7 @@ scalacOptions ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "3.0.3"
+  "org.scalatest" %% "scalatest" % "3.0.5"
 )
 
 scalacOptions in Test ++= Seq("-Yrangepos")
@@ -34,11 +34,10 @@ val gen = TaskKey[Unit]("gen")
 val testGen = project
   .in(file("testGen"))
   .settings(
-    scalaVersion := "2.12.2",
     description := "Generates tests out of scaladoc code snippets",
     libraryDependencies ++= Seq(
-      "org.scalameta" %% "scalameta" % "1.8.0",
-      "org.scalameta" %% "contrib" % "1.8.0",
+      "org.scalameta" %% "scalameta" % "4.0.0",
+      "org.scalameta" %% "contrib" % "4.0.0",
       "com.github.pathikrit" %% "better-files" % "3.0.0"
     ),
     gen := runTask(Compile, "GenerateTests").value

@@ -29,7 +29,7 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
   private[ecspec] var atomic = false
   private[ecspec] var foundException = Option.empty[Throwable]
 
-  def testEveryPath(test: (TestExecutionContext) => Unit): Unit = {
+  def testEveryPath(test: TestExecutionContext => Unit): Unit = {
     var finalStates = 0
     do {
       test(self)
@@ -169,7 +169,7 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
     startSignal
   }
 
-  private def chooseNextThread() = {
+  private def chooseNextThread(): Unit = {
     if (waitingList.isEmpty) {
       finalStop.release()
     } else {

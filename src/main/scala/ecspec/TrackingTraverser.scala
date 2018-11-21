@@ -24,7 +24,7 @@ private[ecspec] class TrackingTraverser[S](init: S)(combine: (S, S) => S) {
 
   private var _state: S = init
 
-  def state = _state
+  def state: S = _state
 
   def choose[E](choices: Seq[(S, E)]): E = {
     val (newState, result) = traverser.choose(choices)

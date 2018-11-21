@@ -1,22 +1,22 @@
 # Model checker (Work in progress)
 
-[Website](http://jentsch.berlin/modelchecker/latest/api/ecspec/index.html)
-
 Prototype of a explicit state model checker based upon the Scala ExecutionContext.
 
 ## Development
 
 [![Build Status](https://travis-ci.org/Jentsch/modelchecker.svg?branch=master)](https://travis-ci.org/Jentsch/modelchecker)
 
-Use `sbt test` to execute all tests. Notice that the code snippets from scaladoc are used to test functionality. For those tests ScalaTest with FlatSpec an Matchers is used.
+Use `sbt test` to execute all tests.
+Notice that example code snippets from scaladoc with [sbt-example](https://github.com/ThoughtWorksInc/sbt-example) are used to test functionality.
+For those tests ScalaTest with Matchers is used.
 
 An example:
 
 ```scala
 /**
-  * My little class. 
+  * @example My little object. 
   * {{{
-  *   MyClass.x should be(1)
+  *   MyObject.x should be(1)
   * }}}
   */
 object MyObject {

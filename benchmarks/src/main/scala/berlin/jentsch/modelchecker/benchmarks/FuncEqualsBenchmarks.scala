@@ -2,6 +2,7 @@ package berlin.jentsch.modelchecker.benchmarks
 
 import java.util.concurrent.TimeUnit
 
+import berlin.jentsch.modelchecker.akka.ReflectiveEquals
 import org.openjdk.jmh.annotations._
 
 import scala.util.Random.{nextInt => randomInt}
@@ -28,6 +29,10 @@ class FuncEqualsBenchmarks {
   @Benchmark
   def randomEquals: Boolean =
     RandomEqual.equal(randomFunction, randomFunction)
+
+  @Benchmark
+  def finalEquals: Boolean =
+    ReflectiveEquals.equals(randomFunction, randomFunction)
 
   @Param(Array("2", "4", "8"))
   var functionCount: Int = _
@@ -151,9 +156,9 @@ class FuncEqualsBenchmarks {
   }
 
   object ReflexionEqual {
-    val Int = classOf[Int]
-    val Long = classOf[Long]
-    val Function1 = classOf[Function[Any, Any]]
+    val Int: Class[Int] = classOf[Int]
+    val Long: Class[Long] = classOf[Long]
+    val Function1: Class[Function[Any, Any]] = classOf[Function[Any, Any]]
 
     def equal(a1: Any, a2: Any): Boolean = {
       val xc = a1.getClass

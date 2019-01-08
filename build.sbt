@@ -57,13 +57,22 @@ lazy val scalaz = project
 
 lazy val akka = project
   .in(file("akka"))
+  .settings(
+    scalacOptions in Test ++= Seq("-Yrangepos"),
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5",
+    examplePackageRef := {
+      import scala.meta._
+      q"berlin.jentsch.modelchecker.akka"
+    }
+  )
+  .enablePlugins(Example)
 
 lazy val benchmarks = project
   .in(file("benchmarks"))
+  .dependsOn(
+    akka
+  )
   .enablePlugins(JmhPlugin)
   .settings(
     skip in publish := true
-  )
-  .aggregate(
-    akka
   )

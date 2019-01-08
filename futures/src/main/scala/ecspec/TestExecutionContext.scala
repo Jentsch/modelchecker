@@ -130,8 +130,9 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
 
   /**
     * Creates a thread that is locked by a semaphore. The caller can start the thread by releasing the
-    * semaphore once. After that the semaphore as no more meaning.
+    * semaphore once. After that the semaphore has no more meaning.
     *
+    * @example
     * {{{
     *   val tec = TestExecutionContext()
     *
@@ -182,7 +183,7 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
     foundException = Some(cause)
   }
 
-  def hookAfterStep(hook: () => Boolean): Unit =
+  private[ecspec] def hookAfterStep(hook: () => Boolean): Unit =
     hooks += hook
 }
 

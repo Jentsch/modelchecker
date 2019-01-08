@@ -6,6 +6,12 @@ Prototype of a explicit state model checker based upon the Scala ExecutionContex
 
 [![Build Status](https://travis-ci.org/Jentsch/modelchecker.svg?branch=master)](https://travis-ci.org/Jentsch/modelchecker)
 
+This project is separated into four sub projects:
+* *futures* contains a model checker for scala Futures and their ExecutionContext
+* *scalaz* contains a model checker for scalaz-io (coming soon)
+* *akka* contains a model checker for Akka (also coming soon)
+* *benchmarks* helps to justify performance sensitive decisions
+
 Use `sbt test` to execute all tests.
 Notice that example code snippets from scaladoc with [sbt-example](https://github.com/ThoughtWorksInc/sbt-example) are used to test functionality.
 For those tests ScalaTest with Matchers is used.

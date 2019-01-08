@@ -84,7 +84,7 @@ private[ecspec] class Traverser {
   }
 
   /**
-    * @return true if the path was decremented
+    * @return true if the [[path]] was decremented
     */
   private def decrementPath(): Boolean = {
     var depth = path.length - 1

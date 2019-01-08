@@ -153,7 +153,6 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * @example
     * {{{
     * import scala.concurrent.Future
-    * import java.util.concurrent.atomic.AtomicInteger
     * import ecspec.EcSpec.everyInterleaving
     * import ecspec.EcSpec.WillWord
     *
@@ -165,7 +164,6 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     *
     *   Future.firstCompletedOf(x :: y :: Nil) will (be(1) or be(2))
     * }
-    *
     * }}}
     */
   implicit class WillWord[T](t: Future[T]) {

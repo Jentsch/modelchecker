@@ -2,15 +2,15 @@ name := "scala-modelchecker"
 
 organization := "jentsch.berlin"
 
-homepage := Some(url("http://jentsch.berlin/modelchecker/"))
+homepage := Some(url("https://github.com/Jentsch/modelchecker"))
 
 licenses := Seq("MIT" -> url("https://choosealicense.com/licenses/mit/"))
 
 version := "0.1.0-SNAPSHOT"
 
-scalaVersion := "2.12.7"
+scalaVersion in ThisBuild := "2.12.7"
 
-scalacOptions ++= Seq(
+scalacOptions in ThisBuild ++= Seq(
   "-unchecked",
   "-feature",
   "-deprecation",
@@ -23,21 +23,47 @@ scalacOptions ++= Seq(
   "-Ywarn-unused-import"
 )
 
-libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "3.0.5"
-)
-
-scalacOptions in Test ++= Seq("-Yrangepos")
-
 enablePlugins(GhpagesPlugin)
 
 git.remoteRepo := "git@github.com:Jentsch/modelchecker.git"
 
 enablePlugins(SiteScaladocPlugin)
 
-enablePlugins(Example)
+lazy val root = project
+  .in(file("."))
+  .settings(
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5"
+  )
+  .aggregate(
+    futures,
+    scalaz,
+    akka
+  )
 
-examplePackageRef := {
-  import scala.meta._
-  q"ecspec"
-}
+lazy val futures = project
+  .in(file("futures"))
+  .settings(
+    scalacOptions in Test ++= Seq("-Yrangepos"),
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5",
+    examplePackageRef := {
+      import scala.meta._
+      q"ecspec"
+    }
+  )
+  .enablePlugins(Example)
+
+lazy val scalaz = project
+  .in(file("scalaz"))
+
+lazy val akka = project
+  .in(file("akka"))
+
+lazy val benchmarks = project
+  .in(file("benchmarks"))
+  .enablePlugins(JmhPlugin)
+  .settings(
+    skip in publish := true
+  )
+  .aggregate(
+    akka
+  )

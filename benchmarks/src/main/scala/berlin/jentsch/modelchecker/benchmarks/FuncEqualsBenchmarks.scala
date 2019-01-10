@@ -139,12 +139,10 @@ class FuncEqualsBenchmarks {
       class Not(private val v: Int) extends (Int => Int) {
         override def apply(v1: Int): Int = ~v
         override def equals(obj: Any): Boolean =
-          if (obj == this) true
-          else
-            obj match {
-              case other: Not => this.v == other.v
-              case _          => false
-            }
+          obj match {
+            case other: Not => this.v == other.v
+            case _          => false
+          }
       }
 
       new Not(_)

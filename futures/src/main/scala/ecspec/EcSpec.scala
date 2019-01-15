@@ -10,7 +10,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 import scala.reflect.macros.blackbox
-import scala.util.{Failure, Success}
 
 /**
   * Add this trait to your test class to use the [[#everyInterleaving]] method.
@@ -113,7 +112,6 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     *
     *   x.get should increase
     * }
-    *
     * }}}
     */
   def increase[T: Ordering]: TimeWord[T] = new TimeWord[T] {
@@ -150,7 +148,10 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
   }
 
   /**
-    * @example
+    * Waits until a future is completed and applies that the given matcher.
+    * Doesn't fail if the future never completes.
+    *
+    * @example usage
     * {{{
     * import scala.concurrent.Future
     * import ecspec.EcSpec.everyInterleaving
@@ -158,32 +159,35 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     *
     * everyInterleaving { implicit ec =>
     *   val x = Future { 1 }
-    *   val y = Future { 2 }
     *
     *   x will be(1)
-    *
-    *   Future.firstCompletedOf(x :: y :: Nil) will (be(1) or be(2))
     * }
     * }}}
     */
   implicit class WillWord[T](t: Future[T]) {
     def will(matcher: Matcher[T])(implicit ec: TestExecutionContext): Unit =
-      ec.hookAfterStep { () =>
+      ec.finallyCheck{ () =>
+        import org.scalatest.TryValues._
+
         t.value match {
-          case Some(Success(s)) =>
-            s should matcher
-            false
-          case Some(Failure(f)) =>
-            throw f
-          case None => true
+          case Some(t) =>
+            t.success.value should matcher
+          case None =>
+            t shouldBe 'completed
         }
+      }
+
+    def will(complete: self.complete.type)(implicit ec: TestExecutionContext): Unit =
+      ec.finallyCheck{ () =>
+        t shouldBe 'completed
       }
   }
 
+  object complete
 }
 
 /**
-  * Instead of mixin the EcSpec trait you can also do a wildcard import of this object.
+  * Instead of mixin the EcSpec trait you can also do a wildcard import of this companion object.
   */
 object EcSpec extends Matchers with EcSpec {
   def ToCouldTestWordImpl[T: c.WeakTypeTag](c: blackbox.Context)(

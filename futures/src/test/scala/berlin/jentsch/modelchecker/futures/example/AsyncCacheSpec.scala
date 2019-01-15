@@ -1,4 +1,4 @@
-package ecspec.example
+package berlin.jentsch.modelchecker.futures.example
 
 import ecspec.EcSpec
 import org.scalatest.{FlatSpec, Matchers}

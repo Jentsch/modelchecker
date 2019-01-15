@@ -1,5 +1,4 @@
-package ecspec.example
-
+package berlin.jentsch.modelchecker.futures.example
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success}

@@ -21,7 +21,7 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
   private[this] val waitingList = mutable.Buffer[Semaphore]()
   private[this] val finalStop = new Semaphore(0)
   private[this] val traverser = new Traverser
-  private[this] val hooks = mutable.Buffer[() => Boolean]()
+  private[this] val finalChecks = mutable.Buffer.empty[() => Unit]
 
   /**
     * If atomic is set no thread switch happens.
@@ -53,7 +53,8 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
 
       finalStates += 1
       foundException.foreach(throw _)
-      hooks.clear()
+      finalChecks.foreach(_())
+      finalChecks.clear()
     } while (traverser.hasMoreOptions)
 
     info("Final states: " + finalStates)
@@ -120,10 +121,6 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
   def pass(): Unit = {
     val ownSemaphore = new Semaphore(0)
     waitingList += ownSemaphore
-    for {
-      i <- hooks.indices.reverse
-      if !hooks(i)()
-    } hooks.remove(i)
     chooseNextThread()
     ownSemaphore.acquire()
   }
@@ -179,12 +176,11 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
     }
   }
 
-  override def reportFailure(cause: Throwable): Unit = {
+  override def reportFailure(cause: Throwable): Unit =
     foundException = Some(cause)
-  }
 
-  private[ecspec] def hookAfterStep(hook: () => Boolean): Unit =
-    hooks += hook
+  private[ecspec] def finallyCheck(check: () => Unit): Unit =
+    finalChecks += check
 }
 
 object TestExecutionContext {

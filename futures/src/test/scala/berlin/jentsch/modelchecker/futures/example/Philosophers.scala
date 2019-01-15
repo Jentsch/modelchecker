@@ -4,7 +4,6 @@ import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import ecspec.EcSpec
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
 class Philosophers(n: Int)(implicit ec: ExecutionContext) {
@@ -14,32 +13,31 @@ class Philosophers(n: Int)(implicit ec: ExecutionContext) {
   val forks: Array[AtomicReference[Future[Unit]]] =
     Array.fill(n)(new AtomicReference(Future.successful(())))
 
-  def philosophers: immutable.IndexedSeq[Future[Unit]] = 0 until n map philosopher
-
   def philosopher(i: Int): Future[Unit] = {
     val (leftPromise, rightPromise) = (Promise[Unit], Promise[Unit])
+
     for {
       _ <- Future { room.incrementAndGet() }
       // THINK
       _ <- forks(i).getAndSet(leftPromise.future)
       _ <- forks((i + 1) % n).getAndSet(leftPromise.future)
       // EAT
-      _ <- Future { room.decrementAndGet() }
     } yield {
       rightPromise.success(())
       leftPromise.success(())
+      room.decrementAndGet()
     }
 
   }
 
-  def run: Future[Unit] =
-    Future.sequence(philosophers).map(_ => ())
-
+  def run: Future[_] =
+    Future.traverse(List.tabulate(n)(identity))(philosopher)
 }
 
 class PhilosophersSpec extends FlatSpec with EcSpec with Matchers {
   behavior of "Philosophers"
-  it should "termintate" in everyInterleaving { implicit ec =>
-    new Philosophers(2).run will complete
-  }
+  they should "not starve" in pendingUntilFixed(everyInterleaving {
+    implicit ec =>
+      new Philosophers(2).run will complete
+  })
 }

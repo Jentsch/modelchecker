@@ -1,47 +1,95 @@
 package berlin.jentsch.modelchecker.akka
 
+import scala.collection.concurrent.TrieMap
+import scala.reflect.runtime.universe.runtimeMirror
+import scala.tools.reflect.{ToolBox, ToolBoxError}
+
 /**
-  * @example
+  * @example Some examples
   * {{{
-  *   cases.foreach{ case (a, b, expected: Boolean) =>
+  *   import org.scalatest.prop.Tables._
+  *
+  *   def examples = Table(
+  *     ("a", "b", "expected"),
+  *     ("x", "x", true),
+  *     ("x", "y", false),
+  *     (str, str, true),
+  *     (str("a"), str("a"), true),
+  *     (str("a"), str("b"), false),
+  *     (str("a")("b"), str("a")("b"), true),
+  *     (int(1), int(1), true),
+  *     (int(0), int(2), false)
+  *   )
+  *
+  *   def str: String => String => String = x => y => x ++ y
+  *   def int: Int => Int => Int = x => y => x + y
+  *
+  *   examples.forEvery{ (a: AnyRef, b: AnyRef, expected: Boolean) =>
   *     ReflectiveEquals(a, b) should be(expected)
   *   }
   *
-  *   def cases: List[(Any, Any, Boolean)] = List(
-  *     ("x", "x", true),
-  *     ("x", "y", false),
-  *     (x, x, true),
-  *     (x(1), x(1), true),
-  *     (x(1), x(2), false),
-  *     (x(1)(2), x(2)(1), true)
-  *   )
-  *
-  *   def x: Int => Int => Int = x => y => x + y
   * }}}
   */
 object ReflectiveEquals {
-  def apply(a: Any, b: Any): Boolean = equals(a, b)
+  def apply(a: AnyRef, b: AnyRef): Boolean =
+    equals(a, b)
 
-  def equals(a: Any, b: Any): Boolean =
-    if (classOf[Function[Any, Any]].isInstance(a)) {
-      val ac = a.getClass
-      if (ac == b.getClass) {
+  private val generatedEquals = TrieMap.empty[Class[_], ReflectiveEquals]
 
-        val fields = ac.getDeclaredFields
+  private val tb = runtimeMirror(getClass.getClassLoader).mkToolBox()
 
-        var i = 0
-        while (i < fields.length) {
-          val f = fields(i)
-          if (!f.isAccessible)
-            f.setAccessible(true)
+  def equals(a: AnyRef, b: AnyRef): Boolean =
+    if (a.isInstanceOf[Any => Any] || a.isInstanceOf[() => Any] || a
+          .isInstanceOf[(Any, Any) => Any]) {
+      generatedEquals
+        .getOrElseUpdate(
+          a.getClass, {
+            val fields = a.getClass.getDeclaredFields
 
-          if (! equals(f.get(a), f.get(b)))
-            return false
+            val code = s""" (clazz: Class[_]) => {
+                | import berlin.jentsch.modelchecker.akka.ReflectiveEquals
+                |
+                | new ReflectiveEquals {
+                |   private val fields = clazz.getDeclaredFields
+                |   fields.foreach(_.setAccessible(true))
+                |   val Array(${fields.indices
+                            .map("f" + _)
+                            .mkString(", ")}) = fields
+                |
+                |   override def compare(a: AnyRef, b: AnyRef): Boolean = {
+                |     if (clazz == b.getClass) {
+                |
+                |       ${fields.zipWithIndex
+                            .map {
+                              case (f, i) =>
+                                if (f.getType == classOf[Int]) {
+                                  s"if (f$i.getInt(a) != f$i.getInt(b)) return false"
+                                } else {
+                                  s"if (! ReflectiveEquals(f$i.get(a), f$i.get(b))) return false"
+                                }
+                            }
+                            .mkString("\n")}
+                |
+                |       return true
+                |     } else false
+                |   }
+                | }
+                | }
+              """.stripMargin
 
-          i += 1
-        }
+            val tree = try { tb.parse(code) } catch {
+              case t: ToolBoxError =>
+                println("Code was:"); println(code); throw t
+            }
 
-        return true
-      } else false
+            tb.compile(tree)()
+              .asInstanceOf[Class[_] => ReflectiveEquals](a.getClass)
+          }
+        )
+        .compare(a, b)
     } else a == b
+}
+
+trait ReflectiveEquals {
+  def compare(a: AnyRef, b: AnyRef): Boolean
 }

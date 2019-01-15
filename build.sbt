@@ -59,7 +59,10 @@ lazy val akka = project
   .in(file("akka"))
   .settings(
     scalacOptions in Test ++= Seq("-Yrangepos"),
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5",
+    libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      "org.scalatest" %% "scalatest" % "3.0.5" % Test,
+    ),
     examplePackageRef := {
       import scala.meta._
       q"berlin.jentsch.modelchecker.akka"

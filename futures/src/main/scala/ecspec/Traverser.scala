@@ -1,5 +1,7 @@
 package ecspec
 
+import java.util.Arrays
+
 import scala.collection.mutable
 
 /**
@@ -21,7 +23,7 @@ import scala.collection.mutable
 private[ecspec] class Traverser {
 
   /** Path in the tree of choices */
-  private val path = Array.fill(100)(-1)
+  private var path = Array.fill(100)(0)
   private var pathLength = 0
   private var currentDepth = 0
 
@@ -66,6 +68,9 @@ private[ecspec] class Traverser {
     require(choices.nonEmpty, "no choices available")
 
     val choiceIndex = if (currentDepth >= pathLength) {
+      if (pathLength == path.length) {
+        path = Arrays.copyOf(path, pathLength * 4)
+      }
       val max = choices.length - 1
       path(currentDepth) = max
       pathLength += 1

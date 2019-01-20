@@ -2,6 +2,8 @@ package ecspec
 
 import java.util.concurrent.{Semaphore, TimeUnit}
 
+import org.scalatest.exceptions.TestFailedException
+
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
@@ -53,11 +55,16 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
 
       finalStates += 1
       foundException.foreach(throw _)
-      finalChecks.foreach(_())
+      finalChecks.foreach(check =>
+        try { check() } catch {
+          case failed: TestFailedException =>
+            info("Tested states: " ++ finalStates.toString)
+            throw failed
+      })
       finalChecks.clear()
     } while (traverser.hasMoreOptions)
 
-    info("Final states: " + finalStates)
+    info("Final states: " ++ finalStates.toString)
   }
 
   override def execute(runnable: Runnable): Unit = {
@@ -93,7 +100,6 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
     *
     * observedInterleaving should be(true)
     * }}}
-    *
     * @example In comparison without pass:
     * {{{
     * var observedInterleaving = false

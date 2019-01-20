@@ -21,7 +21,8 @@ import scala.collection.mutable
 private[ecspec] class Traverser {
 
   /** Path in the tree of choices */
-  private val path = mutable.ListBuffer.empty[Int]
+  private val path = Array.fill(100)(-1)
+  private var pathLength = 0
   private var currentDepth = 0
 
   /**
@@ -64,11 +65,14 @@ private[ecspec] class Traverser {
   def choose[E](choices: Seq[E]): E = {
     require(choices.nonEmpty, "no choices available")
 
-    val choiceIndex = path.applyOrElse(currentDepth, { _: Int =>
+    val choiceIndex = if (currentDepth >= pathLength) {
       val max = choices.length - 1
-      path.append(max)
+      path(currentDepth) = max
+      pathLength += 1
       max
-    })
+    } else {
+      path(currentDepth)
+    }
 
     currentDepth += 1
 
@@ -87,10 +91,10 @@ private[ecspec] class Traverser {
     * @return true if the [[path]] was decremented
     */
   private def decrementPath(): Boolean = {
-    var depth = path.length - 1
+    var depth = pathLength - 1
 
     while (depth >= 0 && path(depth) == 0) {
-      path.remove(depth)
+      pathLength -= 1
       depth -= 1
     }
 

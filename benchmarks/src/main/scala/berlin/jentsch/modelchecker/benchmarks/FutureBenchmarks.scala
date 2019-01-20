@@ -1,4 +1,25 @@
-package berlin.jentsch.modelchecker.futures.example
+package berlin.jentsch.modelchecker.benchmarks
+
+import java.util.concurrent.TimeUnit
+
+import ecspec.EcSpec
+import org.openjdk.jmh.annotations._
+import org.scalatest.{FlatSpec, Matchers}
+
+@State(Scope.Thread)
+@BenchmarkMode(Array(Mode.AverageTime))
+@OutputTimeUnit(TimeUnit.SECONDS)
+@Measurement(time = 5, iterations = 3)
+@Warmup(time = 5, iterations = 2)
+class FutureBenchmarks extends FlatSpec with Matchers with EcSpec {
+
+  @Benchmark
+  def speed: Unit = everyInterleaving { implicit ec =>
+    new Philosophers(3).runOk will complete
+  }
+}
+
+
 import java.util.concurrent.atomic.AtomicReference
 
 import ecspec.EcSpec

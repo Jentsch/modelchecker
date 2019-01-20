@@ -54,6 +54,12 @@ lazy val futures = project
 
 lazy val scalaz = project
   .in(file("scalaz"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.scalaz" %% "scalaz-zio" % "0.5.3",
+      "org.scalatest" %% "scalatest" % "3.0.5" % Test
+    )
+  )
 
 lazy val akka = project
   .in(file("akka"))
@@ -73,6 +79,7 @@ lazy val akka = project
 lazy val benchmarks = project
   .in(file("benchmarks"))
   .dependsOn(
+    futures,
     akka
   )
   .enablePlugins(JmhPlugin)

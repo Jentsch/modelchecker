@@ -20,22 +20,21 @@ class AsyncCacheSpec extends FlatSpec with EcSpec with Matchers {
     cache(1) will be("1")
   }
 
-  it should "cache" in everyInterleaving { implicit ec =>
-    var seenRequest = Set.empty[Int]
+  it should "cache and invoke the given function twice" in everyInterleaving {
+    implicit ec =>
+      var seenRequest = Set.empty[Int]
 
-    val f = { i: Int =>
-      seenRequest should not contain i
-      seenRequest += i
-      Future {
-        i.toString
+      val f = { item: Int =>
+        Future {
+          seenRequest should not contain item
+          seenRequest += item
+          item.toString
+        }
       }
-    }
-    val cache = AsyncCache(f)
+      val cache = AsyncCache(f)
 
-    atomic {
-      ec.execute(() => cache(1) will be("1"))
-      ec.execute(() => cache(1) will be("1"))
-    }
+      cache(1) will be("1")
+      cache(1) will be("1")
   }
 
   it should "not store failures" in everyInterleaving { implicit ec =>
@@ -55,22 +54,5 @@ class AsyncCacheSpec extends FlatSpec with EcSpec with Matchers {
       cache(1) will be("Foo")
     }
 
-  }
-
-  it should "valuate on request" in everyInterleaving { implicit ec =>
-    val f = { _: Int =>
-      Future.firstCompletedOf(
-        List(
-          Future { "Foo" },
-          Future { throw new Exception("") }
-        ))
-    }
-
-    val cache = AsyncCache(f)
-
-    cache(1).onComplete { r =>
-      r could be(a[Failure[_]])
-      r could be(a[Success[_]])
-    }
   }
 }

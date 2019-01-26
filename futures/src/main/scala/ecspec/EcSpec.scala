@@ -12,7 +12,7 @@ import scala.language.implicitConversions
 import scala.reflect.macros.blackbox
 
 /**
-  * Add this trait to your test class to use the [[#everyInterleaving]] method.
+  * Add this trait to your test class to use the [[EcSpec.everyInterleaving()]] method.
   *
   * @example Typical usage should look like:
   *
@@ -83,7 +83,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     */
   def everyInterleaving(test: TestExecutionContext => Unit)(
       implicit pos: Position): Unit = {
-    TestExecutionContext(info.apply(_, None)).testEveryPath(test)
+    TestExecutionContext(info(_)).testEveryPath(test)
 
     throwExceptionForNeverSatisfiedCouldTests()
   }

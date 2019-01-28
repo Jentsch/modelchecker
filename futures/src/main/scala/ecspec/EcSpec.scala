@@ -166,7 +166,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     */
   implicit class WillWord[T](t: Future[T]) {
     def will(matcher: Matcher[T])(implicit ec: TestExecutionContext): Unit =
-      ec.finallyCheck{ () =>
+      ec.finallyCheck { () =>
         import org.scalatest.TryValues._
 
         t.value match {
@@ -177,8 +177,9 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
         }
       }
 
-    def will(complete: self.complete.type)(implicit ec: TestExecutionContext): Unit =
-      ec.finallyCheck{ () =>
+    def will(complete: self.complete.type)(
+        implicit ec: TestExecutionContext): Unit =
+      ec.finallyCheck { () =>
         t shouldBe 'completed
       }
   }

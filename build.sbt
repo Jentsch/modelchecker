@@ -44,7 +44,10 @@ lazy val futures = project
   .in(file("futures"))
   .settings(
     scalacOptions in Test ++= Seq("-Yrangepos"),
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.0.5",
+      "com.lihaoyi" %% "sourcecode" % "0.1.4"
+    ),
     examplePackageRef := {
       import scala.meta._
       q"ecspec"

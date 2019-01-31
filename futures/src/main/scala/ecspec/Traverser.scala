@@ -151,20 +151,48 @@ private[ecspec] abstract class Walker {
   }
 
   def choose[E](choices: Seq[E]): E
+
+  /**
+    * @return false if no next round could be generated
+    */
+  def hasMoreOptions: Boolean
+
+  /**
+    *
+    * @return
+    */
+  def getCurrentPath: Seq[Int]
 }
 
 /**
   * @see [[ecspec.Traverser.getCurrentPath]] for how to use this class
   */
-private[ecspec] final case class SinglePath(private var path: Seq[Int])
+private[ecspec] final case class SinglePath(private val path: Seq[Int])
     extends Walker {
-  override def choose[E](choices: Seq[E]): E =
-    path.headOption match {
-      case Some(value) =>
-        path = path.drop(1)
 
-        choices(value)
-      case None =>
-        choices.last
-    }
+  private var index: Int = 0
+
+  override def choose[E](choices: Seq[E]): E = {
+    val result = path.lift(index).fold(choices.last)(choices)
+    index += 1
+    result
+  }
+
+  override def hasMoreOptions: Boolean = false
+
+  /**
+    * Returns the path that was given to this single path instance.
+    *
+    * @example it equals the given path
+    * {{{
+    *   val path = SinglePath(Seq(1, 2, 3))
+    *
+    *   path.getCurrentPath shouldBe Seq(1, 2, 3)
+    *
+    *   path.choose(Seq(true, false))
+    *
+    *   path.getCurrentPath shouldBe Seq(1, 2, 3)
+    * }}}
+    */
+  override def getCurrentPath: Seq[Int] = path
 }

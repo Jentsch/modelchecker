@@ -17,12 +17,11 @@ import scala.util.control.NonFatal
  * Every interaction between threads is modelled with semaphores to ensure the synchronisation of variables by the JVM (happens before).
  * See [[https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Semaphore.html Semaphore-API]]
  */
-class TestExecutionContext(info: String => Unit) extends ExecutionContext {
+class TestExecutionContext(info: String => Unit, private[this] val walker: Walker) extends ExecutionContext {
   self =>
 
   private[this] val waitingList = mutable.Buffer[Semaphore]()
   private[this] val finalStop = new Semaphore(0)
-  private[this] val traverser = new Traverser
   private[this] val finalChecks = mutable.Buffer.empty[() => Unit]
 
   /**
@@ -54,17 +53,20 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
       assert(waitingList.isEmpty)
 
       finalStates += 1
+      if (foundException.nonEmpty)
+        info("Bal")
       foundException.foreach(throw _)
       finalChecks.foreach(check =>
         try { check() } catch {
           case failed: TestFailedException =>
-            info("Tested states: " ++ finalStates.toString)
+            info("Tested paths: " ++ finalStates.toString)
+            info("Path to reproduce this failure: " ++ walker.getCurrentPath.mkString("Seq(", ",", ")"))
             throw failed
       })
       finalChecks.clear()
-    } while (traverser.hasMoreOptions)
+    } while (walker.hasMoreOptions)
 
-    info("Final states: " ++ finalStates.toString)
+    info("Paths: " ++ finalStates.toString)
   }
 
   override def execute(runnable: Runnable): Unit = {
@@ -179,7 +181,7 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
     if (waitingList.isEmpty) {
       finalStop.release()
     } else {
-      val nextThread = traverser.removeOne(waitingList)
+      val nextThread = walker.removeOne(waitingList)
       nextThread.release()
     }
   }
@@ -192,18 +194,16 @@ class TestExecutionContext(info: String => Unit) extends ExecutionContext {
 }
 
 object TestExecutionContext {
-
   /**
-    * Factory method to create a fresh test execution context
-    */
-  def apply(info: String => Unit): TestExecutionContext =
-    new TestExecutionContext(info)
-
-  /**
-    * Creates a TestExecutionContext wich prints to stdout and stderr.
+    * Creates a TestExecutionContext which prints to stdout and stderr.
     */
   def apply(): TestExecutionContext =
-    TestExecutionContext(println)
+    new TestExecutionContext(println, new Traverser)
 
-  def silent(): TestExecutionContext = TestExecutionContext(_ => ())
+
+  def testEveryPath(test: TestExecutionContext => Unit, info: String => Unit): Unit =
+    new TestExecutionContext(info, new Traverser).testEveryPath(test)
+
+  def testSinglePath(test: TestExecutionContext => Unit, path: Seq[Int], info: String => Unit) =
+    new TestExecutionContext(info, SinglePath(path))
 }

@@ -34,10 +34,14 @@ class FuncEqualsBenchmarks {
   def finalEquals: Boolean =
     ReflectiveEquals.equals(randomFunction, randomFunction)
 
+  @Benchmark
+  def serialEquals: Boolean =
+    SerializableEquals.equal(randomFunction, randomFunction)
+
   @Param(Array("2", "4", "8"))
   var functionCount: Int = _
 
-  @Param(Array("5", "10"))
+  @Param(Array("10"))
   var inputRange: Int = _
 
   private def randomFunction: Int => Int =
@@ -211,6 +215,35 @@ class FuncEqualsBenchmarks {
 
         i -= 1
       }
+
+      return true
+    }
+  }
+
+  object SerializableEquals {
+    def equal(a1: Int => Int, a2: Int => Int): Boolean = {
+
+      def seri(a: Int => Int): Array[Byte] = {
+        val buffer = new java.io.ByteArrayOutputStream()
+        val obj = new java.io.ObjectOutputStream(buffer)
+
+        obj.writeObject(a)
+        obj.close()
+
+        buffer.toByteArray
+      }
+
+      val f = seri(a1)
+
+      val s = seri(a2)
+
+      var i = 0
+
+      do {
+        if (f(i) != s(i))
+          return false
+        i += 1
+      } while (i < f.length)
 
       return true
     }

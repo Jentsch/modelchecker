@@ -45,8 +45,7 @@ lazy val futures = project
   .settings(
     scalacOptions in Test ++= Seq("-Yrangepos"),
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.0.5",
-      "com.lihaoyi" %% "sourcecode" % "0.1.4"
+      "org.scalatest" %% "scalatest" % "3.0.5"
     ),
     examplePackageRef := {
       import scala.meta._

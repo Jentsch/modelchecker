@@ -1,6 +1,6 @@
 package ecspec
 
-import java.util.concurrent.{Semaphore, TimeUnit}
+import java.util.concurrent._
 
 import org.scalatest.exceptions.TestFailedException
 
@@ -11,18 +11,21 @@ import scala.util.control.NonFatal
 /**
   * Fake execution context for [[EcSpec]].
   */
-/* Invariant: either two threads a running an within this class active (handling semaphores) or one threads
- * runs provided test code.
+/* Invariant: either two threads a running an within this class active (handling semaphores) or only one
+ * threads runs provided test code.
  *
  * Every interaction between threads is modelled with semaphores to ensure the synchronisation of variables by the JVM (happens before).
  * See [[https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Semaphore.html Semaphore-API]]
  */
-class TestExecutionContext(info: String => Unit, private[this] val walker: Walker) extends ExecutionContext {
+class TestExecutionContext(info: String => Unit,
+                           private[this] val walker: Walker)
+    extends ExecutionContext {
   self =>
 
   private[this] val waitingList = mutable.Buffer[Semaphore]()
   private[this] val finalStop = new Semaphore(0)
   private[this] val finalChecks = mutable.Buffer.empty[() => Unit]
+  private[this] val executor = TestExecutionContext.globalThreadPool
 
   /**
     * If atomic is set no thread switch happens.
@@ -60,7 +63,9 @@ class TestExecutionContext(info: String => Unit, private[this] val walker: Walke
         try { check() } catch {
           case failed: TestFailedException =>
             info("Tested paths: " ++ finalStates.toString)
-            info("Path to reproduce this failure: " ++ walker.getCurrentPath.mkString("Seq(", ",", ")"))
+            info(
+              "Path to reproduce this failure: " ++ walker.getCurrentPath
+                .mkString("Seq(", ",", ")"))
             throw failed
       })
       finalChecks.clear()
@@ -158,21 +163,17 @@ class TestExecutionContext(info: String => Unit, private[this] val walker: Walke
   private[ecspec] def createStoppedThread(runnable: Runnable): Semaphore = {
     val startSignal = new Semaphore(0)
 
-    val thread: Thread = new Thread {
-      this.setName("TestExecutionContext")
-      override def run(): Unit = {
-        startSignal.acquire()
-        try {
-          runnable.run()
-        } catch {
-          case NonFatal(thrown) =>
-            foundException = Some(thrown)
-        } finally {
-          chooseNextThread()
-        }
+    executor.execute { () =>
+      startSignal.acquire()
+      try {
+        runnable.run()
+      } catch {
+        case NonFatal(thrown) =>
+          foundException = Some(thrown)
+      } finally {
+        chooseNextThread()
       }
     }
-    thread.start()
 
     startSignal
   }
@@ -194,16 +195,26 @@ class TestExecutionContext(info: String => Unit, private[this] val walker: Walke
 }
 
 object TestExecutionContext {
+
   /**
     * Creates a TestExecutionContext which prints to stdout and stderr.
     */
   def apply(): TestExecutionContext =
     new TestExecutionContext(println, new Traverser)
 
-
-  def testEveryPath(test: TestExecutionContext => Unit, info: String => Unit): Unit =
+  def testEveryPath(test: TestExecutionContext => Unit,
+                    info: String => Unit): Unit =
     new TestExecutionContext(info, new Traverser).testEveryPath(test)
 
-  def testSinglePath(test: TestExecutionContext => Unit, path: Seq[Int], info: String => Unit) =
+  def testSinglePath(test: TestExecutionContext => Unit,
+                     path: Seq[Int],
+                     info: String => Unit) =
     new TestExecutionContext(info, SinglePath(path))
+
+  private[TestExecutionContext] val globalThreadPool =
+    new ThreadPoolExecutor(0,
+                           Integer.MAX_VALUE,
+                           10,
+                           TimeUnit.SECONDS,
+                           new SynchronousQueue[Runnable])
 }

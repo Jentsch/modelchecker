@@ -8,6 +8,12 @@ trait ExecutionContextOps {
     * Within an atomic block the only when calling pass() explicitly a thread switch can happen.
     */
   def atomic[T](block: => T)(implicit ec: ExecutionContext): T = {
+    val result = uninterrupted(block)
+    pass()
+    result
+  }
+
+  def uninterrupted[T](block: => T)(implicit ec: ExecutionContext): T =
     ec match {
       case tec: TestExecutionContext if !tec.atomic =>
         tec.atomic = true
@@ -16,14 +22,10 @@ trait ExecutionContextOps {
 
         tec.atomic = false
 
-        tec.pass()
-
         result
       case _ =>
         block
     }
-
-  }
 
   /**
     * Allows to interleave two atomic operations with a TestExecutionContext. Has no effects otherwise.
@@ -59,14 +61,12 @@ trait ExecutionContextOps {
     *
     * }}}
     */
-  def pass()(implicit ec: ExecutionContext): Unit = {
+  def pass()(implicit ec: ExecutionContext): Unit =
     ec match {
       case tec: TestExecutionContext =>
         tec.pass()
       case _ =>
     }
-
-  }
 }
 
 /**

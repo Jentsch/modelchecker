@@ -215,9 +215,22 @@ private[ecspec] final class RandomTraverser(private var rounds: Int)
 
   /**
     * @return returns [[rounds]] times true and afterwards always false
+    *
+    * @example of limited rounds
+    * {{{
+    * val walker: Walker = new RandomTraverser(4)
+    * var executedRounds = 0
+    *
+    * do {
+    *   executedRounds += 1
+    *   walker.choose(Seq(1, 2, 3))
+    * } while (walker.hasMoreOptions)
+    *
+    * assert(executedRounds == 4)
+    * }}}
     */
   override def hasMoreOptions: Boolean =
-    if (rounds > 0) {
+    if (rounds > 1) {
       rounds -= 1
       true
     } else {

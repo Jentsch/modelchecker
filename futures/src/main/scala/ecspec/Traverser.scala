@@ -85,7 +85,7 @@ private[ecspec] final class Traverser extends Walker {
     *   calculation(SinglePath(foundPath)) should be(seeking)
     * }}}
     */
-  def getCurrentPath: Seq[Int] = path.toSeq.take(currentDepth)
+  override def getCurrentPath: Seq[Int] = path.toSeq.take(currentDepth)
 
   /**
     * @return false if no next round could be generated
@@ -195,4 +195,34 @@ private[ecspec] final case class SinglePath(private val path: Seq[Int])
     * }}}
     */
   override def getCurrentPath: Seq[Int] = path
+}
+
+private[ecspec] final class RandomTraverser(private var rounds: Int)
+    extends Walker {
+
+  import scala.util.Random.nextInt
+
+  private var currentPath = List.empty[Int]
+
+  override def choose[E](choices: Seq[E]): E = {
+    require(choices.nonEmpty, "no choices available")
+
+    val choice = nextInt(choices.length)
+    currentPath ::= choice
+
+    choices(choice)
+  }
+
+  /**
+    * @return returns [[rounds]] times true and afterwards always false
+    */
+  override def hasMoreOptions: Boolean =
+    if (rounds > 0) {
+      rounds -= 1
+      true
+    } else {
+      false
+    }
+
+  override def getCurrentPath: Seq[Int] = currentPath.reverse
 }

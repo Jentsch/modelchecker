@@ -22,6 +22,7 @@ class TestExecutionContext(info: String => Unit,
     extends ExecutionContext {
   self =>
 
+  /** All waiting threads, all semaphores have -1 permits */
   private[this] val waitingList = mutable.Buffer[Semaphore]()
   private[this] val finalStop = new Semaphore(0)
   private[this] val finalChecks = mutable.Buffer.empty[() => Unit]
@@ -37,14 +38,14 @@ class TestExecutionContext(info: String => Unit,
     var finalStates = 0
     do {
       test(self)
-      chooseNextThread()
+      runNextThread()
 
       val maxSeconds = 60L
 
       val noOpenThreads = finalStop.tryAcquire(maxSeconds, TimeUnit.SECONDS)
 
       if (!noOpenThreads && waitingList.nonEmpty) {
-        chooseNextThread()
+        runNextThread()
 
         val noOpenThreads2 = finalStop.tryAcquire(maxSeconds, TimeUnit.SECONDS)
         assert(
@@ -135,7 +136,7 @@ class TestExecutionContext(info: String => Unit,
     if (waitingList.nonEmpty) {
       val ownSemaphore = new Semaphore(0)
       waitingList += ownSemaphore
-      chooseNextThread()
+      runNextThread()
       ownSemaphore.acquire()
     }
   }
@@ -171,21 +172,20 @@ class TestExecutionContext(info: String => Unit,
         case NonFatal(thrown) =>
           foundException = Some(thrown)
       } finally {
-        chooseNextThread()
+        runNextThread()
       }
     }
 
     startSignal
   }
 
-  private def chooseNextThread(): Unit = {
+  private def runNextThread(): Unit =
     if (waitingList.isEmpty) {
       finalStop.release()
     } else {
       val nextThread = walker.removeOne(waitingList)
       nextThread.release()
     }
-  }
 
   override def reportFailure(cause: Throwable): Unit =
     foundException = Some(cause)

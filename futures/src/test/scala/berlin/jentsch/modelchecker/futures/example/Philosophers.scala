@@ -28,7 +28,6 @@ class Philosophers(n: Int)(implicit ec: ExecutionContext) {
       secondPromise.success(())
       firstPromise.success(())
     }
-
   }
 
   def runDeadLock: Future[_] =

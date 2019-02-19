@@ -120,7 +120,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * }}}
     */
   def increase[T: Ordering]: TimeWord[T] = new TimeWord[T] {
-    override def apply(t: => T)(implicit ec: ExecutionContext): Unit = {
+    override def apply(t: => T)(implicit ec: ExecutionContext, position: Position): Unit = {
       Future {
         t
       }.foreach { t1 =>
@@ -138,7 +138,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * Properties about a term `t` and it's behaviour over time.
     */
   trait TimeWord[T] {
-    def apply(t: => T)(implicit ec: ExecutionContext): Unit
+    def apply(t: => T)(implicit ec: ExecutionContext, position: Position): Unit
   }
 
   /**
@@ -170,7 +170,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * }}}
     */
   implicit class WillWord[T](t: Future[T]) {
-    def will(matcher: Matcher[T])(implicit ec: TestExecutionContext): Unit =
+    def will(matcher: Matcher[T])(implicit ec: TestExecutionContext, position: Position): Unit =
       ec.finallyCheck { () =>
         import org.scalatest.TryValues._
 
@@ -178,14 +178,15 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
           case Some(t) =>
             t.success.value should matcher
           case None =>
-            t shouldBe 'completed
+            fail("All computations are done, but the Future wasn't completed")
         }
       }
 
     def will(complete: self.complete.type)(
-        implicit ec: TestExecutionContext): Unit =
+        implicit ec: TestExecutionContext, position: Position): Unit =
       ec.finallyCheck { () =>
-        t shouldBe 'completed
+        if (! t.isCompleted)
+          fail("All computations are done, but the Future wasn't completed")
       }
   }
 

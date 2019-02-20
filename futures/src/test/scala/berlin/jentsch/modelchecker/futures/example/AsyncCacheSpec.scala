@@ -1,6 +1,5 @@
 package berlin.jentsch.modelchecker.futures.example
-
-import ecspec.EcSpec
+import berlin.jentsch.modelchecker.futures.EcSpec
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.Future

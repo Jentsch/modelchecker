@@ -1,4 +1,4 @@
-package ecspec
+package berlin.jentsch.modelchecker.futures
 
 import org.scalactic.source.Position
 import org.scalatest.exceptions.TestFailedException
@@ -68,7 +68,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * @example Ok:
     * {{{
     * import scala.concurrent.Future
-    * import ecspec.EcSpec._
+    * import berlin.jentsch.modelchecker.futures.EcSpec._
     *
     * everyInterleaving { implicit ec =>
     *   @volatile var x = 1
@@ -106,7 +106,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * {{{
     * import scala.concurrent.Future
     * import java.util.concurrent.atomic.AtomicInteger
-    * import ecspec.EcSpec._
+    * import berlin.jentsch.modelchecker.futures.EcSpec._
     *
     * everyInterleaving { implicit ec =>
     *   val x = new AtomicInteger(0)
@@ -144,7 +144,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
   /**
     * Add a should that accepts [[TimeWord]], properties about state over time.
     *
-    * @see ecspec.EcSpec#increase
+    * @see berlin.jentsch.modelchecker.futures.EcSpec#increase
     */
   implicit class TimeWordShould[T](t: => T) {
     def should(timeWord: TimeWord[T])(implicit ec: ExecutionContext): Unit = {
@@ -159,8 +159,8 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * @example usage
     * {{{
     * import scala.concurrent.Future
-    * import ecspec.EcSpec.everyInterleaving
-    * import ecspec.EcSpec.WillWord
+    * import berlin.jentsch.modelchecker.futures.EcSpec.everyInterleaving
+    * import berlin.jentsch.modelchecker.futures.EcSpec.WillWord
     *
     * everyInterleaving { implicit ec =>
     *   val x = Future { 1 }
@@ -208,7 +208,7 @@ object EcSpec extends Matchers with EcSpec {
     val txt = fileContent.slice(start, start + 1)
 
     val tree =
-      q"""new ecspec.EcSpec.CouldTestWord[${weakTypeOf[T]}]($value, $txt, $pos)"""
+      q"""new berlin.jentsch.modelchecker.futures.EcSpec.CouldTestWord[${weakTypeOf[T]}]($value, $txt, $pos)"""
 
     c.Expr[CouldTestWord[T]](tree)
   }

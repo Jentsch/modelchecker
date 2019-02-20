@@ -1,4 +1,4 @@
-package ecspec
+package berlin.jentsch.modelchecker.futures
 
 /**
   * A traverser that tracks the probability of the current state. Probability is modeled as a Double in the range of 0.0 ... 1.0.
@@ -25,7 +25,7 @@ package ecspec
   *
   * }}}
   */
-private[ecspec] class ProbabilityTraverser
+private[futures] class ProbabilityTraverser
     extends TrackingTraverser(1.0)(_ * _) {
 
   /**

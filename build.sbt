@@ -18,7 +18,6 @@ scalacOptions in ThisBuild ++= Seq(
   "-Yno-adapted-args",
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
-  "-Ywarn-value-discard",
   "-Ywarn-unused",
   "-Ywarn-unused-import"
 )
@@ -35,13 +34,29 @@ lazy val root = project
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5"
   )
   .aggregate(
+    core,
     futures,
     scalaz,
     akka
   )
 
+lazy val core = project
+  .in(file("core"))
+  .settings(
+    description := "Internal common functionality shared by the futures and scalaz subproject, no external API",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.0.5" % Test
+    ),
+    examplePackageRef := {
+      import scala.meta._
+      q"berlin.jentsch.modelchecker"
+    }
+  )
+  .enablePlugins(Example)
+
 lazy val futures = project
   .in(file("futures"))
+  .dependsOn(core)
   .settings(
     scalacOptions in Test ++= Seq("-Yrangepos"),
     libraryDependencies ++= Seq(
@@ -49,7 +64,7 @@ lazy val futures = project
     ),
     examplePackageRef := {
       import scala.meta._
-      q"ecspec"
+      q"berlin.jentsch.modelchecker.futures"
     }
   )
   .enablePlugins(Example)

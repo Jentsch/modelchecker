@@ -3,7 +3,7 @@ package berlin.jentsch.modelchecker.benchmarks
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-import ecspec.EcSpec
+import berlin.jentsch.modelchecker.futures.EcSpec
 import org.openjdk.jmh.annotations._
 import org.scalatest.{FlatSpec, Matchers}
 

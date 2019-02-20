@@ -2,8 +2,8 @@ package berlin.jentsch.modelchecker.futures.example
 
 import java.util.concurrent.atomic.AtomicReference
 
-import ecspec.EcSpec
-import ecspec.ExecutionContextOps.uninterrupted
+import berlin.jentsch.modelchecker.futures.EcSpec
+import berlin.jentsch.modelchecker.futures.ExecutionContextOps.uninterrupted
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.{ExecutionContext, Future, Promise}

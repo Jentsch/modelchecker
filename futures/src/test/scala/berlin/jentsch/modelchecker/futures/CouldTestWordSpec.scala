@@ -1,4 +1,4 @@
-package ecspec
+package berlin.jentsch.modelchecker.futures
 
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.{FlatSpec, Matchers}
@@ -14,7 +14,7 @@ class CouldTestWordSpec extends FlatSpec with Matchers with EcSpec {
   it should "not confuse multiple expression on one line" in {
     an[TestFailedException] should be thrownBy {
       everyInterleaving { _ =>
-        // for this test it's important that this to statements are on one line, don't reformat
+        // for this test it's important that this to statements are on one line, so don't reformat
         true could be(true); false could be(true)
       }
     }

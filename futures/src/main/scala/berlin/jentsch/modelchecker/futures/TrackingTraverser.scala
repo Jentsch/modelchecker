@@ -1,4 +1,5 @@
-package ecspec
+package berlin.jentsch.modelchecker.futures
+import berlin.jentsch.modelchecker.Traverser
 
 /**
   * A traverser that accumulates some state S during the a run and has a initial state for every run. The
@@ -19,7 +20,7 @@ package ecspec
   *
   * Note: init and combine should form a monoid
   */
-private[ecspec] class TrackingTraverser[S](init: S)(combine: (S, S) => S) {
+private[futures] class TrackingTraverser[S](init: S)(combine: (S, S) => S) {
 
   private val traverser = new Traverser
 

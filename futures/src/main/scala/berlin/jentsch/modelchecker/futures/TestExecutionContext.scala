@@ -1,7 +1,8 @@
-package ecspec
+package berlin.jentsch.modelchecker.futures
 
 import java.util.concurrent._
 
+import berlin.jentsch.modelchecker.{SinglePath, Traverser, Walker}
 import org.scalatest.exceptions.TestFailedException
 
 import scala.collection.mutable
@@ -31,8 +32,8 @@ class TestExecutionContext(info: String => Unit,
   /**
     * If atomic is set no thread switch happens.
     */
-  private[ecspec] var atomic = false
-  private[ecspec] var foundException = Option.empty[Throwable]
+  private[futures] var atomic = false
+  private[futures] var foundException = Option.empty[Throwable]
 
   def testEveryPath(test: TestExecutionContext => Unit): Unit = {
     var finalStates = 0
@@ -70,7 +71,7 @@ class TestExecutionContext(info: String => Unit,
             throw failed
       })
       finalChecks.clear()
-    } while (walker.hasMoreOptions)
+    } while (walker.hasMoreOptions())
 
     info("Paths: " ++ finalStates.toString)
   }
@@ -161,7 +162,7 @@ class TestExecutionContext(info: String => Unit,
     *   run.get should be(1)
     * }}}
     */
-  private[ecspec] def createStoppedThread(runnable: Runnable): Semaphore = {
+  private[futures] def createStoppedThread(runnable: Runnable): Semaphore = {
     val startSignal = new Semaphore(0)
 
     executor.execute { () =>
@@ -190,7 +191,7 @@ class TestExecutionContext(info: String => Unit,
   override def reportFailure(cause: Throwable): Unit =
     foundException = Some(cause)
 
-  private[ecspec] def finallyCheck(check: () => Unit): Unit =
+  private[futures] def finallyCheck(check: () => Unit): Unit =
     finalChecks += check
 }
 

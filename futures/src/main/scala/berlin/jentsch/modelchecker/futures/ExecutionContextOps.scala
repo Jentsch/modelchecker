@@ -1,4 +1,4 @@
-package ecspec
+package berlin.jentsch.modelchecker.futures
 
 import scala.concurrent.ExecutionContext
 
@@ -34,9 +34,9 @@ trait ExecutionContextOps {
     * {{{
     * import scala.concurrent.Future
     * import java.util.concurrent.atomic.AtomicInteger
-    * import ecspec.EcSpec.everyInterleaving
+    * import berlin.jentsch.modelchecker.futures.EcSpec.everyInterleaving
     *
-    * import ecspec.ExecutionContextOps.pass
+    * import berlin.jentsch.modelchecker.futures.ExecutionContextOps.pass
     *
     * everyInterleaving { implicit ec =>
     *   val result = new AtomicInteger(0)

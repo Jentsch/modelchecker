@@ -120,7 +120,8 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * }}}
     */
   def increase[T: Ordering]: TimeWord[T] = new TimeWord[T] {
-    override def apply(t: => T)(implicit ec: ExecutionContext, position: Position): Unit = {
+    override def apply(t: => T)(implicit ec: ExecutionContext,
+                                position: Position): Unit = {
       Future {
         t
       }.foreach { t1 =>
@@ -170,7 +171,8 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * }}}
     */
   implicit class WillWord[T](t: Future[T]) {
-    def will(matcher: Matcher[T])(implicit ec: TestExecutionContext, position: Position): Unit =
+    def will(matcher: Matcher[T])(implicit ec: TestExecutionContext,
+                                  position: Position): Unit =
       ec.finallyCheck { () =>
         import org.scalatest.TryValues._
 
@@ -182,10 +184,10 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
         }
       }
 
-    def will(complete: self.complete.type)(
-        implicit ec: TestExecutionContext, position: Position): Unit =
+    def will(complete: self.complete.type)(implicit ec: TestExecutionContext,
+                                           position: Position): Unit =
       ec.finallyCheck { () =>
-        if (! t.isCompleted)
+        if (!t.isCompleted)
           fail("All computations are done, but the Future wasn't completed")
       }
   }
@@ -208,7 +210,8 @@ object EcSpec extends Matchers with EcSpec {
     val txt = fileContent.slice(start, start + 1)
 
     val tree =
-      q"""new berlin.jentsch.modelchecker.futures.EcSpec.CouldTestWord[${weakTypeOf[T]}]($value, $txt, $pos)"""
+      q"""new berlin.jentsch.modelchecker.futures.EcSpec.CouldTestWord[${weakTypeOf[
+        T]}]($value, $txt, $pos)"""
 
     c.Expr[CouldTestWord[T]](tree)
   }

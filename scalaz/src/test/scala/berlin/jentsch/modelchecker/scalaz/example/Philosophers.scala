@@ -38,7 +38,7 @@ object Philosophers {
 class PhilosophersSpec extends FlatSpec with Matchers with RTS {
   behavior of "Philosophers"
 
-  they should "have very few side effects" in pendingUntilFixed{
-    unsafeRun(Interpreter.effectCounter(Philosophers.runOk(3))) should be <= 30
+  they should "have very few concurrent side effects" in pendingUntilFixed {
+    unsafeRun(Interpreter.concurrentEffectsCounter(Philosophers.runOk(3))) should be <= 30
   }
 }

@@ -1,6 +1,8 @@
 package berlin.jentsch.modelchecker.scalaz.example
+
 import berlin.jentsch.modelchecker.scalaz.Interpreter
 import org.scalatest.{FlatSpec, Matchers}
+import scalaz.zio.duration.durationInt
 import scalaz.zio.{IO, Promise, RTS, Ref}
 
 object Cache {
@@ -24,14 +26,17 @@ object Cache {
 }
 
 class CacheSpec extends FlatSpec with Matchers with RTS {
+  behavior of "a cache"
 
-  val runCache = for {
+  private val runCache = for {
     cache <- Cache[Int, Int](IO.succeed)
     _ <- cache(2)
     _ <- cache(2)
   } yield ()
 
-  it should "have few side effects" in pendingUntilFixed {
-    unsafeRun(Interpreter.effectCounter(Philosophers.runOk(3))) should be <= 30
+  it should "have few concurrent side effects" in {
+    unsafeRun(
+      Interpreter
+        .concurrentEffectsCounter(runCache.timeout(10.seconds))) should be <= 30
   }
 }

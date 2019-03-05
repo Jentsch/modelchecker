@@ -1,7 +1,7 @@
 package berlin.jentsch.modelchecker
 
 /**
-  * This [[Walker]] is useful when the combinatorial explosion denies the usage of the [[Traverser]].
+  * This [[Traverser]] is useful when the combinatorial explosion denies the usage of the [[EveryPathTraverser]].
   * It only runs [[rounds]] times and returns random results.
   *
   * @param rounds the number of times the loop will be executed
@@ -25,7 +25,7 @@ package berlin.jentsch.modelchecker
   * }}}
   */
 private[modelchecker] final class RandomTraverser(private var rounds: Int)
-    extends Walker {
+    extends Traverser {
 
   import scala.util.Random.nextInt
 

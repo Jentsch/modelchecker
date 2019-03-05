@@ -2,7 +2,7 @@ package berlin.jentsch.modelchecker.futures
 
 import java.util.concurrent._
 
-import berlin.jentsch.modelchecker.{SinglePath, Traverser, Walker}
+import berlin.jentsch.modelchecker.{SinglePath, EveryPathTraverser, Traverser}
 import org.scalatest.exceptions.TestFailedException
 
 import scala.collection.mutable
@@ -19,7 +19,7 @@ import scala.util.control.NonFatal
  * See [[https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Semaphore.html Semaphore-API]]
  */
 class TestExecutionContext(info: String => Unit,
-                           private[this] val walker: Walker)
+                           private[this] val traverser: Traverser)
     extends ExecutionContext {
   self =>
 
@@ -66,12 +66,12 @@ class TestExecutionContext(info: String => Unit,
           case failed: TestFailedException =>
             info("Tested paths: " ++ finalStates.toString)
             info(
-              "Path to reproduce this failure: " ++ walker.getCurrentPath
+              "Path to reproduce this failure: " ++ traverser.getCurrentPath
                 .mkString("Seq(", ",", ")"))
             throw failed
       })
       finalChecks.clear()
-    } while (walker.hasMoreOptions())
+    } while (traverser.hasMoreOptions())
 
     info("Paths: " ++ finalStates.toString)
   }
@@ -184,7 +184,7 @@ class TestExecutionContext(info: String => Unit,
     if (waitingList.isEmpty) {
       finalStop.release()
     } else {
-      val nextThread = walker.removeOne(waitingList)
+      val nextThread = traverser.removeOne(waitingList)
       nextThread.release()
     }
 
@@ -201,11 +201,11 @@ object TestExecutionContext {
     * Creates a TestExecutionContext which prints to stdout and stderr.
     */
   def apply(): TestExecutionContext =
-    new TestExecutionContext(println, new Traverser)
+    new TestExecutionContext(println, new EveryPathTraverser)
 
   def testEveryPath(test: TestExecutionContext => Unit,
                     info: String => Unit): Unit =
-    new TestExecutionContext(info, new Traverser).testEveryPath(test)
+    new TestExecutionContext(info, new EveryPathTraverser).testEveryPath(test)
 
   def testSinglePath(test: TestExecutionContext => Unit,
                      path: Seq[Int],

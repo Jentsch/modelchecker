@@ -1,10 +1,10 @@
 package berlin.jentsch.modelchecker
 
 /**
-  * @see [[Traverser.getCurrentPath]] for how to use this class
+  * @see [[EveryPathTraverser.getCurrentPath]] for how to use this class
   */
 private[modelchecker] final case class SinglePath(private val path: Seq[Int])
-    extends Walker {
+    extends Traverser {
 
   private var index: Int = 0
 

@@ -1,51 +1,52 @@
 package berlin.jentsch.modelchecker.scalaz
 
-import scalaz.zio.Exit.Cause
-import scalaz.zio.{IO, Ref}
+import scalaz.zio.{Ref, ZIO}
 
 object Interpreter {
 
-  def concurrentEffectsCounter[E](io: IO[E, _]): IO[E, Int] =
+  def concurrentEffectsCounter[R, E](io: ZIO[R, E, _]): ZIO[R, E, Int] =
     for {
       counter <- Ref.make((1, 0))
       _ <- rewrite(io, counter)
       effects <- counter.get
     } yield effects._2
 
-  def rewrite[E, A](io: IO[E, A], counter: Ref[(Int, Int)]): IO[E, A] = {
-    def rec[E1, A1](io: IO[E1, A1]): IO[E1, A1] =
+  def rewrite[R, E, A](io: ZIO[R, E, A],
+                       counter: Ref[(Int, Int)]): ZIO[R, E, A] = {
+    def rec[R2, E1, A1](io: ZIO[R2, E1, A1]): ZIO[R2, E1, A1] =
       rewrite(io, counter)
 
     io match {
-      case value: IO.FlatMap[E, _, A] =>
-        rec(value.io).flatMap(x => rec(value.flatMapper(x)))
-      case value: IO.Point[A]  => value
-      case value: IO.Strict[A] => value
+      case value: ZIO.FlatMap[R, E, _, A] =>
+        rec(value.zio).flatMap(x => rec(value.k(x)))
+      case value: ZIO.Succeed[A] => value
 
-      case value: IO.SyncEffect[A] =>
+      case value: ZIO.Effect[A] =>
         counter.update(incCounter) *> value
-      case value: IO.AsyncEffect[E, A] => counter.update(incCounter) *> value
-      case value: IO.Redeem[_, E, _, A] =>
-        redeem(rec(value.value),
-               value.err.andThen(rec),
-               value.succ.andThen(rec))
-      case value: IO.Fork[_, _] =>
+      case value: ZIO.EffectAsync[E, A] => counter.update(incCounter) *> value
+      case value: ZIO.Fork[_, _] =>
         val prepIO =
           counter.update(incThreads) *>
             rec(value.value) ensuring
             counter.update(decThreads)
 
-        value.handler.fold(prepIO.fork)(handler => prepIO.forkWith(handler))
-      case value: IO.Uninterruptible[E, A] =>
-        rec(value.io).uninterruptible
-      case value: IO.Supervise[E, A] =>
+        prepIO.fork
+      case value: ZIO.Uninterruptible[R, E, A] =>
+        rec(value.zio).uninterruptible
+      case value: ZIO.Supervise[R, E, A] =>
         rec(value.value).superviseWith(x => rec(value.supervisor(x)))
-      case value: IO.Fail[_] => value
-      case value: IO.Ensuring[E, A] =>
-        rec(value.io).ensuring(rec(value.finalizer))
-      case IO.Descriptor        => IO.Descriptor
-      case value: IO.Lock[E, A] => rec(value.io).lock(value.executor)
-      case IO.Yield             => IO.Yield
+      case value: ZIO.Fail[_] => value
+      case value: ZIO.Ensuring[R, E, A] =>
+        rec(value.zio).ensuring(rec(value.finalizer))
+      case d @ ZIO.Descriptor       => d
+      case value: ZIO.Lock[R, E, A] => rec(value.zio).lock(value.executor)
+      case y @ ZIO.Yield            => y
+      case fold : ZIO.Fold[R, E, _, A, _] =>
+        rec(fold.value).foldCauseM(fold.err.andThen(rec), fold.succ.andThen(rec))
+      case provide: ZIO.Provide[R, E, A] =>
+        provide
+      case read: ZIO.Read[R, E, A] =>
+        ZIO.accessM(read.k.andThen(rec))
     }
   }
 
@@ -61,16 +62,5 @@ object Interpreter {
   private val decThreads: ((Int, Int)) => (Int, Int) = {
     case (t, c) => (t - 1, c)
   }
-
-  private val redeemConstructor =
-    classOf[IO.Redeem[_, _, _, _]].getConstructors.apply(0)
-  redeemConstructor.setAccessible(true)
-
-  private def redeem[E, E2, A, B](value: IO[E, A],
-                                  err: Cause[E] => IO[E2, B],
-                                  succ: A => IO[E2, B]): IO[E2, B] =
-    redeemConstructor
-      .newInstance(value, err, succ)
-      .asInstanceOf[IO.Redeem[E, E2, A, B]]
 
 }

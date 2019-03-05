@@ -31,7 +31,7 @@ enablePlugins(SiteScaladocPlugin)
 lazy val root = project
   .in(file("."))
   .settings(
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5"
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.6"
   )
   .aggregate(
     core,
@@ -45,7 +45,7 @@ lazy val core = project
   .settings(
     description := "Internal common functionality shared by the futures and scalaz subproject, no external API",
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.0.5" % Test
+      "org.scalatest" %% "scalatest" % "3.0.6" % Test
     ),
     examplePackageRef := {
       import scala.meta._
@@ -60,7 +60,7 @@ lazy val futures = project
   .settings(
     scalacOptions in Test ++= Seq("-Yrangepos"),
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.0.5"
+      "org.scalatest" %% "scalatest" % "3.0.6"
     ),
     examplePackageRef := {
       import scala.meta._
@@ -73,8 +73,8 @@ lazy val scalaz = project
   .in(file("scalaz"))
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalaz" %% "scalaz-zio" % "0.6.3",
-      "org.scalatest" %% "scalatest" % "3.0.5" % Test
+      "org.scalaz" %% "scalaz-zio" % "0.9",
+      "org.scalatest" %% "scalatest" % "3.0.6" % Test
     )
   )
 
@@ -84,7 +84,7 @@ lazy val akka = project
     scalacOptions in Test ++= Seq("-Yrangepos"),
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scalatest" %% "scalatest" % "3.0.5" % Test,
+      "org.scalatest" %% "scalatest" % "3.0.6" % Test,
     ),
     examplePackageRef := {
       import scala.meta._

@@ -9,12 +9,15 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
+/*
+ * This benchmark will invoke some stack traces when run
+ */
 @State(Scope.Thread)
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @Fork(value = 3)
-@Measurement(time = 10, iterations = 3)
-@Warmup(time = 10, iterations = 2)
+@Measurement(time = 20, iterations = 5)
+@Warmup(time = 10, iterations = 3)
 class FutureBenchmarks extends FlatSpec with Matchers with EcSpec {
 
   @Benchmark

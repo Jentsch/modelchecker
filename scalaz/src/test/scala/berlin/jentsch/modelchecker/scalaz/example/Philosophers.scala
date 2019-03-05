@@ -35,7 +35,7 @@ object Philosophers {
     } yield ()
 }
 
-class PhilosophersSpec extends FlatSpec with Matchers with RTS {
+class PhilosophersSpec extends FlatSpec with Matchers with DefaultRuntime {
   behavior of "Philosophers"
 
   they should "have very few concurrent side effects" in pendingUntilFixed {

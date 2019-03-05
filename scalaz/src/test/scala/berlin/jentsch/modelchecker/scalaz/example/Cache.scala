@@ -3,7 +3,7 @@ package berlin.jentsch.modelchecker.scalaz.example
 import berlin.jentsch.modelchecker.scalaz.Interpreter
 import org.scalatest.{FlatSpec, Matchers}
 import scalaz.zio.duration.durationInt
-import scalaz.zio.{IO, Promise, RTS, Ref}
+import scalaz.zio.{DefaultRuntime, IO, Promise, Ref}
 
 object Cache {
   def apply[I, O](
@@ -25,7 +25,7 @@ object Cache {
     }
 }
 
-class CacheSpec extends FlatSpec with Matchers with RTS {
+class CacheSpec extends FlatSpec with Matchers with DefaultRuntime {
   behavior of "a cache"
 
   private val runCache = for {

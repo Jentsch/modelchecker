@@ -5,7 +5,7 @@ import java.util.Arrays
 /**
   * @example usage
   * {{{
-  *   val trav = new Traverser
+  *   val trav = new EveryPathTraverser
   *   var out = Set.empty[Int]
   *
   *   do {
@@ -59,13 +59,14 @@ private[modelchecker] final class EveryPathTraverser extends Traverser {
     * Returns the current path. Can be used to recreate a single run with the traverse
     *
     * @return current path
-    * @example usage of getCurrentPath and [[SinglePath
+    * @example usage of getCurrentPath and [[SinglePath]]
+    *
     * {{{
-    *   val trav = new Traverser
+    *   val trav = new EveryPathTraverser
     *   val seeking = 12
     *   var foundPath: Seq[Int] = Seq.empty
     *
-    *   def calculation(walk: Walker): Int = {
+    *   def calculation(walk: Traverser): Int = {
     *     val a: Int = walk.choose(Seq(1, 2, 3))
     *     val b: Int = walk.choose(Seq(4, 2))
     *     a * b

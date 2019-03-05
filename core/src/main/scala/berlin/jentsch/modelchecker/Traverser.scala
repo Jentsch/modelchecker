@@ -9,7 +9,7 @@ private[modelchecker] abstract class Traverser {
     * @throws IllegalArgumentException, if no choice is offered
     * @example
     * {{{
-    *   val trav = new Traverser
+    *   val trav = new EveryPathTraverser
     *
     *   do {
     *     val original = List(1, 2, 3)
@@ -24,7 +24,7 @@ private[modelchecker] abstract class Traverser {
     * }}}
     * @example empty buffers are an invalid argument for `removeOne`
     * {{{
-    *   val trav = new Traverser
+    *   val trav = new EveryPathTraverser
     *
     *   an[IllegalArgumentException] should be thrownBy trav.removeOne(collection.mutable.Buffer.empty)
     * }}}

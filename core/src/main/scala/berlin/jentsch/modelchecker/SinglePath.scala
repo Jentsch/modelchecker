@@ -3,7 +3,7 @@ package berlin.jentsch.modelchecker
 /**
   * @see [[EveryPathTraverser.getCurrentPath]] for how to use this class
   */
-private[modelchecker] final case class SinglePath(private val path: Seq[Int])
+private[modelchecker] final class SinglePath(path: Seq[Int])
     extends Traverser {
 
   private var index: Int = 0
@@ -21,7 +21,7 @@ private[modelchecker] final case class SinglePath(private val path: Seq[Int])
     *
     * @example it equals the given path
     * {{{
-    *   val path = SinglePath(Seq(1, 2, 3))
+    *   val path = new SinglePath(Seq(1, 2, 3))
     *
     *   path.getCurrentPath shouldBe Seq(1, 2, 3)
     *

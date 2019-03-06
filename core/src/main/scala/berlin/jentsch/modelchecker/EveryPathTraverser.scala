@@ -81,7 +81,7 @@ private[modelchecker] final class EveryPathTraverser extends Traverser {
     *
     *   foundPath should not(be(empty))
     *
-    *   calculation(SinglePath(foundPath)) should be(seeking)
+    *   calculation(new SinglePath(foundPath)) should be(seeking)
     * }}}
     */
   override def getCurrentPath: Seq[Int] = path.toSeq.take(currentDepth)

@@ -52,6 +52,12 @@ class PhilosophersSpec extends FlatSpec with EcSpec with Matchers {
       new Philosophers(3).runDeadLock will complete
   })
 
+  they should "starve on this specific path" in {
+    everyInterleaving(Seq(1, 2, 3, 2, 1, 0)) { implicit ec =>
+      new Philosophers(3).runDeadLock willNot complete
+    }
+  }
+
   they should "not starve when everything is ok" in everyInterleaving {
     implicit ec =>
       new Philosophers(3).runOk will complete

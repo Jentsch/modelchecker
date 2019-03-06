@@ -210,7 +210,7 @@ object TestExecutionContext {
   def testSinglePath(test: TestExecutionContext => Unit,
                      path: Seq[Int],
                      info: String => Unit) =
-    new TestExecutionContext(info, SinglePath(path))
+    new TestExecutionContext(info, new SinglePath(path)).testEveryPath(test)
 
   private[TestExecutionContext] val globalThreadPool =
     new ThreadPoolExecutor(0,

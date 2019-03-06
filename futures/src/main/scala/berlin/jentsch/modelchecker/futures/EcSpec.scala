@@ -46,7 +46,6 @@ import scala.reflect.macros.blackbox
   *     }
   *   }
   * }}}
-  *
   * @see #everyInterleaving
   */
 trait EcSpec extends ExecutionContextOps { self: Matchers =>
@@ -77,9 +76,9 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     *   Future { x = 3 }
     * }
     * }}}
-    * Without the volatile annotation tests would be ok but the runtime semantic isn't covered by the tests.
     *
-    * @param test the test code to rum
+    * Without the volatile annotation tests would be still ok but the runtime semantic isn't covered by the tests.
+    * @param test the test code to run
     */
   def everyInterleaving(test: TestExecutionContext => Unit)(
       implicit pos: Position): Unit = {
@@ -88,6 +87,12 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     throwExceptionForNeverSatisfiedCouldTests()
   }
 
+  /**
+    * This helper method runs only a single path.
+    * All could assumptions will be ignored!
+    *
+    * @param test the test code to run
+    */
   def everyInterleaving(path: Seq[Int])(test: TestExecutionContext => Unit)(
       implicit pos: Position): Unit = {
     TestExecutionContext.testSinglePath(test, path, info(_))
@@ -189,6 +194,13 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
       ec.finallyCheck { () =>
         if (!t.isCompleted)
           fail("All computations are done, but the Future wasn't completed")
+      }
+
+    def willNot(complete: self.complete.type)(implicit ec: TestExecutionContext,
+                                              position: Position): Unit =
+      ec.finallyCheck { () =>
+        if (t.isCompleted)
+          fail("The future was completed with " ++ t.value.get.toString)
       }
   }
 

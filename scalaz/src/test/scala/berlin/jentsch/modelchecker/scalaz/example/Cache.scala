@@ -7,7 +7,7 @@ import scalaz.zio.duration.durationInt
 
 object Cache {
   def apply[I, O](
-      cached: I => IO[Nothing, O]): IO[Nothing, I => IO[Nothing, O]] =
+      cached: I => UIO[O]): UIO[I => IO[Nothing, O]] =
     for {
       c <- Ref.make(Map.empty[I, Promise[Nothing, O]])
     } yield { i: I =>
@@ -35,8 +35,8 @@ class CacheSpec extends FlatSpec with Matchers with DefaultRuntime {
   } yield ()
 
   it should "rewritable by the interpreter" in pendingUntilFixed {
-    val counter: ZIO[Any, Nothing, (Unit, Int)] =
-      concurrentEffectsCounterAndResult(runCache)
+    val counter: UIO[Int] =
+      concurrentEffectsCounter(runCache)
 
     unsafeRun(counter.timeout(10.seconds)) should be('defined)
   }

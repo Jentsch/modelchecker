@@ -7,7 +7,7 @@ import scalaz.zio._
 object Philosophers {
 
   private def philosopher(firstStick: Semaphore,
-                          secondStick: Semaphore): IO[Nothing, Unit] =
+                          secondStick: Semaphore): UIO[Unit] =
     IO.succeed((/* THINK */ )) *>
       firstStick.acquire *>
       secondStick.acquire *>
@@ -15,7 +15,7 @@ object Philosophers {
       secondStick.release *>
       firstStick.release
 
-  def run(n: Int): IO[Nothing, Unit] =
+  def run(n: Int): UIO[Unit] =
     for {
       sticks <- IO.foreach(in = 0 until n)(_ => Semaphore.make(1))
       philosophers = 0 until n map { i =>
@@ -24,7 +24,7 @@ object Philosophers {
       _ <- IO.foreachPar(philosophers)(identity)
     } yield ()
 
-  def runOk(n: Int): IO[Nothing, Unit] =
+  def runOk(n: Int): UIO[Unit] =
     for {
       sticks <- IO.foreach(in = 0 until n)(_ => Semaphore.make(1))
       philosophers = 0 until n map {

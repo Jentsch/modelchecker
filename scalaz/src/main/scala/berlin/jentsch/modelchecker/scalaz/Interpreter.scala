@@ -3,17 +3,26 @@ package berlin.jentsch.modelchecker.scalaz
 import scalaz.zio._
 
 object Interpreter {
-  def concurrentEffectsCounter[R, E](zio: ZIO[R, E, _]): ZIO[R, E, Int] =
+
+  /**
+    * Counts concurrent effects in `zio` to estimate the runtime for finding all interleaving.
+    *
+    * To counts the effects `zio`, more precisely a modification of `zio` has to be executed.
+    *
+    * @param zio program to count the effects
+    * @tparam R Runtime environment
+    */
+  def concurrentEffectsCounter[R, E](zio: ZIO[R, _, _]): ZIO[R, Nothing, Int] =
     concurrentEffectsCounterAndResult(zio).map(_._2)
 
   def concurrentEffectsCounterAndResult[R, E, A](
-      zio: ZIO[R, E, A]): ZIO[R, E, (A, Int)] =
+      zio: ZIO[R, E, A]): ZIO[R, Nothing, (Either[E, A], Int)] =
     for {
       counter <- Ref.make((1, 0))
       a <- rewriteConcurrentEffects(zio,
                                     beforeEffect = counter.update(incCounter),
                                     onStart = counter.update(incThreads),
-                                    onEnd = counter.update(decThreads))
+                                    onEnd = counter.update(decThreads)).either
       effects <- counter.get
     } yield (a, effects._2)
 
@@ -30,7 +39,7 @@ object Interpreter {
     case (threads, effects) => (threads - 1, effects)
   }
 
-  def rewriteConcurrentEffects[R, E, A, S](
+  private def rewriteConcurrentEffects[R, E, A, S](
       zio: ZIO[R, E, A],
       onStart: UIO[Any],
       onEnd: UIO[Any],

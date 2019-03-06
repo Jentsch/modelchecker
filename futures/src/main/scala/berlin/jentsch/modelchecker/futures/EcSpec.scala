@@ -1,15 +1,12 @@
 package berlin.jentsch.modelchecker.futures
 
 import org.scalactic.source.Position
-import org.scalatest.exceptions.TestFailedException
+import org.scalatest.exceptions.{StackDepthException, TestFailedException}
 import org.scalatest.matchers.{MatchFailed, Matcher}
 import org.scalatest.{Informer, Matchers}
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
-import scala.language.experimental.macros
-import scala.language.implicitConversions
-import scala.reflect.macros.blackbox
 
 /**
   * Add this trait to your test class to use the [[EcSpec.everyInterleaving()]] method.
@@ -41,8 +38,8 @@ import scala.reflect.macros.blackbox
   *       x should be <= 2
   *
   *       x could be(0) // Thread 0 can be done before Thread 1 or 2 even start
-  *       x could be(1) // in case of an interleaving x can be actual 1
-  *       x could be(2) // No interleaving
+  *       x could be(1) // in case of an interleaving x can be 1
+  *       x could be(2) // No interleaving and threads 1 and 2 finish before this 'main' thread
   *     }
   *   }
   * }}}
@@ -53,10 +50,8 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
   /** Don't implement this method, but mixin the EcSpec into a FlatSpec, WordSpec etc. */
   protected def info: Informer
 
-  implicit val ecContext: EcSpec = this
-
   private val couldWasTrueFor =
-    mutable.Map.empty[String, Option[TestFailedException]]
+    mutable.Map.empty[Position, Option[TestFailedException]]
 
   /**
     * It's possible that not every computation is done after returning to the test.
@@ -91,6 +86,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * This helper method runs only a single path.
     * All could assumptions will be ignored!
     *
+    * @param path concrete path provided by the other everyInterleaving method
     * @param test the test code to run
     */
   def everyInterleaving(path: Seq[Int])(test: TestExecutionContext => Unit)(
@@ -137,8 +133,37 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     }
   }
 
-  implicit def toCouldTestWord[T](value: T): EcSpec.CouldTestWord[T] =
-    macro EcSpec.ToCouldTestWordImpl[T]
+  implicit class CouldTestWord[T](value: T) {
+
+    /**
+      * This method enables syntax such as the following:
+      *
+      * ```
+      * result could be (3)
+      * ```
+      **/
+    def could(rightMatcher: Matcher[T])(implicit position: Position): Unit = {
+      rightMatcher(value) match {
+        case MatchFailed(_) =>
+          self.couldWasTrueFor.getOrElseUpdate(
+            position,
+            Some(
+              new TestFailedException(
+                (_: StackDepthException) =>
+                  Some(" couldn't " + rightMatcher.toString()),
+                None,
+                Left(position),
+                None)))
+
+          ()
+        case _ =>
+          self.couldWasTrueFor(position) = None
+
+          ()
+      }
+    }
+
+  }
 
   /**
     * Properties about a term `t` and it's behaviour over time.
@@ -211,51 +236,6 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
   * Instead of mixin the EcSpec trait you can also do a wildcard import of this companion object.
   */
 object EcSpec extends Matchers with EcSpec {
-  def ToCouldTestWordImpl[T: c.WeakTypeTag](c: blackbox.Context)(
-      value: c.Expr[T]): c.Expr[CouldTestWord[T]] = {
-    import c.universe._
-
-    val position = c.enclosingPosition
-    val pos = position.source.path + " " + position.line.toString + ":" + position.column.toString
-    val fileContent = new String(value.tree.pos.source.content)
-    val start = value.tree.pos.start
-    val txt = fileContent.slice(start, start + 1)
-
-    val tree =
-      q"""new berlin.jentsch.modelchecker.futures.EcSpec.CouldTestWord[${weakTypeOf[
-        T]}]($value, $txt, $pos)"""
-
-    c.Expr[CouldTestWord[T]](tree)
-  }
-
-  class CouldTestWord[T](value: T, valRep: String, pos: String) {
-
-    /**
-      * This method enables syntax such as the following:
-      *
-      * ```
-      * result could be (3)
-      * ```
-      **/
-    def could(rightMatcher: Matcher[T])(implicit ctx: EcSpec): Unit = {
-      rightMatcher(value) match {
-        case MatchFailed(_) =>
-          ctx.couldWasTrueFor.getOrElseUpdate(
-            pos,
-            Some(
-              new TestFailedException(
-                valRep + " couldn't " + rightMatcher.toString(),
-                13)))
-          ()
-        case _ =>
-          ctx.couldWasTrueFor(pos) = None
-
-          ()
-      }
-    }
-
-  }
-
   override protected def info: Informer = new Informer {
     override def apply(message: String, payload: Option[Any])(
         implicit pos: Position): Unit =

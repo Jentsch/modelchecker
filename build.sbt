@@ -58,7 +58,6 @@ lazy val futures = project
   .in(file("futures"))
   .dependsOn(core)
   .settings(
-    scalacOptions in Test ++= Seq("-Yrangepos"),
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.0.6"
     ),

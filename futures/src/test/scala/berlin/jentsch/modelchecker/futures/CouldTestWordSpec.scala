@@ -1,22 +1,15 @@
 package berlin.jentsch.modelchecker.futures
 
-import org.scalatest.exceptions.TestFailedException
 import org.scalatest.{FlatSpec, Matchers}
 
 class CouldTestWordSpec extends FlatSpec with Matchers with EcSpec {
+  behavior of "Could word"
 
-  "could" should "work on every data type" in {
-    true could be(true)
-    1 could be(2)
-    "" could be(10)
-  }
+  it should "not capture statements outside the interleaving context" in pendingUntilFixed{
+    true could be(false)
 
-  it should "not confuse multiple expression on one line" in {
-    an[TestFailedException] should be thrownBy {
-      everyInterleaving { _ =>
-        // for this test it's important that this to statements are on one line, so don't reformat
-        true could be(true); false could be(true)
-      }
+    everyInterleaving { _ =>
+      1 could be (1)
     }
   }
 }

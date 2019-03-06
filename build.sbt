@@ -11,9 +11,9 @@ version := "0.1.0-SNAPSHOT"
 scalaVersion in ThisBuild := "2.12.8"
 
 scalacOptions in ThisBuild ++= Seq(
-  "-unchecked",
+  Opts.compile.unchecked,
   "-feature",
-  "-deprecation",
+  Opts.compile.deprecation,
   "-Xfuture",
   "-Yno-adapted-args",
   "-Ywarn-dead-code",
@@ -30,15 +30,18 @@ enablePlugins(SiteScaladocPlugin)
 
 lazy val root = project
   .in(file("."))
-  .settings(
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.6"
-  )
   .aggregate(
     core,
     futures,
     scalaz,
     akka
   )
+  .settings(
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.6",
+    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(benchmarks),
+    scalacOptions in (Compile, doc) ++= Opts.doc.title("Scala Model-Checker")
+  )
+  .enablePlugins(ScalaUnidocPlugin)
 
 lazy val core = project
   .in(file("core"))
@@ -72,7 +75,7 @@ lazy val scalaz = project
   .in(file("scalaz"))
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalaz" %% "scalaz-zio" % "0.9",
+      "org.scalaz" %% "scalaz-zio" % "0.10",
       "org.scalatest" %% "scalatest" % "3.0.6" % Test
     )
   )

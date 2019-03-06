@@ -4,7 +4,7 @@ import scala.concurrent.ExecutionContext
 
 /**
   * Various methods to give additional information about states of the system.
-  * When used with a normal [[ExecutionContext]] all of the methods are a no operation.
+  * When used with a normal [[scala.concurrent.ExecutionContext]] all of the methods are a no operation.
   */
 trait ExecutionContextOps {
 

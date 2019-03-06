@@ -1,6 +1,6 @@
 package berlin.jentsch.modelchecker.scalaz.example
 
-import berlin.jentsch.modelchecker.scalaz.Interpreter
+import berlin.jentsch.modelchecker.scalaz.Interpreter.concurrentEffectsCounter
 import org.scalatest.{FlatSpec, Matchers}
 import scalaz.zio._
 
@@ -39,6 +39,6 @@ class PhilosophersSpec extends FlatSpec with Matchers with DefaultRuntime {
   behavior of "Philosophers"
 
   they should "have very few concurrent side effects" in pendingUntilFixed {
-    unsafeRun(Interpreter.concurrentEffectsCounter(Philosophers.runOk(3))) should be <= 30
+    unsafeRun(concurrentEffectsCounter(Philosophers.runOk(3))) should be <= 30
   }
 }

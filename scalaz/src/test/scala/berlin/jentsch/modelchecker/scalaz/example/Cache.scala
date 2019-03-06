@@ -1,9 +1,9 @@
 package berlin.jentsch.modelchecker.scalaz.example
 
-import berlin.jentsch.modelchecker.scalaz.Interpreter
+import berlin.jentsch.modelchecker.scalaz.Interpreter._
 import org.scalatest.{FlatSpec, Matchers}
+import scalaz.zio._
 import scalaz.zio.duration.durationInt
-import scalaz.zio.{DefaultRuntime, IO, Promise, Ref}
 
 object Cache {
   def apply[I, O](
@@ -34,9 +34,10 @@ class CacheSpec extends FlatSpec with Matchers with DefaultRuntime {
     _ <- cache(2)
   } yield ()
 
-  it should "have few concurrent side effects" in {
-    unsafeRun(
-      Interpreter
-        .concurrentEffectsCounter(runCache.timeout(10.seconds))) should be <= 30
+  it should "rewritable by the interpreter" in pendingUntilFixed {
+    val counter: ZIO[Any, Nothing, (Unit, Int)] =
+      concurrentEffectsCounterAndResult(runCache)
+
+    unsafeRun(counter.timeout(10.seconds)) should be('defined)
   }
 }

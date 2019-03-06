@@ -214,7 +214,7 @@ object TestExecutionContext {
 
   def testSinglePath(test: TestExecutionContext => Unit,
                      path: Seq[Int],
-                     info: String => Unit) =
+                     info: String => Unit): Unit =
     new TestExecutionContext(info, new SinglePath(path)).testEveryPath(test)
 
   def testRandomPath(test: TestExecutionContext => Unit,

@@ -2,7 +2,12 @@ package berlin.jentsch.modelchecker.futures
 
 import java.util.concurrent._
 
-import berlin.jentsch.modelchecker.{SinglePath, EveryPathTraverser, Traverser}
+import berlin.jentsch.modelchecker.{
+  EveryPathTraverser,
+  RandomTraverser,
+  SinglePath,
+  Traverser
+}
 import org.scalatest.exceptions.TestFailedException
 
 import scala.collection.mutable
@@ -211,6 +216,10 @@ object TestExecutionContext {
                      path: Seq[Int],
                      info: String => Unit) =
     new TestExecutionContext(info, new SinglePath(path)).testEveryPath(test)
+
+  def testRandomPath(test: TestExecutionContext => Unit,
+                     info: String => Unit): Unit =
+    new TestExecutionContext(info, new RandomTraverser(100)).testEveryPath(test)
 
   private[TestExecutionContext] val globalThreadPool =
     new ThreadPoolExecutor(0,

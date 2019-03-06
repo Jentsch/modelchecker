@@ -75,8 +75,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * Without the volatile annotation tests would be still ok but the runtime semantic isn't covered by the tests.
     * @param test the test code to run
     */
-  def everyInterleaving(test: TestExecutionContext => Unit)(
-      implicit pos: Position): Unit = {
+  def everyInterleaving(test: TestExecutionContext => Unit): Unit = {
     TestExecutionContext.testEveryPath(test, info(_))
 
     throwExceptionForNeverSatisfiedCouldTests()
@@ -89,10 +88,12 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * @param path concrete path provided by the other everyInterleaving method
     * @param test the test code to run
     */
-  def everyInterleaving(path: Seq[Int])(test: TestExecutionContext => Unit)(
-      implicit pos: Position): Unit = {
+  def everyInterleaving(path: Seq[Int])(
+      test: TestExecutionContext => Unit): Unit =
     TestExecutionContext.testSinglePath(test, path, info(_))
-  }
+
+  def randomInterleaving(test: TestExecutionContext => Unit): Unit =
+    TestExecutionContext.testRandomPath(test, info(_))
 
   private def throwExceptionForNeverSatisfiedCouldTests(): Unit =
     couldWasTrueFor.values.flatten.headOption

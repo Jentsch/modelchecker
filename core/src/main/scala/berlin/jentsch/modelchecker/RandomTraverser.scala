@@ -22,6 +22,8 @@ package berlin.jentsch.modelchecker
   * assert(resultCounter.values.sum == 100)
   * assert(resultCounter.values.max > 1)
   * assert((0 until 100).toSet != resultCounter.keys)
+  *
+  * assert(traverser.getCurrentPath.length < 3)
   * }}}
   */
 private[modelchecker] final class RandomTraverser(private var rounds: Int)
@@ -29,7 +31,7 @@ private[modelchecker] final class RandomTraverser(private var rounds: Int)
 
   import scala.util.Random.nextInt
 
-  private var currentPath = List.empty[Int]
+  private var currentPath: List[Int] = Nil
 
   override def choose[E](choices: Seq[E]): E = {
     require(choices.nonEmpty, "no choices available")
@@ -58,6 +60,7 @@ private[modelchecker] final class RandomTraverser(private var rounds: Int)
   override def hasMoreOptions(): Boolean =
     if (rounds > 1) {
       rounds -= 1
+      currentPath = Nil
       true
     } else {
       false

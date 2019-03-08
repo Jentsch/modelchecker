@@ -22,12 +22,6 @@ scalacOptions in ThisBuild ++= Seq(
   "-Ywarn-unused-import"
 )
 
-enablePlugins(GhpagesPlugin)
-
-git.remoteRepo := "git@github.com:Jentsch/modelchecker.git"
-
-enablePlugins(SiteScaladocPlugin)
-
 lazy val root = project
   .in(file("."))
   .aggregate(
@@ -38,15 +32,12 @@ lazy val root = project
   )
   .settings(
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.6",
-    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(benchmarks),
-    scalacOptions in (Compile, doc) ++= Opts.doc.title("Scala Model-Checker")
   )
-  .enablePlugins(ScalaUnidocPlugin)
 
 lazy val core = project
   .in(file("core"))
   .settings(
-    description := "Internal common functionality shared by the futures and scalaz subproject, no external API",
+    description := "Internal common functionality shared by the futures and scalaz sub-project, no external API",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.0.6" % Test
     ),

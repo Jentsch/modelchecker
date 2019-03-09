@@ -68,8 +68,17 @@ lazy val scalaz = project
     libraryDependencies ++= Seq(
       "org.scalaz" %% "scalaz-zio" % "0.10",
       "org.scalatest" %% "scalatest" % "3.0.6" % Test
-    )
+    ),
+    examplePackageRef := {
+      import scala.meta._
+      q"berlin.jentsch.modelchecker.scalaz"
+    },
+    exampleSuperTypes += {
+      import scala.meta._
+      ctor"_root_.scalaz.zio.DefaultRuntime"
+    }
   )
+  .enablePlugins(Example)
 
 lazy val akka = project
   .in(file("akka"))

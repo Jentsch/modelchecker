@@ -6,11 +6,41 @@ object Interpreter {
 
   /**
     * Counts concurrent effects in `zio` to estimate the runtime for finding all interleaving.
+    * The result isn't stable.
     *
-    * To counts the effects `zio`, more precisely a modification of `zio` has to be executed.
+    * To counts the effects `zio`, more precisely a modification of `zio`, has to be executed.
     *
     * @param zio program to count the effects
     * @tparam R Runtime environment
+    * @example One concurrent effect in `prog`
+    * {{{
+    * import scalaz.zio._
+    * import scalaz.zio.duration._
+    *
+    * val prog = for {
+    *   result <- Ref.make("")
+    *   _ <- result.set("Two").fork
+    *   _ <- IO.unit.delay(1.second)
+    *   _ <- result.set("One")
+    * } yield ()
+    *
+    * unsafeRun(Interpreter.concurrentEffectsCounter(prog)) === 1
+    * }}}
+    * @example No concurrent effects in `prog`
+    * {{{
+    * import scalaz.zio._
+    *
+    * val prog = for {
+    *   result <- Ref.make("")
+    *   one <- IO.succeed(1)
+    *   laterTwo <- IO.succeed(one).map(_ * 2).fork
+    *   three = one * 3
+    *   two <- laterTwo.join
+    *   _ <- result.set(three.toString ++ two.toString)
+    * } yield () // Drop result
+    *
+    * unsafeRun(Interpreter.concurrentEffectsCounter(prog)) === 0
+    * }}}
     */
   def concurrentEffectsCounter[R, E](zio: ZIO[R, _, _]): ZIO[R, Nothing, Int] =
     concurrentEffectsCounterAndResult(zio).map(_._2)
@@ -19,10 +49,12 @@ object Interpreter {
       zio: ZIO[R, E, A]): ZIO[R, Nothing, (Either[E, A], Int)] =
     for {
       counter <- Ref.make((1, 0))
-      a <- rewriteConcurrentEffects(zio,
-                                    beforeEffect = counter.update(incCounter),
-                                    onStart = counter.update(incThreads),
-                                    onEnd = counter.update(decThreads)).either
+      a <- rewriteConcurrentEffects[R, E, A, Unit](
+        zio,
+        beforeEffect = _ => counter.update(incCounter),
+        onStart = counter.update(incThreads).void,
+        onEnd = _ => counter.update(decThreads),
+        id = { () }).either
       effects <- counter.get
     } yield (a, effects._2)
 
@@ -39,26 +71,34 @@ object Interpreter {
     case (threads, effects) => (threads - 1, effects)
   }
 
-  private def rewriteConcurrentEffects[R, E, A, S](
+  private def rewriteConcurrentEffects[R, E, A, ID](
       zio: ZIO[R, E, A],
-      onStart: UIO[Any],
-      onEnd: UIO[Any],
-      beforeEffect: UIO[Any]): ZIO[R, E, A] = {
+      onStart: UIO[ID],
+      onEnd: ID => UIO[Any],
+      beforeEffect: ID => UIO[Any],
+      id: ID): ZIO[R, E, A] = {
 
     def rec[R2, E1, A1](zio2: ZIO[R2, E1, A1]): ZIO[R2, E1, A1] =
-      rewriteConcurrentEffects(zio2, onStart, onEnd, beforeEffect)
+      rewriteConcurrentEffects(zio2, onStart, onEnd, beforeEffect, id)
 
     zio match {
-      case value: ZIO.Effect[A]         => beforeEffect *> value
-      case value: ZIO.EffectAsync[E, A] => beforeEffect *> value
+      case value: ZIO.Effect[A]         => beforeEffect(id) *> value
+      case value: ZIO.EffectAsync[E, A] => beforeEffect(id) *> value
       case value: ZIO.Fork[_, _] =>
         val prepIO =
-          onStart *>
-            rec(value.value) ensuring
-            onEnd
+          for {
+            id <- onStart
+            result <- rewriteConcurrentEffects(value.value,
+                                               onStart,
+                                               onEnd,
+                                               beforeEffect,
+                                               id)
+              .ensuring(onEnd(id))
+          } yield result
 
         prepIO.fork
 
+      // Recursively apply the rewrite
       case value: ZIO.Succeed[A] => value
       case value: ZIO.FlatMap[R, E, _, A] =>
         rec(value.zio).flatMap(x => rec(value.k(x)))

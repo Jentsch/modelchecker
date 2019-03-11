@@ -66,7 +66,7 @@ lazy val scalaz = project
   .in(file("scalaz"))
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalaz" %% "scalaz-zio" % "0.10",
+      "org.scalaz" %% "scalaz-zio" % "0.11",
       "org.scalatest" %% "scalatest" % "3.0.6" % Test
     ),
     examplePackageRef := {

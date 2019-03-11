@@ -29,11 +29,13 @@ object Interpreter {
     * @example No concurrent effects in `prog`
     * {{{
     * import scalaz.zio._
+    * import scalaz.zio.duration._
     *
     * val prog = for {
     *   result <- Ref.make("")
     *   one <- IO.succeed(1)
     *   laterTwo <- IO.succeed(one).map(_ * 2).fork
+    *   _ <- IO.unit.delay(1.second)
     *   three = one * 3
     *   two <- laterTwo.join
     *   _ <- result.set(three.toString ++ two.toString)

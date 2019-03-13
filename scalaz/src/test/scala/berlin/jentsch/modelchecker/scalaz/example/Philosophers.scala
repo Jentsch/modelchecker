@@ -1,6 +1,6 @@
 package berlin.jentsch.modelchecker.scalaz.example
 
-import berlin.jentsch.modelchecker.scalaz.Interpreter.concurrentEffectsCounter
+import berlin.jentsch.modelchecker.scalaz.Interpreter
 import org.scalatest.{FlatSpec, Matchers}
 import scalaz.zio._
 
@@ -35,10 +35,15 @@ object Philosophers {
     } yield ()
 }
 
-class PhilosophersSpec extends FlatSpec with Matchers with DefaultRuntime {
+class PhilosophersSpec extends FlatSpec with Matchers {
   behavior of "Philosophers"
 
-  they should "have very few concurrent side effects" in pendingUntilFixed {
-    unsafeRun(concurrentEffectsCounter(Philosophers.runOk(3))) should be <= 30
+  they should "sometimes deadlock in wrong configuration" in {
+    Interpreter.notFailing(Philosophers.run(3)) should (contain(None) and contain(Some(())))
+  }
+
+  they should "never deadlock" in {
+    all(Interpreter.notFailing(Philosophers.runOk(3))) should be(Some(()))
   }
 }
+

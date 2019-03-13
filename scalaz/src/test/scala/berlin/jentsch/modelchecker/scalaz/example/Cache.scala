@@ -38,6 +38,6 @@ class CacheSpec extends FlatSpec with Matchers with DefaultRuntime {
     val counter: UIO[Int] =
       concurrentEffectsCounter(runCache)
 
-    unsafeRun(counter.timeout(10.seconds)) should be('defined)
+    unsafeRun(counter.timeout(5.seconds)) should be('defined)
   }
 }

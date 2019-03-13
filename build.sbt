@@ -64,6 +64,7 @@ lazy val futures = project
 
 lazy val scalaz = project
   .in(file("scalaz"))
+  .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(
       "org.scalaz" %% "scalaz-zio" % "0.11",

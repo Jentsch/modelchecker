@@ -84,8 +84,8 @@ lazy val scalaz = project
 lazy val akka = project
   .in(file("akka"))
   .settings(
-    scalacOptions in Test ++= Seq("-Yrangepos"),
     libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor-typed" % "2.5.21",
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "org.scalatest" %% "scalatest" % "3.0.6" % Test,
     ),

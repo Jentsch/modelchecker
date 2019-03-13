@@ -15,7 +15,7 @@ import scala.util.Random.{nextInt => randomInt}
 class FuncEqualsBenchmarks {
 
   @Benchmark
-  def refences: Boolean =
+  def references: Boolean =
     RefEqual.equal(randomFunction, randomFunction)
 
   @Benchmark

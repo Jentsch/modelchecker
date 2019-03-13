@@ -5,6 +5,8 @@ import scala.reflect.runtime.universe.runtimeMirror
 import scala.tools.reflect.{ToolBox, ToolBoxError}
 
 /**
+  * Determine equality of to object with runtime reflection.
+  *
   * @example Some examples
   * {{{
   *   import org.scalatest.prop.Tables._
@@ -39,7 +41,9 @@ object ReflectiveEquals {
   private val tb = runtimeMirror(getClass.getClassLoader).mkToolBox()
 
   def equals(a: AnyRef, b: AnyRef): Boolean =
-    if (a.isInstanceOf[Any => Any] || a.isInstanceOf[() => Any] || a
+    if (a eq b) {
+      true
+    } else if (a.isInstanceOf[Any => Any] || a.isInstanceOf[() => Any] || a
           .isInstanceOf[(Any, Any) => Any]) {
       generatedEquals
         .getOrElseUpdate(

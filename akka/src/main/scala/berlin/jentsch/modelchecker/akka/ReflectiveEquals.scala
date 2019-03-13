@@ -44,7 +44,7 @@ object ReflectiveEquals {
     if (a eq b) {
       true
     } else if (a.isInstanceOf[Any => Any] || a.isInstanceOf[() => Any] || a
-          .isInstanceOf[(Any, Any) => Any]) {
+                 .isInstanceOf[(Any, Any) => Any]) {
       generatedEquals
         .getOrElseUpdate(
           a.getClass, {

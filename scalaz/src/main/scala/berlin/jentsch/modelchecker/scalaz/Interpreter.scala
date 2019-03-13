@@ -20,7 +20,10 @@ object Interpreter {
     * Returns a set of possible outcomes of `zio`.
     *
     * {{{
-    * apply(zio) === notFailing(zio).map(_.map(Exit.Success))
+    * import scalaz.zio.IO
+    *
+    * val prog = IO.succeed(1) race IO.succeed(1)
+    * Interpreter.notFailing(prog) === Set(Some(1), Some(2))
     * }}}
     */
   def notFailing[A](zio: ZIO[Unit, Nothing, A]): Set[Option[A]] =

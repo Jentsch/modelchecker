@@ -34,12 +34,14 @@ private[modelchecker] final class RandomTraverser(private var rounds: Int)
   private var currentPath: List[Int] = Nil
 
   override def choose[E](choices: Seq[E]): E = {
-    require(choices.nonEmpty, "no choices available")
+    if (needToChoose(choices)) {
+      val choice = nextInt(choices.length)
+      currentPath ::= choice
 
-    val choice = nextInt(choices.length)
-    currentPath ::= choice
-
-    choices(choice)
+      choices(choice)
+    } else {
+      choices.head
+    }
   }
 
   /**

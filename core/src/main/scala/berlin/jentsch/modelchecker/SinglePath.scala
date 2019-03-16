@@ -8,9 +8,13 @@ private[modelchecker] final class SinglePath(path: Seq[Int]) extends Traverser {
   private var index: Int = 0
 
   override def choose[E](choices: Seq[E]): E = {
-    val result = path.lift(index).fold(choices.last)(choices)
-    index += 1
-    result
+    if (needToChoose(choices)) {
+      val result = path.lift(index).fold(choices.last)(choices)
+      index += 1
+      result
+    } else {
+      choices.head
+    }
   }
 
   override def hasMoreOptions(): Boolean = false

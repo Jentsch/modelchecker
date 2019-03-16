@@ -37,6 +37,12 @@ private[modelchecker] abstract class Traverser {
 
   def choose[E](choices: Seq[E]): E
 
+  protected def needToChoose(choices: Seq[_]): Boolean = {
+    require(choices.nonEmpty, "no choices available")
+
+    choices.length > 1
+  }
+
   /**
     * Marks the end of the current round and returns true, if more rounds are needed
     *

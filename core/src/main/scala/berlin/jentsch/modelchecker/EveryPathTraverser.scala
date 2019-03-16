@@ -36,23 +36,25 @@ private[modelchecker] final class EveryPathTraverser extends Traverser {
     * @throws IllegalArgumentException, if no choice is offered
     */
   override def choose[E](choices: Seq[E]): E = {
-    require(choices.nonEmpty, "no choices available")
-
-    val choiceIndex = if (currentDepth >= pathLength) {
-      if (pathLength == path.length) {
-        path = Arrays.copyOf(path, pathLength * 4)
+    if (needToChoose(choices)) {
+      val choiceIndex = if (currentDepth >= pathLength) {
+        if (pathLength == path.length) {
+          path = Arrays.copyOf(path, pathLength * 4)
+        }
+        val max = choices.length - 1
+        path(currentDepth) = max
+        pathLength += 1
+        max
+      } else {
+        path(currentDepth)
       }
-      val max = choices.length - 1
-      path(currentDepth) = max
-      pathLength += 1
-      max
+
+      currentDepth += 1
+
+      choices(choiceIndex)
     } else {
-      path(currentDepth)
+      choices.head
     }
-
-    currentDepth += 1
-
-    choices(choiceIndex)
   }
 
   /**

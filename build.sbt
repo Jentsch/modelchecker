@@ -10,6 +10,8 @@ version := "0.1.0-SNAPSHOT"
 
 scalaVersion in ThisBuild := "2.12.8"
 
+lazy val scalaTestVersion = "3.0.7"
+
 scalacOptions in ThisBuild ++= Seq(
   Opts.compile.unchecked,
   "-feature",
@@ -31,7 +33,7 @@ lazy val root = project
     akka
   )
   .settings(
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.6",
+    libraryDependencies += "org.scalatest" %% "scalatest" % scalaTestVersion,
   )
 
 lazy val core = project
@@ -39,7 +41,7 @@ lazy val core = project
   .settings(
     description := "Internal common functionality shared by the futures and scalaz sub-project, no external API",
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.0.6" % Test
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     ),
     examplePackageRef := {
       import scala.meta._
@@ -53,7 +55,8 @@ lazy val futures = project
   .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.0.6"
+      "org.scalatest" %% "scalatest" % scalaTestVersion,
+      "com.novocode" % "junit-interface" % "0.11" % Test
     ),
     examplePackageRef := {
       import scala.meta._
@@ -67,8 +70,8 @@ lazy val scalaz = project
   .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalaz" %% "scalaz-zio" % "0.11",
-      "org.scalatest" %% "scalatest" % "3.0.6" % Test
+      "org.scalaz" %% "scalaz-zio" % "0.16",
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     ),
     examplePackageRef := {
       import scala.meta._
@@ -87,7 +90,7 @@ lazy val akka = project
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % "2.5.21",
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scalatest" %% "scalatest" % "3.0.6" % Test,
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
     ),
     examplePackageRef := {
       import scala.meta._

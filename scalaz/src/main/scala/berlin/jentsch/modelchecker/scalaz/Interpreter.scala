@@ -3,12 +3,21 @@ package berlin.jentsch.modelchecker.scalaz
 import berlin.jentsch.modelchecker.{RandomTraverser, Traverser}
 import scalaz.zio._
 import scalaz.zio.internal.{Executor, Platform, PlatformLive}
+import scalaz.zio.random.Random
 
 import scala.concurrent.ExecutionContext
 
+/**
+  * @example using random
+  * {{{
+  * import scalaz.zio.random
+  *
+  * Interpreter.terminatesAlwaysSuccessfully(random.nextInt(3)) should be(Set(0, 1, 2))
+  * }}}
+  */
 object Interpreter {
 
-  def apply[E, A](zio: ZIO[Unit, E, A]): Set[Option[Exit[E, A]]] = {
+  def apply[E, A](zio: ZIO[Random, E, A]): Set[Option[Exit[E, A]]] = {
     val yielding = yieldingEffects(zio)
 
     val testRuntime = new TestRuntime
@@ -26,7 +35,7 @@ object Interpreter {
     * Interpreter.notFailing(prog) === Set(Some(1), Some(2))
     * }}}
     */
-  def notFailing[A](zio: ZIO[Unit, Nothing, A]): Set[Option[A]] =
+  def notFailing[A](zio: ZIO[Random, Nothing, A]): Set[Option[A]] =
     Interpreter[Nothing, A](zio).map {
       case Some(Exit.Success(value)) => Some(value)
       case Some(_: Exit.Failure[Nothing]) =>
@@ -34,10 +43,13 @@ object Interpreter {
       case None => None
     }
 
-  private def yieldingEffects[R, E, A](zio: ZIO[R, E, A]): ZIO[R, E, A] =
-    rewriteConcurrentEffects(zio, ZIO.unit, ZIO.unit, ZIO.yieldNow)
+  def terminatesAlwaysSuccessfully[A](zio: ZIO[Random, Nothing, A]): Set[A] =
+    notFailing[A](zio).map {
+      case Some(value) => value
+      case None        => sys.error("Doesn't terminate")
+    }
 
-  private class TestRuntime extends Runtime[Unit] {
+  private class TestRuntime extends Runtime[Random] {
     private val traverser: Traverser = new RandomTraverser(200)
     private val pendingRunnables = collection.mutable.Buffer.empty[Runnable]
     private val appendingExecutionContext = new ExecutionContext {
@@ -48,11 +60,33 @@ object Interpreter {
     private val neverYieldingExecutor: Executor =
       Executor.fromExecutionContext(Int.MaxValue)(appendingExecutionContext)
 
-    override val Environment: Unit = ()
+    override val Environment: Random = new Random {
+      override val random: Random.Service[Any] with Object =
+        new Random.Service[Any] {
+          override val nextBoolean =
+            ZIO.effectTotal(traverser.choose(Seq(true, false)))
+          override def nextBytes(length: Int) = ???
+          override val nextDouble =
+            ZIO.succeedLazy(sys.error("Not implemented"))
+          override val nextFloat = ZIO.effectTotal(sys.error("Not implemented"))
+          override val nextGaussian =
+            ZIO.effectTotal(sys.error("Not implemented"))
+          override def nextInt(n: Int) =
+            ZIO.effectTotal(traverser.choose(0 until n))
+          override val nextInt =
+            ZIO.effectTotal(traverser.choose(Int.MinValue until Int.MaxValue))
+          override val nextLong =
+            ZIO.effectTotal(traverser.choose(Long.MinValue until Long.MaxValue))
+          override val nextPrintableChar =
+            ZIO.effectTotal(sys.error("Not implemented"))
+          override def nextString(length: Int) =
+            ZIO.effectTotal(sys.error("Not implemented"))
+        }
+    }
     override val Platform: Platform =
       PlatformLive.fromExecutor(neverYieldingExecutor)
 
-    def ana[E, A](io: ZIO[Unit, E, A]): Set[Option[Exit[E, A]]] = {
+    def ana[E, A](io: ZIO[Random, E, A]): Set[Option[Exit[E, A]]] = {
       var results: Set[Option[Exit[E, A]]] = Set.empty
 
       do {
@@ -73,112 +107,38 @@ object Interpreter {
     }
   }
 
-  /**
-    * Counts concurrent effects in `zio` to estimate the runtime for finding all interleaving.
-    * The result isn't stable.
-    *
-    * To counts the effects `zio`, more precisely a modification of `zio`, has to be executed.
-    *
-    * @param zio program to count the effects
-    * @tparam R Runtime environment
-    * @example One concurrent effect in `prog`
-    * {{{
-    * import scalaz.zio._
-    * import scalaz.zio.duration._
-    *
-    * val prog = for {
-    *   result <- Ref.make("")
-    *   _ <- result.set("Two").fork
-    *   _ <- IO.unit.delay(1.second)
-    *   _ <- result.set("One")
-    * } yield ()
-    *
-    * unsafeRun(Interpreter.concurrentEffectsCounter(prog)) === 1
-    * }}}
-    * @example No concurrent effects in `prog`
-    * {{{
-    * import scalaz.zio._
-    * import scalaz.zio.duration._
-    *
-    * val prog = for {
-    *   result <- Ref.make("")
-    *   one <- IO.succeed(1)
-    *   laterTwo <- IO.succeed(one).map(_ * 2).fork
-    *   _ <- IO.unit.delay(1.second)
-    *   three = one * 3
-    *   two <- laterTwo.join
-    *   _ <- result.set(three.toString ++ two.toString)
-    * } yield () // Drop result
-    *
-    * unsafeRun(Interpreter.concurrentEffectsCounter(prog)) === 0
-    * }}}
-    */
-  def concurrentEffectsCounter[R, E](zio: ZIO[R, _, _]): ZIO[R, Nothing, Int] =
-    concurrentEffectsCounterAndResult(zio).map(_._2)
-
-  def concurrentEffectsCounterAndResult[R, E, A](
-      zio: ZIO[R, E, A]): ZIO[R, Nothing, (Either[E, A], Int)] =
-    for {
-      counter <- Ref.make((1, 0))
-      a <- rewriteConcurrentEffects[R, E, A, Unit](
-        zio,
-        beforeEffect = counter.update(incCounter),
-        onStart = counter.update(incThreads).void,
-        onEnd = counter.update(decThreads)).either
-      effects <- counter.get
-    } yield (a, effects._2)
-
-  private val incCounter: ((Int, Int)) => (Int, Int) = {
-    case notConcurrent @ (1, _) => notConcurrent
-    case (threads, effects)     => (threads, effects + 1)
-  }
-
-  private val incThreads: ((Int, Int)) => (Int, Int) = {
-    case (threads, effects) => (threads + 1, effects)
-  }
-
-  private val decThreads: ((Int, Int)) => (Int, Int) = {
-    case (threads, effects) => (threads - 1, effects)
-  }
-
-  private def rewriteConcurrentEffects[R, E, A, ID](
-      zio: ZIO[R, E, A],
-      onStart: UIO[Any],
-      onEnd: UIO[Any],
-      beforeEffect: UIO[Any]): ZIO[R, E, A] = {
-
-    def rec[R2, E1, A1](zio2: ZIO[R2, E1, A1]): ZIO[R2, E1, A1] =
-      rewriteConcurrentEffects(zio2, onStart, onEnd, beforeEffect)
+  private def yieldingEffects[R, E, A](zio: ZIO[R, E, A]): ZIO[R, E, A] = {
 
     zio match {
-      case value: ZIO.Effect[A]         => beforeEffect *> value
-      case value: ZIO.EffectAsync[E, A] => beforeEffect *> value
-      case value: ZIO.Fork[_, _] =>
-        val prepIO = onStart *> rec(value.value).ensuring(onEnd)
-
-        prepIO.fork
+      case value: ZIO.Effect[A]         => ZIO.yieldNow *> value
+      case value: ZIO.EffectAsync[E, A] => ZIO.yieldNow *> value
 
       // Recursively apply the rewrite
       case value: ZIO.Succeed[A] => value
+      case value: ZIO.Fork[_, _] =>
+        yieldingEffects(value.value).fork
       case value: ZIO.FlatMap[R, E, _, A] =>
-        rec(value.zio).flatMap(x => rec(value.k(x)))
+        yieldingEffects(value.zio).flatMap(x => yieldingEffects(value.k(x)))
       case value: ZIO.Uninterruptible[R, E, A] =>
-        rec(value.zio).uninterruptible
+        yieldingEffects(value.zio).uninterruptible
       case value: ZIO.Supervise[R, E, A] =>
-        rec(value.value).superviseWith(x => rec(value.supervisor(x)))
-      case value: ZIO.Fail[E] => value
+        yieldingEffects(value.value).superviseWith(x =>
+          yieldingEffects(value.supervisor(x)))
+      case fail: ZIO.Fail[E] => fail
       case value: ZIO.Ensuring[R, E, A] =>
-        rec(value.zio).ensuring(rec(value.finalizer))
-      case d @ ZIO.Descriptor      => d
-      case lock: ZIO.Lock[R, E, A] => rec(lock.zio).lock(lock.executor)
+        yieldingEffects(value.zio).ensuring(yieldingEffects(value.finalizer))
+      case d @ ZIO.Descriptor => d
+      // Don't allow to change executor
+      case lock: ZIO.Lock[R, E, A] => yieldingEffects(lock.zio)
       case y @ ZIO.Yield           => y
       case fold: ZIO.Fold[R, E, _, A, _] =>
-        rec(fold.value)
-          .foldCauseM(fold.err.andThen(rec), fold.succ.andThen(rec))
+        yieldingEffects(fold.value)
+          .foldCauseM(fold.err.andThen(yieldingEffects),
+                      fold.succ.andThen(yieldingEffects))
       case provide: ZIO.Provide[_, E, A] =>
-        rec(provide.next).provide(provide.r)
+        yieldingEffects(provide.next).provide(provide.r)
       case read: ZIO.Read[R, E, A] =>
-        ZIO.accessM(read.k.andThen(rec))
+        ZIO.accessM(read.k.andThen(yieldingEffects))
     }
   }
 

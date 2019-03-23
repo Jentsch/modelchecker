@@ -74,26 +74,25 @@ class Interpreter(newTraverser: () => Traverser) {
       Executor.fromExecutionContext(Int.MaxValue)(appendingExecutionContext)
 
     override val Environment: Random = new Random {
-      override val random: Random.Service[Any] with Object =
+      override val random: Random.Service[Any] =
         new Random.Service[Any] {
+          private val notImplemented: UIO[Nothing] =
+            ZIO.effectTotal(sys.error("Not implemented"))
+
           override val nextBoolean =
             ZIO.effectTotal(traverser.choose(Seq(true, false)))
-          override def nextBytes(length: Int) = ???
-          override val nextDouble =
-            ZIO.succeedLazy(sys.error("Not implemented"))
-          override val nextFloat = ZIO.effectTotal(sys.error("Not implemented"))
-          override val nextGaussian =
-            ZIO.effectTotal(sys.error("Not implemented"))
-          override def nextInt(n: Int) =
+          override def nextInt(n: Int): UIO[Int] =
             ZIO.effectTotal(traverser.choose(0 until n))
-          override val nextInt =
+          override val nextInt: UIO[Int] =
             ZIO.effectTotal(traverser.choose(Int.MinValue until Int.MaxValue))
           override val nextLong =
             ZIO.effectTotal(traverser.choose(Long.MinValue until Long.MaxValue))
-          override val nextPrintableChar =
-            ZIO.effectTotal(sys.error("Not implemented"))
-          override def nextString(length: Int) =
-            ZIO.effectTotal(sys.error("Not implemented"))
+          override def nextBytes(length: Int): UIO[Nothing] = notImplemented
+          override val nextDouble = notImplemented
+          override val nextFloat = notImplemented
+          override val nextGaussian = notImplemented
+          override val nextPrintableChar = notImplemented
+          override def nextString(length: Int): UIO[String] = notImplemented
         }
     }
     override val Platform: Platform = new Platform {

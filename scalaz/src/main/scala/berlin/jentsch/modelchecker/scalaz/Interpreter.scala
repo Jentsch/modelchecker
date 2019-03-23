@@ -1,8 +1,11 @@
 package berlin.jentsch.modelchecker.scalaz
 
+import java.util.WeakHashMap
+
 import berlin.jentsch.modelchecker.{RandomTraverser, Traverser}
+import scalaz.zio.Exit.Cause
 import scalaz.zio._
-import scalaz.zio.internal.{Executor, Platform, PlatformLive}
+import scalaz.zio.internal.{Executor, Platform}
 import scalaz.zio.random.Random
 
 import scala.concurrent.ExecutionContext
@@ -50,7 +53,7 @@ object Interpreter {
     }
 
   private class TestRuntime extends Runtime[Random] {
-    private val traverser: Traverser = new RandomTraverser(200)
+    private val traverser: Traverser = new RandomTraverser(1000)
     private val pendingRunnables = collection.mutable.Buffer.empty[Runnable]
     private val appendingExecutionContext = new ExecutionContext {
       override def execute(runnable: Runnable): Unit =
@@ -83,8 +86,18 @@ object Interpreter {
             ZIO.effectTotal(sys.error("Not implemented"))
         }
     }
-    override val Platform: Platform =
-      PlatformLive.fromExecutor(neverYieldingExecutor)
+    override val Platform: Platform = new Platform {
+      val executor = neverYieldingExecutor
+
+      def nonFatal(t: Throwable): Boolean =
+        !t.isInstanceOf[VirtualMachineError]
+
+      def reportFailure(cause: Cause[_]): Unit =
+        ()
+
+      def newWeakHashMap[A, B]() =
+        new WeakHashMap[A, B]()
+    }
 
     def ana[E, A](io: ZIO[Random, E, A]): Set[Option[Exit[E, A]]] = {
       var results: Set[Option[Exit[E, A]]] = Set.empty

@@ -2,7 +2,11 @@ package berlin.jentsch.modelchecker.scalaz
 
 import java.util.WeakHashMap
 
-import berlin.jentsch.modelchecker.{RandomTraverser, Traverser}
+import berlin.jentsch.modelchecker.{
+  EveryPathTraverser,
+  RandomTraverser,
+  Traverser
+}
 import scalaz.zio.Exit.Cause
 import scalaz.zio._
 import scalaz.zio.internal.{Executor, Platform}
@@ -18,7 +22,7 @@ import scala.concurrent.ExecutionContext
   * Interpreter.terminatesAlwaysSuccessfully(random.nextInt(3)) should be(Set(0, 1, 2))
   * }}}
   */
-object Interpreter {
+class Interpreter(newTraverser: () => Traverser) {
 
   def apply[E, A](zio: ZIO[Random, E, A]): Set[Option[Exit[E, A]]] = {
     val yielding = yieldingEffects(zio)
@@ -39,7 +43,7 @@ object Interpreter {
     * }}}
     */
   def notFailing[A](zio: ZIO[Random, Nothing, A]): Set[Option[A]] =
-    Interpreter[Nothing, A](zio).map {
+    this.apply[Nothing, A](zio).map {
       case Some(Exit.Success(value)) => Some(value)
       case Some(_: Exit.Failure[Nothing]) =>
         sys.error("Should be impossible, since E is Nothing, hence impossible")
@@ -52,8 +56,14 @@ object Interpreter {
       case None        => sys.error("Doesn't terminate")
     }
 
+  def terminates[E, A](zio: ZIO[Random, E, A]): Set[Exit[E, A]] =
+    this.apply[E, A](zio).map {
+      case Some(error) => error
+      case None        => sys.error("Was not terminated")
+    }
+
   private class TestRuntime extends Runtime[Random] {
-    private val traverser: Traverser = new RandomTraverser(1000)
+    private val traverser: Traverser = newTraverser()
     private val pendingRunnables = collection.mutable.Buffer.empty[Runnable]
     private val appendingExecutionContext = new ExecutionContext {
       override def execute(runnable: Runnable): Unit =
@@ -155,4 +165,8 @@ object Interpreter {
     }
   }
 
+}
+
+object Interpreter extends Interpreter(() => new RandomTraverser(1000)) {
+  val everyPath: Interpreter = new Interpreter(() => new EveryPathTraverser)
 }

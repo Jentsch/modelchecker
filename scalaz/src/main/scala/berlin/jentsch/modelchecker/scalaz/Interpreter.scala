@@ -39,7 +39,7 @@ object Interpreter {
     Interpreter[Nothing, A](zio).map {
       case Some(Exit.Success(value)) => Some(value)
       case Some(_: Exit.Failure[Nothing]) =>
-        sys.error("Should be impossible, since no failure is possible")
+        sys.error("Should be impossible, since E is Nothing, hence impossible")
       case None => None
     }
 

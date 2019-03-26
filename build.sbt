@@ -17,12 +17,17 @@ scalacOptions in ThisBuild ++= Seq(
   "-feature",
   Opts.compile.deprecation,
   "-Xfuture",
-  "-Yno-adapted-args",
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
   "-Ywarn-unused",
-  "-Ywarn-unused-import"
 )
+
+scalacOptions in ThisBuild ++= {
+  if (scalaVersion.value startsWith "2.12")
+    Seq( "-Yno-adapted-args", "-Ywarn-unused-import")
+  else
+    Seq()
+}
 
 lazy val root = project
   .in(file("."))

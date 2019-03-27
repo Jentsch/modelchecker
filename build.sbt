@@ -8,23 +8,22 @@ licenses := Seq("MIT" -> url("https://choosealicense.com/licenses/mit/"))
 
 version := "0.1.0-SNAPSHOT"
 
-scalaVersion in ThisBuild := "2.12.8"
+scalaVersion := "2.12.8"
 
 lazy val scalaTestVersion = "3.0.7"
 
-scalacOptions in ThisBuild ++= Seq(
+scalacOptions ++= Seq(
   Opts.compile.unchecked,
   "-feature",
   Opts.compile.deprecation,
   "-Xfuture",
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
-  "-Ywarn-unused",
 )
 
-scalacOptions in ThisBuild ++= {
+scalacOptions ++= {
   if (scalaVersion.value startsWith "2.12")
-    Seq( "-Yno-adapted-args", "-Ywarn-unused-import")
+    Seq("-Yno-adapted-args", "-Ywarn-unused-import", "-Ywarn-unused")
   else
     Seq()
 }
@@ -35,10 +34,9 @@ lazy val root = project
     core,
     futures,
     scalaz,
-    akka
-  )
-  .settings(
-    libraryDependencies += "org.scalatest" %% "scalatest" % scalaTestVersion,
+    akka,
+    benchmarks,
+    jpf,
   )
 
 lazy val core = project
@@ -51,7 +49,8 @@ lazy val core = project
     examplePackageRef := {
       import scala.meta._
       q"berlin.jentsch.modelchecker"
-    }
+    },
+    crossScalaVersions += "2.10.7"
   )
   .enablePlugins(Example)
 
@@ -113,4 +112,14 @@ lazy val benchmarks = project
   .enablePlugins(JmhPlugin)
   .settings(
     skip in publish := true
+  )
+
+lazy val jpf = project
+  .in(file("jpf"))
+  .dependsOn(core)
+  .settings(
+    description := "Generates that can be used by the JavaPathfinder",
+    // JavaPathfinder can't parse newer Byte-Code
+    crossScalaVersions += "2.10.7",
+    skip in publish := true,
   )

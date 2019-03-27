@@ -26,7 +26,6 @@ import scala.util.control.NonFatal
 class TestExecutionContext(info: String => Unit,
                            private[this] val traverser: Traverser)
     extends ExecutionContext {
-  self =>
 
   /** All waiting threads, all semaphores have -1 permits */
   private[this] val waitingList = mutable.Buffer[Semaphore]()
@@ -43,7 +42,7 @@ class TestExecutionContext(info: String => Unit,
   def testEveryPath(test: TestExecutionContext => Unit): Unit = {
     var finalStates = 0
     do {
-      test(self)
+      test(this)
       runNextThread()
 
       val maxSeconds = 60L

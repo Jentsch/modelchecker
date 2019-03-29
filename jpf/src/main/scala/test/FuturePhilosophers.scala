@@ -3,13 +3,7 @@ package test
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
 object FuturePhilosophers {
-  implicit val ec: ExecutionContext = new ExecutionContext {
-    override def execute(runnable: Runnable): Unit =
-      new Thread {
-        override def run(): Unit = runnable.run()
-      }.start()
-    override def reportFailure(cause: Throwable): Unit = ???
-  }
+  implicit val ec: ExecutionContext = JpfExecutionContext
 
   val n = 3
 

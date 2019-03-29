@@ -30,7 +30,6 @@ object NativePhilosophers {
       case i => new philosopher(chopsticks(i), chopsticks((i + 1) % n)).start()
     }
 
-
   def main(args: Array[String]): Unit = {
     runOk
   }

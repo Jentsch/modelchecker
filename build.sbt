@@ -94,7 +94,7 @@ lazy val akka = project
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % "2.5.21",
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
+      "org.scalatest" %% "scalatest" % scalaTestVersion,
     ),
     examplePackageRef := {
       import scala.meta._

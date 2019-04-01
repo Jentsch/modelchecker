@@ -2,17 +2,15 @@ package berlin.jentsch.modelchecker.akka.example
 
 import akka.actor.typed._
 import akka.actor.typed.scaladsl.Behaviors._
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import berlin.jentsch.modelchecker.akka._
 
 object Philosophers {
   def apply(): Behavior[Unit] = setup { ctx =>
     val stick1 = ctx.spawn(stick, "Stick1")
     val stick2 = ctx.spawn(stick, "Stick2")
 
-    ctx.spawn(philosophers(stick1, stick2), "P1")
-    ctx.spawn(philosophers(stick1, stick2), "P2")
+    ctx.spawn(philosophers(stick1, stick2), "Philosopher1")
+    ctx.spawn(philosophers(stick1, stick2), "Philosopher2")
 
     empty
   }
@@ -40,7 +38,8 @@ object Philosophers {
       stickRequested(sender)
   }
 
-  def stickRequested(pendingRequest: ActorRef[StickAck]): Behavior[StickMessages] =
+  def stickRequested(
+      pendingRequest: ActorRef[StickAck]): Behavior[StickMessages] =
     receiveMessage {
       case Free(sender) =>
         sender ! StickAck
@@ -75,11 +74,10 @@ object Philosophers {
 
 }
 
-object PhilosophersSpec {
-  def main(args: Array[String]): Unit = {
-    println("Start")
-    val sys = ActorSystem(Philosophers(), "TestSys")
-    Thread.sleep(50)
-    Await.ready(sys.terminate(), 100.milliseconds)
+object PhilosophersSpec extends AkkaSpec {
+  behavior of "philosophers"
+
+  Philosophers() should "always progress" in {
+    alwaysEventually(root / "stick1" is Philosophers.stickFree)
   }
 }

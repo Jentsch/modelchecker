@@ -1,7 +1,7 @@
 package akka.actor.typed.mc
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors.{ReceiveImpl, ReceiveMessageImpl}
-import berlin.jentsch.modelchecker.akka.ReflectiveEquals
+import berlin.jentsch.modelchecker.akka.{Equal, ReflectiveEquals}
 
 /**
   * @example Empty
@@ -26,7 +26,7 @@ import berlin.jentsch.modelchecker.akka.ReflectiveEquals
   *
   * }}}
   */
-object BehaviorsEquals {
+object BehaviorsEquals extends Equal[Behavior[_]] {
   def apply(behavior1: Behavior[_], behavior2: Behavior[_]): Boolean =
     (behavior1, behavior2) match {
       case (`behavior2`, _) => true
@@ -36,4 +36,5 @@ object BehaviorsEquals {
         ReflectiveEquals(rec1.onMessage, rec2.onMessage)
       case _ => false
     }
+  override def equal(a1: Behavior[_], a2: Behavior[_]): Boolean = apply(a1, a2)
 }

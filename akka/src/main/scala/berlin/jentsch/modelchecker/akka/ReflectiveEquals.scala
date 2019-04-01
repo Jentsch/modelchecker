@@ -81,7 +81,9 @@ object ReflectiveEquals {
                 | }
               """.stripMargin
 
-            val tree = try { tb.parse(code) } catch {
+            val tree = try {
+              tb.parse(code)
+            } catch {
               case t: ToolBoxError =>
                 println("Code was:"); println(code); throw t
             }

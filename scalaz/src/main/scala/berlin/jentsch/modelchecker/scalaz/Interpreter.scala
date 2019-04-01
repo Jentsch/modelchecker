@@ -143,9 +143,8 @@ class Interpreter(newTraverser: () => Traverser) {
         yieldingEffects(value.zio).flatMap(x => yieldingEffects(value.k(x)))
       case value: ZIO.Uninterruptible[R, E, A] =>
         yieldingEffects(value.zio).uninterruptible
-      case value: ZIO.Supervise[R, E, A] =>
-        yieldingEffects(value.value).superviseWith(x =>
-          yieldingEffects(value.supervisor(x)))
+      case supervised: ZIO.Supervised[R, E, A] =>
+        yieldingEffects(supervised.value).supervised
       case fail: ZIO.Fail[E] => fail
       case value: ZIO.Ensuring[R, E, A] =>
         yieldingEffects(value.zio).ensuring(yieldingEffects(value.finalizer))
@@ -155,8 +154,10 @@ class Interpreter(newTraverser: () => Traverser) {
       case y @ ZIO.Yield           => y
       case fold: ZIO.Fold[R, E, _, A, _] =>
         yieldingEffects(fold.value)
-          .foldCauseM(fold.err.andThen(yieldingEffects),
-                      fold.succ.andThen(yieldingEffects))
+          .foldCauseM(
+            fold.err.andThen(yieldingEffects),
+            fold.succ.andThen(yieldingEffects)
+          )
       case provide: ZIO.Provide[_, E, A] =>
         yieldingEffects(provide.next).provide(provide.r)
       case read: ZIO.Read[R, E, A] =>

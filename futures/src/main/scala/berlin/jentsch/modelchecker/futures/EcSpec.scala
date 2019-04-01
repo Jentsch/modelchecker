@@ -88,8 +88,9 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * @param path concrete path provided by the other everyInterleaving method
     * @param test the test code to run
     */
-  def everyInterleaving(path: Seq[Int])(
-      test: TestExecutionContext => Unit): Unit =
+  def everyInterleaving(
+      path: Seq[Int]
+  )(test: TestExecutionContext => Unit): Unit =
     TestExecutionContext.testSinglePath(test, path, info(_))
 
   def randomInterleaving(test: TestExecutionContext => Unit): Unit =
@@ -122,8 +123,9 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * }}}
     */
   def increase[T: Ordering]: TimeWord[T] = new TimeWord[T] {
-    override def apply(t: => T)(implicit ec: ExecutionContext,
-                                position: Position): Unit = {
+    override def apply(
+        t: => T
+    )(implicit ec: ExecutionContext, position: Position): Unit = {
       Future {
         t
       }.foreach { t1 =>
@@ -154,7 +156,10 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
                   Some(" couldn't " + rightMatcher.toString()),
                 None,
                 Left(position),
-                None)))
+                None
+              )
+            )
+          )
 
           ()
         case _ =>
@@ -202,8 +207,9 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * }}}
     */
   implicit class WillWord[T](t: Future[T]) {
-    def will(matcher: Matcher[T])(implicit ec: TestExecutionContext,
-                                  position: Position): Unit =
+    def will(
+        matcher: Matcher[T]
+    )(implicit ec: TestExecutionContext, position: Position): Unit =
       ec.finallyCheck { () =>
         import org.scalatest.TryValues._
 
@@ -215,15 +221,17 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
         }
       }
 
-    def will(complete: self.complete.type)(implicit ec: TestExecutionContext,
-                                           position: Position): Unit =
+    def will(
+        complete: self.complete.type
+    )(implicit ec: TestExecutionContext, position: Position): Unit =
       ec.finallyCheck { () =>
         if (!t.isCompleted)
           fail("All computations are done, but the Future wasn't completed")
       }
 
-    def willNot(complete: self.complete.type)(implicit ec: TestExecutionContext,
-                                              position: Position): Unit =
+    def willNot(
+        complete: self.complete.type
+    )(implicit ec: TestExecutionContext, position: Position): Unit =
       ec.finallyCheck { () =>
         if (t.isCompleted)
           fail("The future was completed with " ++ t.value.get.toString)
@@ -239,7 +247,8 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
 object EcSpec extends Matchers with EcSpec {
   override protected def info: Informer = new Informer {
     override def apply(message: String, payload: Option[Any])(
-        implicit pos: Position): Unit =
+        implicit pos: Position
+    ): Unit =
       println(s"$message: $payload at $pos")
   }
 }

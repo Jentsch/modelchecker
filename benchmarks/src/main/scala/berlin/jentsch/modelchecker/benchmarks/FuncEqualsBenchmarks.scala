@@ -150,7 +150,7 @@ class FuncEqualsBenchmarks {
       }
 
       new Not(_)
-    },
+    }
   )
 
   object RefEqual {

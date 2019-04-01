@@ -18,8 +18,10 @@ object FuturePhilosophers {
   val chopsticks: Array[Chopstick] =
     Array.fill(n)(Chopstick(Future.successful(())))
 
-  def philosopher(firstStick: Chopstick,
-                  secondStick: Chopstick): Future[Unit] = {
+  def philosopher(
+      firstStick: Chopstick,
+      secondStick: Chopstick
+  ): Future[Unit] = {
     val (firstPromise, secondPromise) = (Promise[Unit], Promise[Unit])
 
     for {

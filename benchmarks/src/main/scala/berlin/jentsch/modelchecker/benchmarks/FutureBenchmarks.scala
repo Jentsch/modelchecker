@@ -33,8 +33,10 @@ class Philosophers(n: Int)(implicit ec: ExecutionContext) {
   val chopsticks: Array[Chopstick] =
     Array.fill(n)(new AtomicReference(Future.successful(())))
 
-  def philosopher(firstStick: Chopstick,
-                  secondStick: Chopstick): Future[Unit] = {
+  def philosopher(
+      firstStick: Chopstick,
+      secondStick: Chopstick
+  ): Future[Unit] = {
     val (firstPromise, secondPromise) = (Promise[Unit], Promise[Unit])
 
     for {

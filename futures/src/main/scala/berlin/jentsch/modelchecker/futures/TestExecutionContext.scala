@@ -23,9 +23,10 @@ import scala.util.control.NonFatal
  * Every interaction between threads is modelled with semaphores to ensure the synchronisation of variables by the JVM (happens before).
  * See [[https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Semaphore.html Semaphore-API]]
  */
-class TestExecutionContext(info: String => Unit,
-                           private[this] val traverser: Traverser)
-    extends ExecutionContext {
+class TestExecutionContext(
+    info: String => Unit,
+    private[this] val traverser: Traverser
+) extends ExecutionContext {
 
   /** All waiting threads, all semaphores have -1 permits */
   private[this] val waitingList = mutable.Buffer[Semaphore]()
@@ -65,15 +66,20 @@ class TestExecutionContext(info: String => Unit,
       if (foundException.nonEmpty)
         info("Bal")
       foundException.foreach(throw _)
-      finalChecks.foreach(check =>
-        try { check() } catch {
-          case failed: TestFailedException =>
-            info("Tested paths: " ++ finalStates.toString)
-            info(
-              "Path to reproduce this failure: " ++ traverser.getCurrentPath
-                .mkString("Seq(", ",", ")"))
-            throw failed
-      })
+      finalChecks.foreach(
+        check =>
+          try {
+            check()
+          } catch {
+            case failed: TestFailedException =>
+              info("Tested paths: " ++ finalStates.toString)
+              info(
+                "Path to reproduce this failure: " ++ traverser.getCurrentPath
+                  .mkString("Seq(", ",", ")")
+              )
+              throw failed
+          }
+      )
       finalChecks.clear()
     } while (traverser.hasMoreOptions())
 
@@ -207,23 +213,31 @@ object TestExecutionContext {
   def apply(): TestExecutionContext =
     new TestExecutionContext(println, new EveryPathTraverser)
 
-  def testEveryPath(test: TestExecutionContext => Unit,
-                    info: String => Unit): Unit =
+  def testEveryPath(
+      test: TestExecutionContext => Unit,
+      info: String => Unit
+  ): Unit =
     new TestExecutionContext(info, new EveryPathTraverser).testEveryPath(test)
 
-  def testSinglePath(test: TestExecutionContext => Unit,
-                     path: Seq[Int],
-                     info: String => Unit): Unit =
+  def testSinglePath(
+      test: TestExecutionContext => Unit,
+      path: Seq[Int],
+      info: String => Unit
+  ): Unit =
     new TestExecutionContext(info, new SinglePath(path)).testEveryPath(test)
 
-  def testRandomPath(test: TestExecutionContext => Unit,
-                     info: String => Unit): Unit =
+  def testRandomPath(
+      test: TestExecutionContext => Unit,
+      info: String => Unit
+  ): Unit =
     new TestExecutionContext(info, new RandomTraverser(100)).testEveryPath(test)
 
   private[TestExecutionContext] val globalThreadPool =
-    new ThreadPoolExecutor(0,
-                           Integer.MAX_VALUE,
-                           10,
-                           TimeUnit.SECONDS,
-                           new SynchronousQueue[Runnable])
+    new ThreadPoolExecutor(
+      0,
+      Integer.MAX_VALUE,
+      10,
+      TimeUnit.SECONDS,
+      new SynchronousQueue[Runnable]
+    )
 }

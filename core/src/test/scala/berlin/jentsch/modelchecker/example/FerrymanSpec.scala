@@ -12,6 +12,7 @@ class FerrymanSpec extends FlatSpec {
     var cabbageBeforeWolf = false
     do {
       var wolf, goat, cabbage, ferryman: Boolean = false
+
       /** Upper bound found by experimentation, actually 7 is enough */
       var steps = 8
 
@@ -27,8 +28,8 @@ class FerrymanSpec extends FlatSpec {
         (wolf == ferryman) -> (() => { wolf = !wolf; ferryman = !ferryman }) ::
           (goat == ferryman) -> (() => { goat = !goat; ferryman = !ferryman }) ::
           (cabbage == ferryman) -> (() => {
-          cabbage = !cabbage; ferryman = !ferryman
-        }) ::
+            cabbage = !cabbage; ferryman = !ferryman
+          }) ::
           true -> (() => { ferryman = !ferryman }) ::
           Nil
 
@@ -42,7 +43,7 @@ class FerrymanSpec extends FlatSpec {
       }
 
       wolfBeforeCabbage |= wolf && !goat & !cabbage
-      cabbageBeforeWolf |= ! wolf && !goat & cabbage
+      cabbageBeforeWolf |= !wolf && !goat & cabbage
 
       if (!everDone && done) {
         info("First found path: " ++ traverser.getCurrentPath.toString)

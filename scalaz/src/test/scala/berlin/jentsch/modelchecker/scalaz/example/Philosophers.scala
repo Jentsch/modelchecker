@@ -2,13 +2,15 @@ package berlin.jentsch.modelchecker.scalaz.example
 
 import berlin.jentsch.modelchecker.scalaz.Interpreter
 import org.scalatest.{FlatSpec, Matchers}
-import scalaz.zio.{UIO, Semaphore}
 import scalaz.zio.UIO._
+import scalaz.zio.{Semaphore, UIO}
 
 object Philosophers {
 
-  private def philosopher(firstStick: Semaphore,
-                          secondStick: Semaphore): UIO[Unit] =
+  private def philosopher(
+      firstStick: Semaphore,
+      secondStick: Semaphore
+  ): UIO[Unit] =
     succeed((/* THINK */ )) *>
       firstStick.acquire *>
       secondStick.acquire *>
@@ -40,11 +42,12 @@ class PhilosophersSpec extends FlatSpec with Matchers {
   behavior of "Philosophers"
 
   they should "sometimes deadlock in wrong configuration" in {
-    Interpreter.notFailing(Philosophers.run(3)) should (contain(None) and contain(Some(())))
+    Interpreter.notFailing(Philosophers.run(3)) should (contain(None) and contain(
+      Some(())
+    ))
   }
 
   they should "never deadlock" in {
     all(Interpreter.notFailing(Philosophers.runOk(3))) should be(Some(()))
   }
 }
-

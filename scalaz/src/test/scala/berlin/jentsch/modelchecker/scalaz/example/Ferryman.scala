@@ -54,8 +54,9 @@ object Ferryman {
   def sameSide(item1: Ref[Boolean], item2: Ref[Boolean]): UIO[Boolean] =
     item1.get.zipWith(item2.get)(_ == _)
 
-  def repeatUntil[E](condition: UIO[Boolean])(
-      zio: ZIO[Random, E, _]): ZIO[Random, E, Unit] =
+  def repeatUntil[E](
+      condition: UIO[Boolean]
+  )(zio: ZIO[Random, E, _]): ZIO[Random, E, Unit] =
     condition.flatMap {
       case false => zio *> repeatUntil(condition)(zio)
       case true  => ZIO.unit
@@ -68,7 +69,8 @@ object Ferryman {
     }
 
   def doOneOf[E, A](
-      actions: (UIO[Boolean], ZIO[Any, E, _])*): ZIO[Random, E, Unit] = {
+      actions: (UIO[Boolean], ZIO[Any, E, _])*
+  ): ZIO[Random, E, Unit] = {
     val options: UIO[Seq[ZIO[Any, E, Unit]]] =
       actions.foldLeft(ZIO.succeed(Seq.empty[ZIO[Any, E, Unit]])) {
         case (found, (predicate, action)) =>

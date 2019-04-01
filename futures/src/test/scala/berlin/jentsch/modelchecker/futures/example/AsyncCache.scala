@@ -4,8 +4,9 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success}
 
 object AsyncCache {
-  def apply[In, Out](f: In => Future[Out])(
-      implicit ec: ExecutionContext): In => Future[Out] = {
+  def apply[In, Out](
+      f: In => Future[Out]
+  )(implicit ec: ExecutionContext): In => Future[Out] = {
 
     val store = TrieMap.empty[In, Promise[Out]]
 

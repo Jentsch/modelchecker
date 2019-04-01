@@ -15,7 +15,9 @@ class InterpreterSpec extends FlatSpec with Matchers {
       r <- counter.get
     } yield r
 
-    Interpreter.everyPath.terminatesAlwaysSuccessfully(runCache) should be(Set(0, 1, 2))
+    Interpreter.everyPath.terminatesAlwaysSuccessfully(runCache) should be(
+      Set(0, 1, 2)
+    )
   }
 
 }

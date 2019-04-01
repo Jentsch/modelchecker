@@ -24,13 +24,13 @@ object Philosophers {
 
   def stick: Behavior[StickMessages] = stickFree
 
-  def stickFree: Behavior[StickMessages] = receiveMessage {
+  lazy val stickFree: Behavior[StickMessages] = receiveMessage {
     case Req(sender) =>
       sender ! StickAck
       stickInUse
   }
 
-  def stickInUse: Behavior[StickMessages] = receiveMessage {
+  lazy val stickInUse: Behavior[StickMessages] = receiveMessage {
     case Free(sender) =>
       sender ! StickAck
       stickFree
@@ -39,7 +39,8 @@ object Philosophers {
   }
 
   def stickRequested(
-      pendingRequest: ActorRef[StickAck]): Behavior[StickMessages] =
+      pendingRequest: ActorRef[StickAck]
+  ): Behavior[StickMessages] =
     receiveMessage {
       case Free(sender) =>
         sender ! StickAck
@@ -47,8 +48,10 @@ object Philosophers {
         stickInUse
     }
 
-  def philosophers(stick1: ActorRef[StickMessages],
-                   stick2: ActorRef[StickMessages]): Behavior[StickAck] =
+  def philosophers(
+      stick1: ActorRef[StickMessages],
+      stick2: ActorRef[StickMessages]
+  ): Behavior[StickAck] =
     setup { ctx =>
       stick1 ! Req(ctx.self)
       ctx.log.info("Request 1 to " + stick1.path)
@@ -64,8 +67,10 @@ object Philosophers {
       }
     }
 
-  def release(stick1: ActorRef[StickMessages],
-              stick2: ActorRef[StickMessages]): Behavior[StickAck] =
+  def release(
+      stick1: ActorRef[StickMessages],
+      stick2: ActorRef[StickMessages]
+  ): Behavior[StickAck] =
     setup { ctx =>
       stick2 ! Free(ctx.self)
       stick1 ! Free(ctx.self)

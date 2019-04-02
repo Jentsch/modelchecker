@@ -85,7 +85,7 @@ class PhilosophersSpec extends AkkaSpec {
 
   Philosophers() should "always progress" in (
     root is Philosophers(),
-    existsNext(root is stopped)
+    alwaysNext(root is stopped)
   )
 
   Philosophers() should "initially have no sticks" in (

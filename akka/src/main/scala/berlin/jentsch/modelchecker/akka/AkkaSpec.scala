@@ -53,6 +53,8 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
           BehaviorsEquals.areEquivalent(currentBehavior, behavior)
         }
       case AlwaysEventually(property) => ???
+      case AlwaysNext(property) =>
+        transitions.directAncestors(check(property))
       case ExistsEventually(property) => ???
       case ExistsNext(property) =>
         transitions.directAncestors(check(property))

@@ -100,6 +100,9 @@ object ReflectiveEquals {
     } else a == b
 }
 
+/**
+  * Do not use this class. It's used only internally
+  */
 trait ReflectiveEquals {
   def compare(a: AnyRef, b: AnyRef): Boolean
 }

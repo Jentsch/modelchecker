@@ -9,7 +9,7 @@ import scala.reflect.ClassTag
 /**
   * Directed mutable graph
   */
-final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge])
+private[akka] final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge])
     extends AnyVal {
   import wrapped._
 
@@ -56,7 +56,7 @@ final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge])
   override def toString: String = wrapped.toString
 }
 
-object Graph {
+private[akka] object Graph {
   def apply[E: ClassTag](pairs: (E, E)*): Graph[E] = {
     val edges = pairs.map { case (a, b) => DiEdge(a, b)}
     val xgraph: XGraph[E, DiEdge] = XGraph.from(edges = edges)

@@ -51,6 +51,8 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
       case ExistsEventually(property) => ???
       case Not(property) =>
         transitions.nodes -- checkProperty(transitions, property)
+      case And(property1, property2) =>
+        checkProperty(transitions, property1) intersect checkProperty(transitions, property2)
     }
 
   implicit class BehaviorShould(behavior: Behavior[_]) {

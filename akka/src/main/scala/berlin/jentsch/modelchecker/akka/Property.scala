@@ -5,21 +5,31 @@ import akka.actor.typed.Behavior
 
 sealed trait Property {
   def unary_! : Property = Not(this)
+
+  def &(that: Property): Property = And(this, that)
 }
 
 /**
   * An atomic property
   */
-case class ActorIs(path: ActorPath, behavior: Behavior[_]) extends Property
+private case class ActorIs(path: ActorPath, behavior: Behavior[_])
+    extends Property
 
-case class AlwaysEventually(property: Property) extends Property
-case class ExistsEventually(property: Property) extends Property
+private case class AlwaysEventually(property: Property) extends Property
+private case class ExistsEventually(property: Property) extends Property
 
-case class Not(property: Property) extends Property
+private case class Not(property: Property) extends Property
+private case class And(property1: Property, property2: Property)
+    extends Property
 
 trait PropertySyntax {
 
   implicit class PathSyntax(path: ActorPath) {
+
+    /**
+      * An atomic property of a single actor.
+      * Use Behavior.stopped to test if an actor is stopped or not jet created
+      */
     def is(behavior: Behavior[_]): Property = ActorIs(path, behavior)
   }
 

@@ -4,7 +4,8 @@ scala:
 jdk:
   - openjdk11
 script:
-  - sbt clean test scalafmtCheck
+  - sbt clean test benchmarks/compile
+  - sbt scalafmtCheckAll
 
 sudo: false
 cache:

@@ -9,7 +9,8 @@ import scala.reflect.ClassTag
 /**
   * Directed mutable graph
   */
-final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge]) extends AnyVal {
+final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge])
+    extends AnyVal {
   import wrapped._
 
   def withAncestors(nodes: Set[E], filter: E => Boolean = _ => true): Set[E] = {
@@ -40,24 +41,27 @@ final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge]) ext
   def directAncestors(node: E): Set[E] =
     get(node).diPredecessors.map(_.value)
 
+  def withDirectPrecursor(filter: E => Boolean): Set[E] =
+    wrapped.nodes
+      .filter(node => node.diSuccessors.forall(s => filter(s.toOuter)))
+      .map(_.toOuter)
+      .to
+
   private def nodesOf(values: Set[E]): Set[NodeT] =
     wrapped.nodes.filter(node => values(node.value)).to[Set]
 
   def nodes: Set[E] =
     wrapped.nodes.map(_.value).to[Set]
 
-  def +=(edge: (E, E)): Unit =
-    wrapped.add(DiEdge(edge._1, edge._2))
-
   override def toString: String = wrapped.toString
 }
 
 object Graph {
   def apply[E: ClassTag](pairs: (E, E)*): Graph[E] = {
-    val graph = empty[E]
-    pairs.foreach(graph += _)
+    val edges = pairs.map { case (a, b) => DiEdge(a, b)}
+    val xgraph: XGraph[E, DiEdge] = XGraph.from(edges = edges)
 
-    graph
+    new Graph(xgraph)
   }
 
   def empty[E: ClassTag]: Graph[E] =
@@ -70,28 +74,31 @@ object Graph {
       init: Traversable[E]
   )(successors: E => Traversable[E]): Graph[E] = {
 
+    val xgraph = XGraph.empty[E, DiEdge]
+
     @tailrec
     def depthFirstSearch(
         unvisited: List[E],
         visited: Set[E],
-        graph: XGraph[E, DiEdge]
-    ): Graph[E] =
+    ): Unit =
       unvisited match {
         case Nil =>
-          new Graph(graph)
+          // done
         case e :: es if visited(e) =>
-          depthFirstSearch(es, visited, graph)
+          depthFirstSearch(es, visited)
         case e :: es =>
           val visited2 = visited + e
           val succs = successors(e)
-          val graph2 = graph ++ succs.map { succ =>
+          xgraph ++= succs.map { succ =>
             DiEdge(e, succ)
           }
           val unvisited2 = succs.filterNot(visited).to[List] ++ unvisited
-          depthFirstSearch(unvisited2, visited2, graph2)
+          depthFirstSearch(unvisited2, visited2)
       }
 
-    depthFirstSearch(init.to[List], Set.empty, XGraph.empty)
+    depthFirstSearch(init.to[List], Set.empty)
+
+    new Graph(xgraph)
   }
 
 }

@@ -16,7 +16,7 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
       implicit position: Position
   ): Assertion = {
     val initialSystemState: SystemState = Map(
-      root -> ActorState(Nil, rootBehavior)
+      root -> ActorState(Map.empty, rootBehavior)
     )
 
     val unvisisted: mutable.Set[SystemState] = mutable.Set(initialSystemState)

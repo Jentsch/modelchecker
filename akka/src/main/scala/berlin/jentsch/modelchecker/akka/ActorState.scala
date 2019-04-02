@@ -1,9 +1,12 @@
 package berlin.jentsch.modelchecker.akka
 
+import akka.actor.ActorPath
 import akka.actor.typed.Behavior
 import akka.actor.typed.mc.BehaviorsEquals
 
-case class ActorState(msg: List[_], behavior: Behavior[_]) {
+case class ActorState(msgs: Map[ActorPath, List[_]], behavior: Behavior[_]) {
+  assert(msgs.values.forall(_.nonEmpty))
+
   override def equals(o: Any): Boolean =
     this == o || (o match {
       case that: ActorState =>

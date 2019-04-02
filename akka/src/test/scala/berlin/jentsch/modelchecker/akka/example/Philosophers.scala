@@ -88,6 +88,6 @@ class PhilosophersSpec extends AkkaSpec {
   }
 
   "BehaviorEquals" should "recognize initial State as equal" in {
-    assert(BehaviorsEquals.equal(Philosophers(), Philosophers()))
+    assert(BehaviorsEquals.areEquivalent(Philosophers(), Philosophers()))
   }
 }

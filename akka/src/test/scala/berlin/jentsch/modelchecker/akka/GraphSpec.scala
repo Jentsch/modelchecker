@@ -50,4 +50,8 @@ class GraphSpec extends PropSpec with Matchers {
     )
   }
 
+  property("toString") {
+    Graph.empty.toString shouldBe "Graph()"
+  }
+
 }

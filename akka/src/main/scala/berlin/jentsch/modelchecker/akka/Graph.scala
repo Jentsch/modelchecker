@@ -9,12 +9,12 @@ import scala.reflect.ClassTag
 /**
   * Directed mutable graph
   */
-final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge]) {
+final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge]) extends AnyVal {
   import wrapped._
 
-  def withAncestors(nodes: Set[E], filter: E => Boolean = x => true): Set[E] = {
+  def withAncestors(nodes: Set[E], filter: E => Boolean = _ => true): Set[E] = {
 
-    //TODO: create a generic search for `withAncestorsRec` and `explore`
+    @tailrec
     def withAncestorsRec(
         unvisited: Set[NodeT],
         nodes: Set[NodeT] = Set.empty[NodeT]
@@ -23,7 +23,7 @@ final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge]) {
         nodes
       else {
         val nodes2 = nodes + unvisited.head
-        val succs = unvisited.head.diPredecessors.filter { filter }
+        val succs = unvisited.head.diPredecessors.filter(filter)
         val unvisited2 =
           (unvisited.drop(1) ++ succs).filterNot(nodes2)
         withAncestorsRec(unvisited2, nodes2)
@@ -44,13 +44,6 @@ final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge]) {
     wrapped.add(DiEdge(edge._1, edge._2))
 
   override def toString: String = wrapped.toString
-
-  override def equals(any: Any): Boolean = any match {
-    case that: Graph[_] => this.wrapped == that.wrapped
-    case _              => false
-  }
-
-  override def hashCode: Int = wrapped.hashCode
 }
 
 object Graph {

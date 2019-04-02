@@ -3,8 +3,9 @@ package berlin.jentsch.modelchecker.akka
 import akka.actor.ActorPath
 import akka.actor.typed.Behavior
 import akka.actor.typed.mc.BehaviorsEquals
+import akka.actor.typed.scaladsl.Behaviors
 import org.scalactic.source.Position
-import org.scalatest.{Assertion, FlatSpec}
+import org.scalatest.FlatSpec
 
 import scala.collection.mutable
 
@@ -12,9 +13,9 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
 
   type SystemState = Map[ActorPath, ActorState]
 
-  private def test(rootBehavior: Behavior[_], property: Property)(
+  private def test(rootBehavior: Behavior[_], properties: Seq[Property])(
       implicit position: Position
-  ): Assertion = {
+  ): Unit = {
     val initialSystemState: SystemState = Map(
       root -> ActorState(Map.empty, rootBehavior)
     )
@@ -32,10 +33,12 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
       visisted.add(current)
     }
 
-    assert(
-      checkProperty(transitions, property).contains(initialSystemState),
-      "the property wasn't fulfilled"
-    )
+    properties.foreach { property =>
+      assert(
+        checkProperty(transitions, property).contains(initialSystemState),
+        "the property wasn't fulfilled"
+      )
+    }
   }
 
   private def checkProperty(
@@ -44,9 +47,13 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
   ): Set[SystemState] =
     property match {
       case ActorIs(path, behavior) =>
-        transitions.nodes.filter(
-          s => BehaviorsEquals.equal(s(path).behavior, behavior)
-        )
+        transitions.nodes.filter { state =>
+          val currentBehavior = state.get(path)
+            .map(_.behavior)
+            .getOrElse(Behaviors.stopped)
+
+          BehaviorsEquals.areEquivalent(currentBehavior, behavior)
+        }
       case AlwaysEventually(property) => ???
       case ExistsEventually(property) => ???
       case Not(property) =>
@@ -60,9 +67,9 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
   }
 
   class InWord(behavior: Behavior[_], description: String) {
-    def in(property: Property): Unit =
+    def in(properties: Property*)(implicit position: Position): Unit =
       it should description in {
-        test(behavior, property)
+        test(behavior, properties)
       }
   }
 

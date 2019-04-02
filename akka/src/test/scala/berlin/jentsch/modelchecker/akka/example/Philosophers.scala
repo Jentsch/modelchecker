@@ -87,6 +87,11 @@ class PhilosophersSpec extends AkkaSpec {
     root is Philosophers()
   }
 
+  Philosophers() should "initially have no sticks" in (
+    !(root / "Stick1" is Philosophers.stick),
+    root / "Stick1" is stopped
+  )
+
   "BehaviorEquals" should "recognize initial State as equal" in {
     assert(BehaviorsEquals.areEquivalent(Philosophers(), Philosophers()))
   }

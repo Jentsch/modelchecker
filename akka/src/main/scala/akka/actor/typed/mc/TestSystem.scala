@@ -8,7 +8,7 @@ import java.util.{Optional, function}
 
 import akka.actor.typed._
 import akka.actor.typed.internal.InternalRecipientRef
-import akka.actor.{ActorPath, ActorRefProvider, Cancellable, DynamicAccess, Scheduler}
+import akka.actor.{ActorPath, ActorRefProvider, Cancellable}
 import akka.util.Timeout
 import berlin.jentsch.modelchecker.akka.root
 
@@ -144,6 +144,9 @@ class TestSystem[R](init: Behavior[R]) {
       extends ActorSystem[R]
       with InternalRecipientRef[R]
       with MActorRef[R] {
+
+    import akka.actor.{DynamicAccess, Scheduler}
+
     override val path: ActorPath = root
     override def name: String = "TestActorSystem"
     override def settings: Settings = ???

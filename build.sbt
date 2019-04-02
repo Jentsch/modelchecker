@@ -96,7 +96,6 @@ lazy val akka = project
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "org.scalatest" %% "scalatest" % scalaTestVersion,
       "org.scala-graph" %% "graph-core" % "1.12.5",
-      "org.scalaz" %% "scalaz-core" % "7.2.27",
     ),
     examplePackageRef := {
       import scala.meta._

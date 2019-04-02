@@ -7,7 +7,7 @@ case class ActorState(msg: List[_], behavior: Behavior[_]) {
   override def equals(o: Any): Boolean =
     this == o || (o match {
       case that: ActorState =>
-        this.msg == that.msg && BehaviorsEquals.equal(
+        this.msgs == that.msgs && BehaviorsEquals.areEquivalent(
           this.behavior,
           that.behavior
         )

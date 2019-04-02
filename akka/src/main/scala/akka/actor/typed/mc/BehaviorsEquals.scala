@@ -3,7 +3,7 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.Behavior.{DeferredBehavior, StoppedBehavior}
 import akka.actor.typed.scaladsl.Behaviors.{ReceiveImpl, ReceiveMessageImpl}
 import berlin.jentsch.modelchecker.akka.ReflectiveEquals
-import scalaz.Equal
+import org.scalactic.Equivalence
 
 /**
   * @example Empty
@@ -12,24 +12,24 @@ import scalaz.Equal
   * import akka.actor.typed.scaladsl.Behaviors
   * import akka.actor.typed.mc.BehaviorsEquals
   *
-  * assert(BehaviorsEquals.equal(Behaviors.empty, Behaviors.empty))
-  * assert(BehaviorsEquals.equal(stopped, stopped))
-  * assert(! BehaviorsEquals.equal(stopped, Behaviors.empty))
+  * assert(BehaviorsEquals.areEquivalent(Behaviors.empty, Behaviors.empty))
+  * assert(BehaviorsEquals.areEquivalent(stopped, stopped))
+  * assert(! BehaviorsEquals.areEquivalent(stopped, Behaviors.empty))
   *
   * def receiving = receive[String]{case (ctx, m) => same}
   * assert(receiving != receiving)
-  * assert(BehaviorsEquals.equal(receiving, receiving))
+  * assert(BehaviorsEquals.areEquivalent(receiving, receiving))
   *
   * def receivingMsg = receiveMessage[String]{
   *   case "" => stopped
   *   case _ => same
   * }
-  * assert(BehaviorsEquals.equal(receivingMsg, receivingMsg))
+  * assert(BehaviorsEquals.areEquivalent(receivingMsg, receivingMsg))
   *
   * }}}
   */
-object BehaviorsEquals extends Equal[Behavior[_]] {
-  override def equal(behavior1: Behavior[_], behavior2: Behavior[_]): Boolean =
+object BehaviorsEquals extends Equivalence[Behavior[_]] {
+  override def areEquivalent(behavior1: Behavior[_], behavior2: Behavior[_]): Boolean =
     (behavior1, behavior2) match {
       case (`behavior2`, _) => true
       case (rec1: ReceiveImpl[_], rec2: ReceiveImpl[_]) =>

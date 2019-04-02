@@ -24,9 +24,10 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
 
     val visisted: mutable.Set[SystemState] = mutable.Set.empty
 
-    val transitions: Graph[SystemState] = Graph.explore(Set(initialSystemState)){ _ =>
-      Set(Map.empty)
-    }
+    val transitions: Graph[SystemState] =
+      Graph.explore(Set(initialSystemState)) { _ =>
+        Set(Map.empty)
+      }
 
     properties.foreach { property =>
       assert(
@@ -46,7 +47,8 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
     property match {
       case ActorIs(path, behavior) =>
         transitions.nodes.filter { state =>
-          val currentBehavior = state.get(path)
+          val currentBehavior = state
+            .get(path)
             .map(_.behavior)
             .getOrElse(Behaviors.stopped)
 

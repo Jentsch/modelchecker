@@ -9,8 +9,9 @@ import scala.reflect.ClassTag
 /**
   * Directed mutable graph
   */
-private[akka] final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge])
-    extends AnyVal {
+private[akka] final class Graph[E] private[Graph] (
+    private val wrapped: XGraph[E, DiEdge]
+) extends AnyVal {
   import wrapped._
 
   def withAncestors(nodes: Set[E], filter: E => Boolean = _ => true): Set[E] = {
@@ -58,7 +59,7 @@ private[akka] final class Graph[E] private[Graph] (private val wrapped: XGraph[E
 
 private[akka] object Graph {
   def apply[E: ClassTag](pairs: (E, E)*): Graph[E] = {
-    val edges = pairs.map { case (a, b) => DiEdge(a, b)}
+    val edges = pairs.map { case (a, b) => DiEdge(a, b) }
     val xgraph: XGraph[E, DiEdge] = XGraph.from(edges = edges)
 
     new Graph(xgraph)
@@ -79,11 +80,11 @@ private[akka] object Graph {
     @tailrec
     def depthFirstSearch(
         unvisited: List[E],
-        visited: Set[E],
+        visited: Set[E]
     ): Unit =
       unvisited match {
         case Nil =>
-          // done
+        // done
         case e :: es if visited(e) =>
           depthFirstSearch(es, visited)
         case e :: es =>

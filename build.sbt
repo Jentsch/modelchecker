@@ -8,7 +8,7 @@ licenses := Seq("MIT" -> url("https://choosealicense.com/licenses/mit/"))
 
 version := "0.1.0-SNAPSHOT"
 
-scalaVersion := "2.12.8"
+scalaVersion in ThisBuild := "2.12.8"
 
 lazy val scalaTestVersion = "3.0.7"
 

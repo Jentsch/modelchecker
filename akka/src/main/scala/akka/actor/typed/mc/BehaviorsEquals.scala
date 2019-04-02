@@ -29,7 +29,10 @@ import org.scalactic.Equivalence
   * }}}
   */
 object BehaviorsEquals extends Equivalence[Behavior[_]] {
-  override def areEquivalent(behavior1: Behavior[_], behavior2: Behavior[_]): Boolean =
+  override def areEquivalent(
+      behavior1: Behavior[_],
+      behavior2: Behavior[_]
+  ): Boolean =
     (behavior1, behavior2) match {
       case (`behavior2`, _) => true
       case (rec1: ReceiveImpl[_], rec2: ReceiveImpl[_]) =>
@@ -42,6 +45,8 @@ object BehaviorsEquals extends Equivalence[Behavior[_]] {
 
       case (def1: DeferredBehavior[_], def2: DeferredBehavior[_]) =>
         ReflectiveEquals(def1, def2)
+      case (_: DeferredBehavior[_], _) => false
+
       case (stopped1: StoppedBehavior[_], stopped2: StoppedBehavior[_]) =>
         ReflectiveEquals(stopped1.postStop.x, stopped2.postStop.x)
       case (_: StoppedBehavior[_], _) => false

@@ -17,6 +17,7 @@ private case class ActorIs(path: ActorPath, behavior: Behavior[_])
 
 private case class AlwaysEventually(property: Property) extends Property
 private case class ExistsEventually(property: Property) extends Property
+private case class ExistsNext(property: Property) extends Property
 
 private case class Not(property: Property) extends Property
 private case class And(property1: Property, property2: Property)
@@ -40,4 +41,7 @@ trait PropertySyntax {
 
   def alwaysEventually(property: Property): Property =
     AlwaysEventually(property)
+
+  def existsNext(property: Property): Property =
+    ExistsNext(property)
 }

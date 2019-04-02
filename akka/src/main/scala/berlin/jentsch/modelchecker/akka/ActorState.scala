@@ -16,4 +16,6 @@ case class ActorState(msgs: Map[ActorPath, List[_]], behavior: Behavior[_]) {
         )
       case _ => false
     })
+
+  override def hashCode(): Int = msgs.hashCode() ^ behavior.getClass.hashCode()
 }

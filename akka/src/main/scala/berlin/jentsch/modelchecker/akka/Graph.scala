@@ -34,6 +34,12 @@ final class Graph[E] private[Graph] (private val wrapped: XGraph[E, DiEdge]) ext
 
   }
 
+  def directAncestors(nodes: Set[E]): Set[E] =
+    nodes.flatMap(directAncestors)
+
+  def directAncestors(node: E): Set[E] =
+    get(node).diPredecessors.map(_.value)
+
   private def nodesOf(values: Set[E]): Set[NodeT] =
     wrapped.nodes.filter(node => values(node.value)).to[Set]
 

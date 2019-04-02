@@ -24,13 +24,8 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
 
     val visisted: mutable.Set[SystemState] = mutable.Set.empty
 
-    val transitions: Graph[SystemState] = Graph.singleton(initialSystemState)
-
-    while (unvisisted.nonEmpty) {
-      val current = unvisisted.head
-      unvisisted.remove(current)
-
-      visisted.add(current)
+    val transitions: Graph[SystemState] = Graph.explore(Set(initialSystemState)){ _ =>
+      Set(Map.empty)
     }
 
     properties.foreach { property =>
@@ -44,7 +39,10 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
   private def checkProperty(
       transitions: Graph[SystemState],
       property: Property
-  ): Set[SystemState] =
+  ): Set[SystemState] = {
+    def check(property: Property) =
+      checkProperty(transitions, property)
+
     property match {
       case ActorIs(path, behavior) =>
         transitions.nodes.filter { state =>
@@ -56,11 +54,14 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
         }
       case AlwaysEventually(property) => ???
       case ExistsEventually(property) => ???
+      case ExistsNext(property) =>
+        transitions.directAncestors(check(property))
       case Not(property) =>
-        transitions.nodes -- checkProperty(transitions, property)
+        transitions.nodes -- check(property)
       case And(property1, property2) =>
-        checkProperty(transitions, property1) intersect checkProperty(transitions, property2)
+        check(property1) intersect check(property2)
     }
+  }
 
   implicit class BehaviorShould(behavior: Behavior[_]) {
     def should(description: String): InWord = new InWord(behavior, description)

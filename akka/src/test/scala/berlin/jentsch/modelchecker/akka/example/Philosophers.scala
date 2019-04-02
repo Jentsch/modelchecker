@@ -1,6 +1,7 @@
 package berlin.jentsch.modelchecker.akka.example
 
 import akka.actor.typed._
+import akka.actor.typed.mc.BehaviorsEquals
 import akka.actor.typed.scaladsl.Behaviors._
 import berlin.jentsch.modelchecker.akka._
 
@@ -79,10 +80,14 @@ object Philosophers {
 
 }
 
-object PhilosophersSpec extends AkkaSpec {
+class PhilosophersSpec extends AkkaSpec {
   behavior of "philosophers"
 
   Philosophers() should "always progress" in {
-    alwaysEventually(root / "stick1" is Philosophers.stickFree)
+    root is Philosophers()
+  }
+
+  "BehaviorEquals" should "recognize initial State as equal" in {
+    assert(BehaviorsEquals.equal(Philosophers(), Philosophers()))
   }
 }

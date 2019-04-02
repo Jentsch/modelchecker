@@ -1,5 +1,7 @@
 package berlin.jentsch.modelchecker.akka
 
+import akka.actor.typed.Behavior
+
 import scala.collection.concurrent.TrieMap
 import scala.reflect.runtime.universe.runtimeMirror
 import scala.tools.reflect.{ToolBox, ToolBoxError}
@@ -43,8 +45,10 @@ object ReflectiveEquals {
   def equals(a: AnyRef, b: AnyRef): Boolean =
     if (a eq b) {
       true
-    } else if (a.isInstanceOf[Any => Any] || a.isInstanceOf[() => Any] || a
-                 .isInstanceOf[(Any, Any) => Any]) {
+    } else if (a.isInstanceOf[Any => Any] ||
+               a.isInstanceOf[() => Any] ||
+               a.isInstanceOf[(Any, Any) => Any] ||
+               a.isInstanceOf[Behavior[_]]) {
       generatedEquals
         .getOrElseUpdate(
           a.getClass, {

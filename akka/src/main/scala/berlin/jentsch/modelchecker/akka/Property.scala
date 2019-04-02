@@ -4,7 +4,7 @@ import akka.actor.ActorPath
 import akka.actor.typed.Behavior
 
 sealed trait Property {
-  def prefix_- : Property = Not(this)
+  def unary_! : Property = Not(this)
 }
 
 /**

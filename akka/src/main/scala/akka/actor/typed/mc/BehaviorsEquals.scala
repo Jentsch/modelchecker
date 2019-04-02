@@ -1,7 +1,9 @@
 package akka.actor.typed.mc
 import akka.actor.typed.Behavior
+import akka.actor.typed.Behavior.{DeferredBehavior, StoppedBehavior}
 import akka.actor.typed.scaladsl.Behaviors.{ReceiveImpl, ReceiveMessageImpl}
-import berlin.jentsch.modelchecker.akka.{Equal, ReflectiveEquals}
+import berlin.jentsch.modelchecker.akka.ReflectiveEquals
+import scalaz.Equal
 
 /**
   * @example Empty
@@ -10,31 +12,38 @@ import berlin.jentsch.modelchecker.akka.{Equal, ReflectiveEquals}
   * import akka.actor.typed.scaladsl.Behaviors
   * import akka.actor.typed.mc.BehaviorsEquals
   *
-  * assert(BehaviorsEquals(Behaviors.empty, Behaviors.empty))
-  * assert(BehaviorsEquals(stopped, stopped))
-  * assert(! BehaviorsEquals(stopped, Behaviors.empty))
+  * assert(BehaviorsEquals.equal(Behaviors.empty, Behaviors.empty))
+  * assert(BehaviorsEquals.equal(stopped, stopped))
+  * assert(! BehaviorsEquals.equal(stopped, Behaviors.empty))
   *
   * def receiving = receive[String]{case (ctx, m) => same}
   * assert(receiving != receiving)
-  * assert(BehaviorsEquals(receiving, receiving))
+  * assert(BehaviorsEquals.equal(receiving, receiving))
   *
   * def receivingMsg = receiveMessage[String]{
   *   case "" => stopped
   *   case _ => same
   * }
-  * assert(BehaviorsEquals(receivingMsg, receivingMsg))
+  * assert(BehaviorsEquals.equal(receivingMsg, receivingMsg))
   *
   * }}}
   */
 object BehaviorsEquals extends Equal[Behavior[_]] {
-  def apply(behavior1: Behavior[_], behavior2: Behavior[_]): Boolean =
+  override def equal(behavior1: Behavior[_], behavior2: Behavior[_]): Boolean =
     (behavior1, behavior2) match {
       case (`behavior2`, _) => true
       case (rec1: ReceiveImpl[_], rec2: ReceiveImpl[_]) =>
         ReflectiveEquals(rec1.onMessage, rec2.onMessage)
+      case (_: ReceiveImpl[_], _) => false
+
       case (rec1: ReceiveMessageImpl[_], rec2: ReceiveMessageImpl[_]) =>
         ReflectiveEquals(rec1.onMessage, rec2.onMessage)
-      case _ => false
+      case (_: ReceiveMessageImpl[_], _) => false
+
+      case (def1: DeferredBehavior[_], def2: DeferredBehavior[_]) =>
+        ReflectiveEquals(def1, def2)
+      case (stopped1: StoppedBehavior[_], stopped2: StoppedBehavior[_]) =>
+        ReflectiveEquals(stopped1.postStop.x, stopped2.postStop.x)
+      case (_: StoppedBehavior[_], _) => false
     }
-  override def equal(a1: Behavior[_], a2: Behavior[_]): Boolean = apply(a1, a2)
 }

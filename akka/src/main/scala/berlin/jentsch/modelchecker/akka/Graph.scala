@@ -5,7 +5,6 @@ import scalax.collection.mutable.{Graph => XGraph}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.collection.mutable.Queue
 import scala.reflect.ClassTag
 
 /**
@@ -78,7 +77,7 @@ private[akka] object Graph {
   )(successors: E => Traversable[E]): Graph[E] = {
 
     val xgraph = XGraph.empty[E, DiEdge]
-    val unvisited: Queue[E] = init.to[Queue]
+    val unvisited: mutable.Queue[E] = init.to[mutable.Queue]
     val visited: mutable.Set[E] = mutable.Set.empty
 
     while (unvisited.nonEmpty) {

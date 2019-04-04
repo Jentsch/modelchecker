@@ -6,24 +6,109 @@ import java.util.concurrent.{CompletionStage, ThreadFactory}
 import java.util.function.BiFunction
 import java.util.{Optional, function}
 
+import akka.actor.typed.Behavior.DeferredBehavior
 import akka.actor.typed._
+import akka.actor.typed.internal.BehaviorImpl.ReceiveMessageBehavior
 import akka.actor.typed.internal.InternalRecipientRef
+import akka.actor.typed.scaladsl.Behaviors.ReceiveImpl
 import akka.actor.{ActorPath, ActorRefProvider, Cancellable}
 import akka.util.Timeout
-import berlin.jentsch.modelchecker.akka.root
+import berlin.jentsch.modelchecker.akka.{ActorState, root}
 
-import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.reflect.ClassTag
 import scala.util.Try
 
-class TestSystem[R](init: Behavior[R]) {
+final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
 
-  case class ActorState[T](msgs: Seq[T], behavior: Behavior[T])
+  var currentActor: ActorPath = null
 
-  val currentState: mutable.Map[ActorPath, ActorState[_]] =
-    mutable.Map(root -> ActorState(Seq.empty, init))
+  def nextStates: Set[Map[ActorPath, ActorState]] = {
+    var next = Set.empty[Map[ActorPath, ActorState]]
+
+    val startState = currentState
+
+    startState.foreach {
+      case (path, ActorState(behavior, messages)) =>
+        currentState = startState
+        currentActor = path
+        try {
+          behavior match {
+            case b: DeferredBehavior[_] =>
+              val result = b(MActorContext(path))
+              currentState =
+                modify(currentState, path)(_.copy(behavior = result))
+              next += currentState
+
+            case rec: ReceiveMessageBehavior[_] =>
+              def run[T](rec: ReceiveMessageBehavior[T]): Unit =
+                messages.foreach {
+                  case (sender, messages) =>
+                    val message = messages.head
+                    if (messages.tail == Nil) {
+                      currentState = modify(startState, path)(
+                        s => s.copy(messages = s.messages - sender)
+                      )
+                    } else {
+                      currentState = modify(startState, path)(
+                        s =>
+                          s.copy(messages = modify(s.messages, sender)(_.tail))
+                      )
+                    }
+
+                    val result = rec.receive(
+                      MActorContext(path),
+                      message.asInstanceOf[T]
+                    )
+                    currentState =
+                      modify(currentState, path)(_.copy(behavior = result))
+
+                    next += currentState
+                }
+
+              run(rec)
+
+            case rec: ReceiveImpl[_] =>
+              def run[T](rec: ReceiveImpl[T]) = messages.foreach {
+                case (sender, messages) =>
+                  val message = messages.head
+                  if (messages.tail == Nil) {
+                    currentState = modify(startState, path)(
+                      s => s.copy(messages = s.messages - sender)
+                    )
+                  } else {
+                    currentState = modify(startState, path)(
+                      s => s.copy(messages = modify(s.messages, sender)(_.tail))
+                    )
+                  }
+
+                  val result =
+                    rec.receive(MActorContext(path), message.asInstanceOf[T])
+                  currentState =
+                    modify(currentState, path)(_.copy(behavior = result))
+
+                  next += currentState
+              }
+              run(rec)
+
+            case Behavior.EmptyBehavior =>
+          }
+
+        } catch {
+          case t: Throwable =>
+            throw new RuntimeException(
+              "While executing " ++ path.toString ++ "\nIn System " ++ currentState.toString,
+              t
+            )
+        }
+    }
+
+    next
+  }
+
+  def MActorContext[T](path: ActorPath): TypedActorContext[T] =
+    new MActorContext[T](path)
 
   class MActorContext[T](path: ActorPath)
       extends TypedActorContext[T]
@@ -44,7 +129,7 @@ class TestSystem[R](init: Behavior[R]) {
     override def spawnAnonymous[U](behavior: Behavior[U]): ActorRef[U] = ???
     override def spawn[U](behavior: Behavior[U], name: String): ActorRef[U] = {
       val childPath = path / name
-      currentState += (childPath -> ActorState(Seq.empty, behavior))
+      currentState += (childPath -> ActorState(behavior))
 
       MActorRef(childPath)
     }
@@ -92,7 +177,11 @@ class TestSystem[R](init: Behavior[R]) {
         behavior: Behavior[U],
         name: String,
         props: Props
-    ): ActorRef[U] = ???
+    ): ActorRef[U] = {
+      require(props == Props.empty)
+
+      spawn(behavior, name)
+    }
     override def stop[U](child: ActorRef[U]): Unit = ???
     override def watch[U](other: ActorRef[U]): Unit =
       ???
@@ -126,14 +215,26 @@ class TestSystem[R](init: Behavior[R]) {
     override val path: ActorPath
 
     override def isTerminated: Boolean =
-      currentState.get(path).exists(_.behavior == Behavior.stopped)
-    override def tell(msg: T): Unit = {
       ???
+
+    override def tell(msg: T): Unit = {
+      currentState = modify(currentState, path)(
+        s => s.copy(messages = modify(s.messages, currentActor)(_ :+ msg))
+      )
     }
     override def narrow[U <: T]: ActorRef[U] = this.asInstanceOf
     override def unsafeUpcast[U >: T]: ActorRef[U] = this.asInstanceOf
     override def provider: ActorRefProvider = ???
     override def compareTo(o: ActorRef[_]): Int = this.path compareTo o.path
+
+    override def equals(o: Any): Boolean = o match {
+      case that: MActorRef[_] => this.path == that.path
+    }
+
+    override def hashCode(): Int = path.hashCode()
+
+    override def toString: String = "Ref(" + path + ")"
+
   }
 
   def MActorRef[T](_path: ActorPath): MActorRef[T] = new MActorRef[T] {
@@ -176,4 +277,19 @@ class TestSystem[R](init: Behavior[R]) {
       sys.error("Extensions are not supported")
     override def hasExtension(ext: ExtensionId[_ <: Extension]): Boolean = false
   }
+
+  private def modify[K, V](map: Map[K, V], key: K)(mod: V => V): Map[K, V] =
+    try {
+      map + (key -> mod(map(key)))
+    } catch {
+      case _: NoSuchElementException =>
+        throw new NoSuchElementException(
+          key.toString ++ " not found in " ++ map.toString
+        )
+    }
+}
+
+object TestSystem {
+  def apply(currentState: Map[ActorPath, ActorState]): TestSystem[_] =
+    new TestSystem(currentState)
 }

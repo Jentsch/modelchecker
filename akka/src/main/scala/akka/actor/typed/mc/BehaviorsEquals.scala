@@ -50,5 +50,7 @@ object BehaviorsEquals extends Equivalence[Behavior[_]] {
       case (stopped1: StoppedBehavior[_], stopped2: StoppedBehavior[_]) =>
         ReflectiveEquals(stopped1.postStop.x, stopped2.postStop.x)
       case (_: StoppedBehavior[_], _) => false
+
+      case (Behavior.EmptyBehavior, _) => behavior2 eq Behavior.EmptyBehavior
     }
 }

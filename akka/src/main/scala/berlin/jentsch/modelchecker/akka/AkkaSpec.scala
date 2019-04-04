@@ -2,12 +2,10 @@ package berlin.jentsch.modelchecker.akka
 
 import akka.actor.ActorPath
 import akka.actor.typed.Behavior
-import akka.actor.typed.mc.BehaviorsEquals
+import akka.actor.typed.mc.{BehaviorsEquals, TestSystem}
 import akka.actor.typed.scaladsl.Behaviors
 import org.scalactic.source.Position
 import org.scalatest.FlatSpec
-
-import scala.collection.mutable
 
 trait AkkaSpec extends FlatSpec with PropertySyntax {
 
@@ -17,17 +15,19 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
       implicit position: Position
   ): Unit = {
     val initialSystemState: SystemState = Map(
-      root -> ActorState(Map.empty, rootBehavior)
+      root -> ActorState(rootBehavior)
     )
 
-    val unvisisted: mutable.Set[SystemState] = mutable.Set(initialSystemState)
-
-    val visisted: mutable.Set[SystemState] = mutable.Set.empty
+    val testSystem = TestSystem(initialSystemState)
 
     val transitions: Graph[SystemState] =
-      Graph.explore(Set(initialSystemState)) { _ =>
-        Set(Map.empty)
+      Graph.explore(Set(initialSystemState)) { s =>
+        testSystem.currentState = s
+
+        testSystem.nextStates
       }
+
+    info("Found states: " ++ transitions.nodes.size.toString)
 
     properties.foreach { property =>
       assert(
@@ -41,7 +41,7 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
       transitions: Graph[SystemState],
       property: Property
   ): Set[SystemState] = {
-    def check(property: Property) =
+    def check(property: Property): Set[SystemState] =
       checkProperty(transitions, property)
 
     property match {

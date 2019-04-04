@@ -4,6 +4,8 @@ import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.mutable.{Graph => XGraph}
 
 import scala.annotation.tailrec
+import scala.collection.mutable
+import scala.collection.mutable.Queue
 import scala.reflect.ClassTag
 
 /**
@@ -76,28 +78,19 @@ private[akka] object Graph {
   )(successors: E => Traversable[E]): Graph[E] = {
 
     val xgraph = XGraph.empty[E, DiEdge]
+    val unvisited: Queue[E] = init.to[Queue]
+    val visited: mutable.Set[E] = mutable.Set.empty
 
-    @tailrec
-    def depthFirstSearch(
-        unvisited: List[E],
-        visited: Set[E]
-    ): Unit =
-      unvisited match {
-        case Nil =>
-        // done
-        case e :: es if visited(e) =>
-          depthFirstSearch(es, visited)
-        case e :: es =>
-          val visited2 = visited + e
-          val succs = successors(e)
-          xgraph ++= succs.map { succ =>
-            DiEdge(e, succ)
-          }
-          val unvisited2 = succs.filterNot(visited).to[List] ++ unvisited
-          depthFirstSearch(unvisited2, visited2)
+    while (unvisited.nonEmpty) {
+      val e = unvisited.dequeue()
+      if (!visited(e)) {
+        visited += e
+
+        val succs = successors(e)
+        xgraph ++= succs.view.map(DiEdge(e, _))
+        unvisited ++= succs.view.filterNot(visited)
       }
-
-    depthFirstSearch(init.to[List], Set.empty)
+    }
 
     new Graph(xgraph)
   }

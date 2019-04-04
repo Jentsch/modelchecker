@@ -87,6 +87,11 @@ private[akka] object Graph {
 
         val succs = successors(e)
         xgraph ++= succs.view.map(DiEdge(e, _))
+
+        if (xgraph.nodes.size >= 100) {
+          println(xgraph.toString)
+          throw new OutOfMemoryError("More than 100 nodes found")
+        }
         unvisited ++= succs.view.filterNot(visited)
       }
     }

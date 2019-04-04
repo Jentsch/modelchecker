@@ -51,27 +51,33 @@ object Philosophers {
   def philosophers(
       stick1: ActorRef[StickMessages],
       stick2: ActorRef[StickMessages]
-  ): Behavior[StickAck] =
-    setup { ctx =>
+  ): Behavior[StickAck] = {
+
+    def acquireFirstStick: Behavior[StickAck] = setup { ctx =>
       stick1 ! Req(ctx.self)
-      receive {
-        case (ctx, StickAck) =>
-          stick2 ! Req(ctx.self)
-          receive {
-            case (ctx, StickAck) =>
-              stick2 ! Free(ctx.self)
-              stick1 ! Free(ctx.self)
-              philosophers(stick1, stick2)
-          }
-      }
+      receive { case (ctx, StickAck) => acquireSecondStick }
     }
+
+    def acquireSecondStick: Behavior[StickAck] = setup { ctx =>
+      stick2 ! Req(ctx.self)
+      receive { case (ctx, StickAck) => release }
+    }
+
+    def release: Receive[StickAck] = receive {
+      case (ctx, StickAck) =>
+        stick2 ! Free(ctx.self)
+        stick1 ! Free(ctx.self)
+        acquireFirstStick
+    }
+
+    acquireFirstStick
+  }
 
 }
 
 class PhilosophersSpec extends AkkaSpec {
   behavior of "philosophers"
 
-  /*
   Philosophers() should "always progress" in (
     root is Philosophers(),
     alwaysNext(root is empty)
@@ -81,6 +87,4 @@ class PhilosophersSpec extends AkkaSpec {
     !(root / "Stick1" is Philosophers.stick),
     root / "Stick1" is stopped
   )
-
- */
 }

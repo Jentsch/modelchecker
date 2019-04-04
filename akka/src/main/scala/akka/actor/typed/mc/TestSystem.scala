@@ -92,7 +92,7 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
               }
               run(rec)
 
-            case Behavior.EmptyBehavior =>
+            case Behavior.EmptyBehavior | Behavior.StoppedBehavior =>
           }
 
         } catch {
@@ -219,7 +219,10 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
 
     override def tell(msg: T): Unit = {
       currentState = modify(currentState, path)(
-        s => s.copy(messages = modify(s.messages, currentActor)(_ :+ msg))
+        s => s.copy(messages = modify(s.messages, currentActor){msgs =>
+          assert(msgs.size <= 5, "To many messages in queue for actor " ++ path.toString)
+          msgs :+ msg
+        })
       )
     }
     override def narrow[U <: T]: ActorRef[U] = this.asInstanceOf

@@ -22,7 +22,7 @@ import scala.util.Try
 
 final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
 
-  var currentActor: ActorPath = null
+  var currentActor: ActorPath = _
 
   def nextStates: Set[Map[ActorPath, ActorState]] = {
     var next = Set.empty[Map[ActorPath, ActorState]]
@@ -129,6 +129,9 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
     override def spawnAnonymous[U](behavior: Behavior[U]): ActorRef[U] = ???
     override def spawn[U](behavior: Behavior[U], name: String): ActorRef[U] = {
       val childPath = path / name
+
+      require(! currentState.isDefinedAt(childPath))
+
       currentState += (childPath -> ActorState(behavior))
 
       MActorRef(childPath)

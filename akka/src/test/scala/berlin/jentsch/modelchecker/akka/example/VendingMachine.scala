@@ -50,5 +50,8 @@ object VendingMachine {
 class VendingMachineSpec extends AkkaSpec {
   behavior of "a vending machine"
 
-  VendingMachine.init should "not throw an exception" in ()
+  VendingMachine.init should "eventually accept coins" in
+    alwaysGlobally(
+      alwaysGlobally(root / "machine" is VendingMachine.vendingMachine)
+    )
 }

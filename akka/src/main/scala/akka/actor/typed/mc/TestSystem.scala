@@ -25,52 +25,20 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
   var currentActor: ActorPath = _
 
   def nextStates: Set[Map[ActorPath, ActorState]] = {
-    var next = Set.empty[Map[ActorPath, ActorState]]
 
+    runDeferred()
+
+    var next = Set.empty[Map[ActorPath, ActorState]]
     val startState = currentState
 
     startState.foreach {
       case (path, ActorState(behavior, messages)) =>
         currentState = startState
         currentActor = path
-        try {
-          behavior match {
-            case b: DeferredBehavior[_] =>
-              val result = b(MActorContext(path))
-              currentState =
-                modify(currentState, path)(_.copy(behavior = result))
-              next += currentState
-
-            case rec: ReceiveMessageBehavior[_] =>
-              def run[T](rec: ReceiveMessageBehavior[T]): Unit =
-                messages.foreach {
-                  case (sender, messages) =>
-                    val message = messages.head
-                    if (messages.tail == Nil) {
-                      currentState = modify(startState, path)(
-                        s => s.copy(messages = s.messages - sender)
-                      )
-                    } else {
-                      currentState = modify(startState, path)(
-                        s =>
-                          s.copy(messages = modify(s.messages, sender)(_.tail))
-                      )
-                    }
-
-                    val result = rec.receive(
-                      MActorContext(path),
-                      message.asInstanceOf[T]
-                    )
-                    currentState =
-                      modify(currentState, path)(_.copy(behavior = result))
-
-                    next += currentState
-                }
-
-              run(rec)
-
-            case rec: ReceiveImpl[_] =>
-              def run[T](rec: ReceiveImpl[T]) = messages.foreach {
+        behavior match {
+          case rec: ReceiveMessageBehavior[_] =>
+            def run[T](rec: ReceiveMessageBehavior[T]): Unit =
+              messages.foreach {
                 case (sender, messages) =>
                   val message = messages.head
                   if (messages.tail == Nil) {
@@ -83,28 +51,71 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
                     )
                   }
 
-                  val result =
-                    rec.receive(MActorContext(path), message.asInstanceOf[T])
+                  val result = rec.receive(
+                    MActorContext(path),
+                    message.asInstanceOf[T]
+                  )
                   currentState =
                     modify(currentState, path)(_.copy(behavior = result))
 
+                  runDeferred()
+
                   next += currentState
               }
-              run(rec)
 
-            case Behavior.EmptyBehavior | Behavior.StoppedBehavior =>
-          }
+            run(rec)
 
-        } catch {
-          case t: Throwable =>
-            throw new RuntimeException(
-              "While executing " ++ path.toString ++ "\nIn System " ++ currentState.toString,
-              t
-            )
+          case rec: ReceiveImpl[_] =>
+            def run[T](rec: ReceiveImpl[T]) = messages.foreach {
+              case (sender, messages) =>
+                val message = messages.head
+                if (messages.tail == Nil) {
+                  currentState = modify(startState, path)(
+                    s => s.copy(messages = s.messages - sender)
+                  )
+                } else {
+                  currentState = modify(startState, path)(
+                    s => s.copy(messages = modify(s.messages, sender)(_.tail))
+                  )
+                }
+
+                val ctx = MActorContext[T](path)
+                var result =
+                  rec.receive(ctx, message.asInstanceOf[T])
+                while (result.isInstanceOf[DeferredBehavior[_]]) {
+                  result
+                }
+
+                currentState =
+                  modify(currentState, path)(_.copy(behavior = result))
+
+                runDeferred()
+
+                next += currentState
+            }
+
+            run(rec)
+
+          case Behavior.EmptyBehavior | Behavior.StoppedBehavior =>
         }
     }
 
     next
+  }
+
+  def runDeferred(): Unit = {
+    while (currentState.values.exists(
+             _.behavior.isInstanceOf[DeferredBehavior[_]]
+           )) {
+      currentState
+        .find(_._2.behavior.isInstanceOf[DeferredBehavior[_]])
+        .foreach {
+          case (path, ActorState(b: DeferredBehavior[_], _)) =>
+            currentActor = path
+            val result = b(MActorContext(path))
+            currentState = modify(currentState, path)(_.copy(behavior = result))
+        }
+    }
   }
 
   def MActorContext[T](path: ActorPath): TypedActorContext[T] =
@@ -130,7 +141,7 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
     override def spawn[U](behavior: Behavior[U], name: String): ActorRef[U] = {
       val childPath = path / name
 
-      require(! currentState.isDefinedAt(childPath))
+      require(!currentState.isDefinedAt(childPath))
 
       currentState += (childPath -> ActorState(behavior))
 
@@ -222,10 +233,14 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
 
     override def tell(msg: T): Unit = {
       currentState = modify(currentState, path)(
-        s => s.copy(messages = modify(s.messages, currentActor){msgs =>
-          assert(msgs.size <= 5, "To many messages in queue for actor " ++ path.toString)
-          msgs :+ msg
-        })
+        s =>
+          s.copy(messages = modify(s.messages, currentActor) { msgs =>
+            assert(
+              msgs.size <= 5,
+              "To many messages in queue for actor " ++ path.toString
+            )
+            msgs :+ msg
+          })
       )
     }
     override def narrow[U <: T]: ActorRef[U] = this.asInstanceOf

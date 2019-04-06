@@ -1,5 +1,6 @@
 package berlin.jentsch.modelchecker.akka.example
 
+import akka.Done
 import akka.actor.typed._
 import akka.actor.typed.scaladsl.Behaviors._
 import berlin.jentsch.modelchecker.akka._
@@ -8,66 +9,71 @@ object Philosophers {
   def apply(): Behavior[Unit] = setup { ctx =>
     val stick1 = ctx.spawn(stick, "Stick1")
     val stick2 = ctx.spawn(stick, "Stick2")
+    val stick3 = ctx.spawn(stick, "Stick3")
 
     ctx.spawn(philosophers(stick1, stick2), "Philosopher1")
-    ctx.spawn(philosophers(stick1, stick2), "Philosopher2")
+    ctx.spawn(philosophers(stick2, stick3), "Philosopher2")
+    ctx.spawn(philosophers(stick1, stick3), "Philosopher3")
+
+    empty
+  }
+  def deadlock: Behavior[Unit] = setup { ctx =>
+    val stick1 = ctx.spawn(stick, "Stick1")
+    val stick2 = ctx.spawn(stick, "Stick2")
+    val stick3 = ctx.spawn(stick, "Stick3")
+
+    ctx.spawn(philosophers(stick1, stick2), "Philosopher1")
+    ctx.spawn(philosophers(stick2, stick3), "Philosopher2")
+    ctx.spawn(philosophers(stick3, stick1), "Philosopher3")
 
     empty
   }
 
-  sealed trait StickMessages
-  case class Req(sender: ActorRef[StickAck]) extends StickMessages
-  case class Free(sender: ActorRef[StickAck]) extends StickMessages
+  sealed trait Messages
+  case class Req(sender: ActorRef[Done]) extends Messages
+  case object Free extends Messages
 
-  case object StickAck
-  type StickAck = StickAck.type
+  def stick: Behavior[Messages] = stickFree
 
-  def stick: Behavior[StickMessages] = stickFree
-
-  lazy val stickFree: Behavior[StickMessages] = receiveMessage {
+  lazy val stickFree: Behavior[Messages] = receiveMessage {
     case Req(sender) =>
-      sender ! StickAck
+      sender ! Done
       stickInUse
   }
 
-  lazy val stickInUse: Behavior[StickMessages] = receiveMessage {
-    case Free(sender) =>
-      sender ! StickAck
-      stickFree
-    case Req(sender) =>
-      stickRequested(sender)
+  lazy val stickInUse: Behavior[Messages] = receiveMessage {
+    case Free        => stickFree
+    case Req(sender) => stickRequested(sender)
   }
 
   def stickRequested(
-      pendingRequest: ActorRef[StickAck]
-  ): Behavior[StickMessages] =
+      pendingRequest: ActorRef[Done]
+  ): Behavior[Messages] =
     receiveMessage {
-      case Free(sender) =>
-        sender ! StickAck
-        pendingRequest ! StickAck
+      case Free =>
+        pendingRequest ! Done
         stickInUse
     }
 
   def philosophers(
-      stick1: ActorRef[StickMessages],
-      stick2: ActorRef[StickMessages]
-  ): Behavior[StickAck] = {
+      stick1: ActorRef[Messages],
+      stick2: ActorRef[Messages]
+  ): Behavior[Done] = {
 
-    def acquireFirstStick: Behavior[StickAck] = setup { ctx =>
+    def acquireFirstStick: Behavior[Done] = setup { ctx =>
       stick1 ! Req(ctx.self)
-      receive { case (ctx, StickAck) => acquireSecondStick }
+      receiveMessage { case Done => acquireSecondStick }
     }
 
-    def acquireSecondStick: Behavior[StickAck] = setup { ctx =>
+    def acquireSecondStick: Behavior[Done] = setup { ctx =>
       stick2 ! Req(ctx.self)
-      receive { case (ctx, StickAck) => release }
+      receiveMessage { case Done => release }
     }
 
-    def release: Receive[StickAck] = receive {
-      case (ctx, StickAck) =>
-        stick2 ! Free(ctx.self)
-        stick1 ! Free(ctx.self)
-        acquireFirstStick
+    def release: Behavior[Done] = setup { _ =>
+      stick2 ! Free
+      stick1 ! Free
+      acquireFirstStick
     }
 
     acquireFirstStick
@@ -79,12 +85,11 @@ class PhilosophersSpec extends AkkaSpec {
   behavior of "philosophers"
 
   Philosophers() should "always progress" in (
-    root is Philosophers(),
-    alwaysNext(root is empty)
+    alwaysGlobally(progressIsPossible),
+    alwaysEventually(root / "Stick1" is Philosophers.stickFree)
   )
 
-  Philosophers() should "initially have no sticks" in (
-    !(root / "Stick1" is Philosophers.stick),
-    root / "Stick1" is stopped
+  Philosophers.deadlock should "deadlock sometimes" in (
+    existsEventually(!progressIsPossible)
   )
 }

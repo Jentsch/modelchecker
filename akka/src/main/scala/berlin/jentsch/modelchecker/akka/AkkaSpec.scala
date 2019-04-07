@@ -100,9 +100,6 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
 
         expand(check(property))
 
-      case AlwaysNext(property) =>
-        check(Not(ExistsNext(Not(property))))
-
       case AlwaysGlobally(property) =>
         @scala.annotation.tailrec
         def expand(
@@ -117,12 +114,6 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
         }
 
         expand(check(property))
-
-      case ExistsNext(property) =>
-        check(property).flatMap(_.diPredecessors)
-      case AlwaysNext(property) =>
-        val succ = check(property)
-        transitions.nodes.filter(_.diSuccessors.subsetOf(succ))
 
       case Not(property) =>
         transitions.nodes -- check(property)

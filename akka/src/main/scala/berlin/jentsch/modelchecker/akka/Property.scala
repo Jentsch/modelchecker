@@ -23,14 +23,12 @@ private case class ActorIs(path: ActorPath, behavior: Behavior[_])
 
 private case object ProgressIsPossible extends Property
 
-private case class AlwaysNext(property: Property) extends Property
 private case class AlwaysEventually(property: Property) extends Property
 private case class AlwaysGlobally(property: Property) extends Property
 private case class AlwaysUntil(property1: Property, property2: Property)
     extends Property
 
 private case class ExistsEventually(property: Property) extends Property
-private case class ExistsNext(property: Property) extends Property
 private case class ExistsUntil(property1: Property, property2: Property)
     extends Property
 
@@ -72,19 +70,13 @@ trait PropertySyntax {
   def alwaysEventually(property: Property): Property =
     AlwaysEventually(property)
 
-  def existsNext(property: Property): Property =
-    ExistsNext(property)
-
-  def alwaysNext(property: Property): Property =
-    AlwaysNext(property)
-
   def alwaysGlobally(property: Property): Property =
     AlwaysGlobally(property)
 
   def progressIsPossible: Property =
     ProgressIsPossible
 
-  implicit def boolToProperty(boolean: Boolean) =
+  implicit def boolToProperty(boolean: Boolean): Property =
     if (boolean) True else Not(True)
 
   def existsUntil(property1: Property, property2: Property): Property =

@@ -12,7 +12,9 @@ sealed trait Property {
 
   def |(that: Property): Property = And(this, that)
 
-  def show = toString
+  def isInevitable: Property = AlwaysEventually(this)
+
+  def show: String = toString
 }
 
 /**
@@ -64,13 +66,10 @@ trait PropertySyntax {
 
   def root: ActorPath = berlin.jentsch.modelchecker.akka.root
 
-  def existsEventually(property: Property): Property =
+  def potentially(property: Property): Property =
     ExistsEventually(property)
 
-  def alwaysEventually(property: Property): Property =
-    AlwaysEventually(property)
-
-  def alwaysGlobally(property: Property): Property =
+  def invariantly(property: Property): Property =
     AlwaysGlobally(property)
 
   def progressIsPossible: Property =

@@ -2,7 +2,6 @@ package berlin.jentsch.modelchecker.akka
 
 import akka.actor.typed.Behavior
 
-import scala.collection.concurrent.TrieMap
 import scala.reflect.runtime.universe.runtimeMirror
 import scala.tools.reflect.{ToolBox, ToolBoxError}
 
@@ -38,7 +37,49 @@ object ReflectiveEquals {
   def apply(a: AnyRef, b: AnyRef): Boolean =
     equals(a, b)
 
-  private val generatedEquals = TrieMap.empty[Class[_], ReflectiveEquals]
+  private val generatedEquals = new ClassValue[ReflectiveEquals] {
+    override def computeValue(aClass: Class[_]): ReflectiveEquals = {
+      val fields = aClass.getDeclaredFields
+
+      val code = s""" (clazz: Class[_]) => {
+                      | import berlin.jentsch.modelchecker.akka.ReflectiveEquals
+                      |
+                      | new ReflectiveEquals {
+                      |   private val fields = clazz.getDeclaredFields
+                      |   fields.foreach(_.setAccessible(true))
+                      |   val Array(${fields.indices.map("f" + _).mkString(", ")}) = fields
+                      |
+                      |   override def compare(a: AnyRef, b: AnyRef): Boolean = {
+                      |     if (clazz == b.getClass) {
+                      |
+                      |       ${fields.zipWithIndex.map {
+                        case (f, i) =>
+                          if (f.getType == classOf[Int]) {
+                            s"if (f$i.getInt(a) != f$i.getInt(b)) return false"
+                          } else {
+                            s"if (! ReflectiveEquals(f$i.get(a), f$i.get(b))) return false"
+                          }
+                      }
+                      .mkString("\n")}
+                      |
+                      |       return true
+                      |     } else false
+                      |   }
+                      | }
+                      | }
+              """.stripMargin
+
+      val tree = try {
+        tb.parse(code)
+      } catch {
+        case t: ToolBoxError =>
+          println("Code was:"); println(code); throw t
+      }
+
+      tb.compile(tree)()
+        .asInstanceOf[Class[_] => ReflectiveEquals](aClass)
+    }
+  }
 
   private val tb = runtimeMirror(getClass.getClassLoader).mkToolBox()
 
@@ -49,54 +90,7 @@ object ReflectiveEquals {
                a.isInstanceOf[() => Any] ||
                a.isInstanceOf[(Any, Any) => Any] ||
                a.isInstanceOf[Behavior[_]]) {
-      generatedEquals
-        .getOrElseUpdate(
-          a.getClass, {
-            val fields = a.getClass.getDeclaredFields
-
-            val code = s""" (clazz: Class[_]) => {
-                | import berlin.jentsch.modelchecker.akka.ReflectiveEquals
-                |
-                | new ReflectiveEquals {
-                |   private val fields = clazz.getDeclaredFields
-                |   fields.foreach(_.setAccessible(true))
-                |   val Array(${fields.indices
-                            .map("f" + _)
-                            .mkString(", ")}) = fields
-                |
-                |   override def compare(a: AnyRef, b: AnyRef): Boolean = {
-                |     if (clazz == b.getClass) {
-                |
-                |       ${fields.zipWithIndex
-                            .map {
-                              case (f, i) =>
-                                if (f.getType == classOf[Int]) {
-                                  s"if (f$i.getInt(a) != f$i.getInt(b)) return false"
-                                } else {
-                                  s"if (! ReflectiveEquals(f$i.get(a), f$i.get(b))) return false"
-                                }
-                            }
-                            .mkString("\n")}
-                |
-                |       return true
-                |     } else false
-                |   }
-                | }
-                | }
-              """.stripMargin
-
-            val tree = try {
-              tb.parse(code)
-            } catch {
-              case t: ToolBoxError =>
-                println("Code was:"); println(code); throw t
-            }
-
-            tb.compile(tree)()
-              .asInstanceOf[Class[_] => ReflectiveEquals](a.getClass)
-          }
-        )
-        .compare(a, b)
+      generatedEquals.get(a.getClass).compare(a, b)
     } else a == b
 }
 

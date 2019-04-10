@@ -6,6 +6,7 @@ import java.util.concurrent.{CompletionStage, ThreadFactory}
 import java.util.function.BiFunction
 import java.util.{Optional, function}
 
+import akka.Done
 import akka.actor.typed.Behavior.DeferredBehavior
 import akka.actor.typed._
 import akka.actor.typed.internal.BehaviorImpl.ReceiveMessageBehavior
@@ -223,6 +224,14 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
     override def pipeToSelf[Value](future: Future[Value])(
         mapResult: Try[Value] => T
     ): Unit = ???
+
+    override private[akka] def onUnhandled(msg: T): Unit = ???
+
+    override private[akka] def currentBehavior: Behavior[T] = currentState(path).behavior.asInstanceOf
+
+    override private[akka] def hasTimer: Boolean = ???
+
+    override private[akka] def cancelAllTimers(): Unit = ???
   }
 
   trait MActorRef[T] extends ActorRef[T] with InternalRecipientRef[T] {
@@ -281,9 +290,9 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
     override def scheduler: Scheduler = ???
     override def dispatchers: Dispatchers = ???
     override implicit def executionContext: ExecutionContextExecutor = ???
-    override def terminate(): Future[Terminated] = ???
-    override def whenTerminated: Future[Terminated] = ???
-    override def getWhenTerminated: CompletionStage[Terminated] = ???
+    override def terminate(): Unit = ???
+    override def whenTerminated: Future[Done] = ???
+    override def getWhenTerminated: CompletionStage[Done] = ???
     override def deadLetters[U]: ActorRef[U] = ???
     override def printTree: String = currentState.toString()
     override def systemActorOf[U](

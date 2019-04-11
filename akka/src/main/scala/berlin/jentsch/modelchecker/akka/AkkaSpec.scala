@@ -37,11 +37,6 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
           )) {
         fail(s"The property ${property.show} wasn't fulfilled")
       }
-      assert(
-        checkProperty(transitions, property)
-          .exists(_.value == initialSystemState),
-        "the property wasn't fulfilled"
-      )
     }
   }
 

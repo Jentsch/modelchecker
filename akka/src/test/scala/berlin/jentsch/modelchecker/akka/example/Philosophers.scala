@@ -81,7 +81,7 @@ class PhilosophersSpec extends AkkaSpec {
 
   Philosophers() should "always progress" in (
     invariantly(progressIsPossible),
-    (root / "Stick1" is Philosophers.stickFree).isInevitable
+    show(alwaysEventually(root / "Stick1" is Philosophers.stickFree))
   )
 
   Philosophers.deadlock should "deadlock sometimes" in

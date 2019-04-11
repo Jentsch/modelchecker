@@ -263,7 +263,7 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
 
     override def hashCode(): Int = path.hashCode()
 
-    override def toString: String = "Ref(" + path + ")"
+    override def toString: String = "Ref(" + path.toStringWithoutAddress + ")"
 
   }
 

@@ -22,4 +22,12 @@ case class ActorState(
 
   override def hashCode(): Int =
     messages.hashCode() ^ behavior.getClass.hashCode()
+
+  override def toString: String =
+    "State(" ++ behavior.toString ++ ", " ++ messages
+      .map {
+        case (sender, messages) =>
+          sender.toStringWithoutAddress ++ " -> " ++ messages.toString
+      }
+      .mkString(", ") ++ ")"
 }

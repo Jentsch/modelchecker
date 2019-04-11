@@ -125,9 +125,11 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
         transitions.nodes
 
       case Show(property) =>
-        println(property.show)
         val pr = check(property)
-        println(pr.toString)
+        info(property.show ++ " matches " ++ pr.size.toString ++ ":")
+        pr.foreach { n =>
+          info(n.value.map{ case (path, state) => path.toStringWithoutAddress ++ " -> " ++ state.toString}.toSeq.sorted.mkString("\n    "))
+        }
         pr
     }
   }

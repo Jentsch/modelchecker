@@ -35,7 +35,7 @@ object Philosophers {
 
   def stick: Behavior[Messages] = stickFree
 
-  lazy val stickFree: Behavior[Messages] = receiveMessage {
+  lazy val stickFree: Behavior[Messages] = receiveMessagePartial {
     case Req(sender) =>
       sender ! Done
       stickInUse
@@ -43,7 +43,7 @@ object Philosophers {
 
   lazy val stickInUse: Behavior[Messages] = receiveMessage {
     case Free        => stickFree
-    case Req(sender) => receiveMessage {
+    case Req(sender) => receiveMessagePartial {
       case Free =>
         sender ! Done
         stickInUse

@@ -64,8 +64,18 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
         }
       case ProgressIsPossible =>
         transitions.nodes.filter(_.diSuccessors.nonEmpty)
+
       case Not(ProgressIsPossible) =>
         transitions.nodes.filter(_.diSuccessors.isEmpty)
+      case Not(property) =>
+        transitions.nodes.filterNot(check(property))
+      case And(property1, property2) =>
+        check(property1) intersect check(property2)
+      case Or(property1, property2) =>
+        check(property1) ++ check(property2)
+      case True =>
+        transitions.nodes
+
       case ExistsEventually(property) =>
         @scala.annotation.tailrec
         def expand(
@@ -80,12 +90,14 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
         }
 
         expand(check(property))
-      case ExistsEventually(property) =>
+      case AlwaysEventually(property) =>
         @scala.annotation.tailrec
         def expand(
             set: collection.Set[transitions.NodeT]
         ): collection.Set[transitions.NodeT] = {
-          val bigger = set.flatMap(_.diPredecessors) ++ set
+          val bigger = set.flatMap(
+            _.diPredecessors.filter(_.diSuccessors.forall(set))
+          ) ++ set
 
           if (bigger.size == set.size)
             bigger
@@ -96,34 +108,24 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
         expand(check(property))
 
       case AlwaysGlobally(property) =>
-        @scala.annotation.tailrec
-        def expand(
-            set: collection.Set[transitions.NodeT]
-        ): collection.Set[transitions.NodeT] = {
-          val bigger = transitions.nodes.filter(_.diSuccessors.subsetOf(set)) ++ set
-
-          if (bigger.size == set.size)
-            bigger
-          else
-            expand(bigger)
-        }
-
-        expand(check(property))
-
-      case Not(property) =>
-        transitions.nodes -- check(property)
-      case And(property1, property2) =>
-        check(property1) intersect check(property2)
-      case Or(property1, property2) =>
-        check(property1) ++ check(property2)
-      case True =>
-        transitions.nodes
+        check(Not(ExistsEventually(Not(property))))
+      case ExistsGlobally(property) =>
+        check(Not(AlwaysEventually(Not(property))))
 
       case Show(property) =>
         val pr = check(property)
         info(property.show ++ " matches " ++ pr.size.toString ++ ":")
         pr.foreach { n =>
-          info(n.value.map{ case (path, state) => path.toStringWithoutAddress ++ " -> " ++ state.toString}.toSeq.sorted.mkString("\n    "))
+          info(
+            n.value
+              .map {
+                case (path, state) =>
+                  path.toStringWithoutAddress ++ " -> " ++ state.toString
+              }
+              .toSeq
+              .sorted
+              .mkString("\n    ")
+          )
         }
         pr
     }

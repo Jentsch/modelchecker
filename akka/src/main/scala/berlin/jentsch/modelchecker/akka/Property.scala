@@ -27,11 +27,12 @@ private case object ProgressIsPossible extends Property
 
 private case class AlwaysEventually(property: Property) extends Property
 private case class AlwaysGlobally(property: Property) extends Property
-private case class AlwaysUntil(property1: Property, property2: Property)
+private case class AlwaysUntil(during: Property, until: Property)
     extends Property
 
 private case class ExistsEventually(property: Property) extends Property
-private case class ExistsUntil(property1: Property, property2: Property)
+private case class ExistsGlobally(property: Property) extends Property
+private case class ExistsUntil(during: Property, until: Property)
     extends Property
 
 /** @group Bool */
@@ -72,17 +73,14 @@ trait PropertySyntax {
   def invariantly(property: Property): Property =
     AlwaysGlobally(property)
 
+  def alwaysEventually(property: Property): Property =
+    AlwaysEventually(property)
+
   def progressIsPossible: Property =
     ProgressIsPossible
 
   implicit def boolToProperty(boolean: Boolean): Property =
     if (boolean) True else Not(True)
-
-  def existsUntil(property1: Property, property2: Property): Property =
-    ExistsUntil(property1, property2)
-
-  def alwaysUntil(property1: Property, property2: Property): Property =
-    AlwaysUntil(property1, property2)
 
   /** Prints the states which fulfill the property during the evaluation */
   def show(property: Property): Property =

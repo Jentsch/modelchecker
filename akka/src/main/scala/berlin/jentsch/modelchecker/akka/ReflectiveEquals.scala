@@ -47,12 +47,15 @@ object ReflectiveEquals {
                       | new ReflectiveEquals {
                       |   private val fields = clazz.getDeclaredFields
                       |   fields.foreach(_.setAccessible(true))
-                      |   val Array(${fields.indices.map("f" + _).mkString(", ")}) = fields
+                      |   val Array(${fields.indices
+                      .map("f" + _)
+                      .mkString(", ")}) = fields
                       |
                       |   override def compare(a: AnyRef, b: AnyRef): Boolean = {
                       |     if (clazz == b.getClass) {
                       |
-                      |       ${fields.zipWithIndex.map {
+                      |       ${fields.zipWithIndex
+                      .map {
                         case (f, i) =>
                           if (f.getType == classOf[Int]) {
                             s"if (f$i.getInt(a) != f$i.getInt(b)) return false"

@@ -51,7 +51,9 @@ class VendingMachineSpec extends AkkaSpec {
   behavior of "a vending machine"
 
   VendingMachine.init should "eventually accept coins" in
-    invariantly((root / "machine" is VendingMachine.vendingMachine).isInevitable)
+    invariantly(
+      (root / "machine" is VendingMachine.vendingMachine).isInevitable
+    )
 
   VendingMachine.init should "be empty after initialization" in
     (root is empty).isInevitable

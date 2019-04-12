@@ -4,7 +4,6 @@ import org.scalatest.{Matchers, PropSpec}
 import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
 
-
 class GraphExplorerSpec extends PropSpec with Matchers {
 
   property("don't go into an infinite loop") {

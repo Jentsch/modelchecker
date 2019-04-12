@@ -42,12 +42,13 @@ object Philosophers {
   }
 
   lazy val stickInUse: Behavior[Messages] = receiveMessage {
-    case Free        => stickFree
-    case Req(sender) => receiveMessagePartial {
-      case Free =>
-        sender ! Done
-        stickInUse
-    }
+    case Free => stickFree
+    case Req(sender) =>
+      receiveMessagePartial {
+        case Free =>
+          sender ! Done
+          stickInUse
+      }
   }
 
   def philosophers(
@@ -79,10 +80,8 @@ object Philosophers {
 class PhilosophersSpec extends AkkaSpec {
   behavior of "philosophers"
 
-  Philosophers() should "always progress" in (
-    invariantly(progressIsPossible),
-    show(alwaysEventually(root / "Stick1" is Philosophers.stickFree))
-  )
+  Philosophers() should "always progress" in
+    invariantly(progressIsPossible)
 
   Philosophers.deadlock should "deadlock sometimes" in
     potentially(!progressIsPossible)

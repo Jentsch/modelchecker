@@ -227,7 +227,8 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
 
     override private[akka] def onUnhandled(msg: T): Unit = ???
 
-    override private[akka] def currentBehavior: Behavior[T] = currentState(path).behavior.asInstanceOf
+    override private[akka] def currentBehavior: Behavior[T] =
+      currentState(path).behavior.asInstanceOf
 
     override private[akka] def hasTimer: Boolean = ???
 

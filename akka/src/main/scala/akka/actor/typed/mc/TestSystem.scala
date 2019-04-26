@@ -21,7 +21,10 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.reflect.ClassTag
 import scala.util.Try
 
-final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
+final class TestSystem[R](
+    var currentState: Map[ActorPath, ActorState],
+    atoms: Seq[Map[ActorPath, ActorState] => Boolean]
+) {
 
   var currentActor: ActorPath = _
 
@@ -37,6 +40,11 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
         currentState = startState
         currentActor = path
         behavior match {
+          case deferred: DeferredBehavior[_] =>
+            val result = deferred(MActorContext(path))
+            currentState = modify(currentState, path)(_.copy(behavior = result))
+            next += currentState
+
           case rec: ReceiveMessageBehavior[_] =>
             def run[T](rec: ReceiveMessageBehavior[T]): Unit =
               messages.foreach {
@@ -105,17 +113,34 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
   }
 
   def runDeferred(): Unit = {
-    while (currentState.values.exists(
-             _.behavior.isInstanceOf[DeferredBehavior[_]]
-           )) {
+    val initialAtomsState: Seq[Boolean] = atoms.map(_(currentState))
+    var dontRun: Set[ActorPath] = Set.empty
+    var limit = 100
+    val isCandidate: ((ActorPath, ActorState)) => Boolean = {
+      case (path, state) =>
+        state.behavior.isInstanceOf[DeferredBehavior[_]] && !dontRun(path)
+    }
+
+    while (currentState.exists(isCandidate)) {
       currentState
-        .find(_._2.behavior.isInstanceOf[DeferredBehavior[_]])
+        .find(isCandidate)
         .foreach {
           case (path, ActorState(b: DeferredBehavior[_], _)) =>
+            val oldState = currentState
             currentActor = path
             val result = b(MActorContext(path))
             currentState = modify(currentState, path)(_.copy(behavior = result))
+            if (initialAtomsState != atoms.map(_(currentState))) {
+              currentState = oldState
+              dontRun += path
+            }
         }
+
+      limit -= 1
+      require(
+        limit >= 0,
+        "Limit for deferred behaviours reached. Maybe this is a loop?"
+      )
     }
   }
 
@@ -321,6 +346,9 @@ final class TestSystem[R](var currentState: Map[ActorPath, ActorState]) {
 }
 
 object TestSystem {
-  def apply(currentState: Map[ActorPath, ActorState]): TestSystem[_] =
-    new TestSystem(currentState)
+  def apply(
+      currentState: Map[ActorPath, ActorState],
+      atoms: Set[Map[ActorPath, ActorState] => Boolean]
+  ): TestSystem[_] =
+    new TestSystem(currentState, atoms.toSeq)
 }

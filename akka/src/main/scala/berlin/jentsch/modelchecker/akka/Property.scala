@@ -2,6 +2,7 @@ package berlin.jentsch.modelchecker.akka
 
 import akka.actor.ActorPath
 import akka.actor.typed.Behavior
+import akka.actor.typed.mc.BehaviorsEquals
 
 import scala.language.implicitConversions
 
@@ -12,18 +13,49 @@ sealed trait Property {
 
   def |(that: Property): Property = And(this, that)
 
+  def ->(that: Property): Property = !this | that
+
+  /** The property will become true */
   def isInevitable: Property = AlwaysEventually(this)
 
   def show: String = toString
 }
 
+private sealed trait Atomic extends Property
+
 /**
   * An atomic property
   */
 private case class ActorIs(path: ActorPath, behavior: Behavior[_])
-    extends Property
+    extends Atomic {
 
-private case object ProgressIsPossible extends Property
+  /**
+    *
+    * @example considers behaviors equals
+    * {{{
+    * import akka.actor.typed.scaladsl.Behaviors._
+    * def behavior = setup[Unit] { _ => same }
+    *
+    * assert(behavior != behavior)
+    * assert(ActorIs(root, behavior) == ActorIs(root, behavior))
+    * }}}
+    */
+  override def equals(o: Any): Boolean = {
+    o match {
+      case other: ActorIs =>
+        this.path == other.path && BehaviorsEquals.areEquivalent(
+          this.behavior,
+          other.behavior
+        )
+      case _ => false
+    }
+  }
+
+  override def hashCode: Int =
+    path.hashCode() ^ behavior.getClass.hashCode()
+}
+
+private case object ProgressIsPossible extends Atomic
 
 private case class AlwaysEventually(property: Property) extends Property
 private case class AlwaysGlobally(property: Property) extends Property

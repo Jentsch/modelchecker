@@ -12,12 +12,17 @@ private[akka] object Atoms {
       case actorIs: ActorIs =>
         state: Map[ActorPath, ActorState] =>
           BehaviorsEquals.areEquivalent(
-            state.get(actorIs.path).fold[Behavior[_]](Behaviors.stopped)(_.behavior),
+            state
+              .get(actorIs.path)
+              .fold[Behavior[_]](Behaviors.stopped)(_.behavior),
             actorIs.behavior
           )
       case ProgressIsPossible =>
         state: Map[ActorPath, ActorState] =>
-          state.values.forall(actor => actor.messages.isEmpty && IsDeferredBehavior(actor.behavior))
+          state.values.forall(
+            actor =>
+              actor.messages.isEmpty && IsDeferredBehavior(actor.behavior)
+          )
     }
 
   private def atoms(property: Property): Set[Atomic] = property match {

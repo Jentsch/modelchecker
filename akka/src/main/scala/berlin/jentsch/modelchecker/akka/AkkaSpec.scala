@@ -20,7 +20,8 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
       root -> ActorState(rootBehavior)
     )
 
-    val testSystem = TestSystem(initialSystemState, Atoms(properties.reduce(_ & _)))
+    val testSystem =
+      TestSystem(initialSystemState, Atoms(properties.reduce(_ & _)))
 
     val transitions: Graph[SystemState, DiEdge] =
       GraphExplorer.explore(Set(initialSystemState)) { s =>

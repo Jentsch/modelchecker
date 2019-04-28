@@ -50,11 +50,11 @@ object VendingMachine {
 class VendingMachineSpec extends AkkaSpec {
   behavior of "a vending machine"
 
-  VendingMachine.init should "eventually accept coins" in
-    invariantly(
-      (root / "machine" is VendingMachine.vendingMachine).isInevitable
-    )
+  import VendingMachine.{init, vendingMachine}
 
-  VendingMachine.init should "be empty after initialization" in
+  init should "eventually accept coins" in
+    invariantly((root / "machine" is vendingMachine).isInevitable)
+
+  init should "be empty after initialization" in
     (root is empty).isInevitable
 }

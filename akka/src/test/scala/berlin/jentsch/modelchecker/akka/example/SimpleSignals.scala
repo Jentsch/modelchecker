@@ -29,7 +29,7 @@ class SimpleSignalsSpec extends AkkaSpec {
 
   red should "get yellow and than green" in (
     signal is red,
-    (signal is yellow).isInevitable,
+    invariantly((signal is yellow).isInevitable),
   )
 
 }

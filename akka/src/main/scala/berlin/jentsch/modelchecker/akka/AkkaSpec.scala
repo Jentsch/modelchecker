@@ -68,10 +68,14 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
 
       case Not(ProgressIsPossible) =>
         transitions.nodes.filter(_.diSuccessors.isEmpty)
+      case Not(True) =>
+        collection.Set.empty
       case Not(property) =>
-        transitions.nodes.filterNot(check(property))
+        transitions.nodes -- check(property)
       case And(property1, property2) =>
         check(property1) intersect check(property2)
+      case Or(True, _) =>
+        transitions.nodes
       case Or(property1, property2) =>
         check(property1) ++ check(property2)
       case True =>

@@ -55,4 +55,10 @@ private[modelchecker] abstract class Traverser {
     * @return
     */
   def getCurrentPath: Seq[Int]
+
+  /**
+    * Returns the same as getCurrentPath.length but without constructing the path
+    */
+  def getCurrentPathLength: Int
+
 }

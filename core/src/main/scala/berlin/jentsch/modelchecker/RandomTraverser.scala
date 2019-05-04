@@ -69,4 +69,6 @@ private[modelchecker] final class RandomTraverser(private var rounds: Int)
     }
 
   override def getCurrentPath: Seq[Int] = currentPath.reverse
+
+  override def getCurrentPathLength: Int = currentPath.length
 }

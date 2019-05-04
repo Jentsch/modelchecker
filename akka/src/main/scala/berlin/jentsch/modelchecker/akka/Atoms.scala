@@ -25,6 +25,9 @@ private[akka] object Atoms {
           )
     }
 
+  /**
+    * Returns a set of the atomic properties
+    */
   private def atoms(property: Property): Set[Atomic] = property match {
     case actorIs: ActorIs           => Set(actorIs)
     case ProgressIsPossible         => Set(ProgressIsPossible)

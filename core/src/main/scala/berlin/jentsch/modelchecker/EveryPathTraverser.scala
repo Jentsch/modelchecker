@@ -88,6 +88,8 @@ private[modelchecker] final class EveryPathTraverser extends Traverser {
     */
   override def getCurrentPath: Seq[Int] = path.toSeq.take(currentDepth)
 
+  override def getCurrentPathLength: Int = currentDepth
+
   /**
     * @return `false` if no next round could be generated
     */

@@ -2,12 +2,7 @@ package berlin.jentsch.modelchecker.futures
 
 import java.util.concurrent._
 
-import berlin.jentsch.modelchecker.{
-  EveryPathTraverser,
-  RandomTraverser,
-  SinglePath,
-  Traverser
-}
+import berlin.jentsch.modelchecker.{EveryPathTraverser, RandomTraverser, SinglePath, Traverser}
 import org.scalatest.exceptions.TestFailedException
 
 import scala.collection.mutable
@@ -41,7 +36,8 @@ class TestExecutionContext(
   private[futures] var foundException = Option.empty[Throwable]
 
   def testEveryPath(test: TestExecutionContext => Unit): Unit = {
-    var finalStates = 0
+    var pathCount = 0
+    var totalPathLength = 0L
     do {
       test(this)
       runNextThread()
@@ -56,13 +52,14 @@ class TestExecutionContext(
         val noOpenThreads2 = finalStop.tryAcquire(maxSeconds, TimeUnit.SECONDS)
         assert(
           noOpenThreads2,
-          s"Couldn't finish the test within $maxSeconds second. Open ${waitingList.size} Threads. Discovered $finalStates final states."
+          s"Couldn't finish the test within $maxSeconds second. Open ${waitingList.size} Threads. Discovered $pathCount final states."
         )
       }
 
       assert(waitingList.isEmpty)
 
-      finalStates += 1
+      pathCount += 1
+      totalPathLength += traverser.getCurrentPathLength
       if (foundException.nonEmpty)
         info("Bal")
       foundException.foreach(throw _)
@@ -72,7 +69,7 @@ class TestExecutionContext(
             check()
           } catch {
             case failed: TestFailedException =>
-              info("Tested paths: " ++ finalStates.toString)
+              info("Tested paths: " ++ pathCount.toString)
               info(
                 "Path to reproduce this failure: " ++ traverser.getCurrentPath
                   .mkString("Seq(", ",", ")")
@@ -83,7 +80,10 @@ class TestExecutionContext(
       finalChecks.clear()
     } while (traverser.hasMoreOptions())
 
-    info("Paths: " ++ finalStates.toString)
+    info(
+      "Paths: " ++ pathCount.toString ++
+        " average length: " ++ (totalPathLength.toDouble / pathCount).toString
+    )
   }
 
   override def execute(runnable: Runnable): Unit = {

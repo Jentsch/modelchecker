@@ -88,7 +88,8 @@ lazy val scalaz = project
     exampleSuperTypes += {
       import scala.meta._
       ctor"_root_.scalaz.zio.DefaultRuntime"
-    }
+    },
+    crossScalaVersions ++= Seq("2.11.12")
   )
   .enablePlugins(Example)
 

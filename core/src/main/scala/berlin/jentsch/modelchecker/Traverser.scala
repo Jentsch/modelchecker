@@ -13,7 +13,7 @@ private[modelchecker] abstract class Traverser {
     *
     *   do {
     *     val original = List(1, 2, 3)
-    *     val choices = original.to[collection.mutable.Buffer]
+    *     val choices = original.toBuffer
     *
     *     val chosen = trav.removeOne(choices)
     *

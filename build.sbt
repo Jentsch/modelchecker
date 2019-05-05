@@ -10,7 +10,10 @@ version := "0.1.0-SNAPSHOT"
 
 scalaVersion in ThisBuild := "2.12.8"
 
-lazy val scalaTestVersion = "3.0.7"
+def scalaTestVersion(scalaVersion: String): String = scalaVersion.take(4) match {
+  case "2.13" => "3.0.8-RC2"
+  case _ => "3.0.7"
+}
 
 scalacOptions ++= Seq(
   Opts.compile.unchecked,
@@ -44,13 +47,13 @@ lazy val core = project
   .settings(
     description := "Internal common functionality shared by the futures and scalaz sub-project, no external API",
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
+      "org.scalatest" %% "scalatest" % scalaTestVersion(scalaVersion.value) % Test
     ),
     examplePackageRef := {
       import scala.meta._
       q"berlin.jentsch.modelchecker"
     },
-    crossScalaVersions += "2.10.7"
+    crossScalaVersions ++= Seq("2.10.7", "2.11.12", "2.13.0-RC1")
   )
   .enablePlugins(Example)
 
@@ -59,7 +62,7 @@ lazy val futures = project
   .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % scalaTestVersion,
+      "org.scalatest" %% "scalatest" % scalaTestVersion(scalaVersion.value),
       "com.novocode" % "junit-interface" % "0.11" % Test
     ),
     examplePackageRef := {
@@ -75,7 +78,7 @@ lazy val scalaz = project
   .settings(
     libraryDependencies ++= Seq(
       "org.scalaz" %% "scalaz-zio" % "0.19",
-      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
+      "org.scalatest" %% "scalatest" % scalaTestVersion(scalaVersion.value) % Test
     ),
     examplePackageRef := {
       import scala.meta._
@@ -94,7 +97,7 @@ lazy val akka = project
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % "2.5.22",
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scalatest" %% "scalatest" % scalaTestVersion,
+      "org.scalatest" %% "scalatest" % scalaTestVersion(scalaVersion.value),
       "org.scala-graph" %% "graph-core" % "1.12.5",
     ),
     examplePackageRef := {

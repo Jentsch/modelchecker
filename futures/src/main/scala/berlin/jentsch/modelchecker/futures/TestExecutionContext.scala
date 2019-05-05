@@ -175,15 +175,19 @@ class TestExecutionContext(
   private[futures] def createStoppedThread(runnable: Runnable): Semaphore = {
     val startSignal = new Semaphore(0)
 
-    executor.execute { () =>
-      startSignal.acquire()
-      try {
-        runnable.run()
-      } catch {
-        case NonFatal(thrown) =>
-          foundException = Some(thrown)
-      } finally {
-        runNextThread()
+    executor.execute {
+      new Runnable {
+        override def run(): Unit = {
+          startSignal.acquire()
+          try {
+            runnable.run()
+          } catch {
+            case NonFatal(thrown) =>
+              foundException = Some(thrown)
+          } finally {
+            runNextThread()
+          }
+        }
       }
     }
 

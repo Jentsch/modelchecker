@@ -118,7 +118,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     *   Future { x.incrementAndGet }
     *   // Future { x.decrementAndGet } would break this test
     *
-    *   x.get should increase
+    *   x.get shouldOnly increase
     * }
     * }}}
     */
@@ -181,10 +181,10 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
   /**
     * Add a should that accepts [[TimeWord]], properties about state over time.
     *
-    * @see berlin.jentsch.modelchecker.futures.EcSpec#increase
+    * @see [[berlin.jentsch.modelchecker.futures.EcSpec.increase]]
     */
   implicit class TimeWordShould[T](t: => T) {
-    def should(timeWord: TimeWord[T])(implicit ec: ExecutionContext): Unit = {
+    def shouldOnly(timeWord: TimeWord[T])(implicit ec: ExecutionContext): Unit = {
       timeWord(t)
     }
   }

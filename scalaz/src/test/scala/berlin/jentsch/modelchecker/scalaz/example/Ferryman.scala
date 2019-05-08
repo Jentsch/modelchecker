@@ -1,10 +1,11 @@
 package berlin.jentsch.modelchecker.scalaz.example
 
 import berlin.jentsch.modelchecker.scalaz.Interpreter.everyPath
+import berlin.jentsch.modelchecker.scalaz.NonDeterministic
+import berlin.jentsch.modelchecker.scalaz.NonDeterministic.doOneOf
 import org.scalatest.matchers.Matcher
 import org.scalatest.{Assertion, FlatSpec, Matchers}
 import scalaz.zio.Exit.Success
-import scalaz.zio.random.Random
 import scalaz.zio.syntax._
 import scalaz.zio.{Exit, _}
 
@@ -13,7 +14,7 @@ object Ferryman {
   type Error = Unit
   val Error: Error = ()
 
-  def randomM: ZIO[Random, Error, Unit] =
+  def randomM: ZIO[NonDeterministic, Error, Unit] =
     for {
       wolf <- Ref.make(false)
       goat <- Ref.make(false)
@@ -54,39 +55,16 @@ object Ferryman {
   def sameSide(item1: Ref[Boolean], item2: Ref[Boolean]): UIO[Boolean] =
     item1.get.zipWith(item2.get)(_ == _)
 
-  def repeatUntil[E](
+  def repeatUntil[R, E](
       condition: UIO[Boolean]
-  )(zio: ZIO[Random, E, _]): ZIO[Random, E, Unit] =
+  )(zio: ZIO[R, E, _]): ZIO[R, E, Unit] =
     condition.flatMap {
       case false => zio *> repeatUntil(condition)(zio)
       case true  => ZIO.unit
     }
 
   def check(predicate: UIO[Boolean]): IO[Error, Unit] =
-    predicate.flatMap {
-      case true  => ZIO.unit
-      case false => ZIO.fail(Error)
-    }
-
-  def doOneOf[E, A](
-      actions: (UIO[Boolean], ZIO[Any, E, _])*
-  ): ZIO[Random, E, Unit] = {
-    val options: UIO[Seq[ZIO[Any, E, Unit]]] =
-      actions.foldLeft(ZIO.succeed(Seq.empty[ZIO[Any, E, Unit]])) {
-        case (found, (predicate, action)) =>
-          predicate.flatMap {
-            case true  => found.map(_ :+ action.void)
-            case false => found
-          }
-      }
-
-    for {
-      o <- options
-      r <- random.nextInt(o.size)
-      s <- o(r)
-    } yield s
-  }
-
+    IO.whenM(predicate.map(!_))(ZIO.fail(Error))
 }
 
 class FerrymanSpec extends FlatSpec with Matchers {
@@ -95,7 +73,6 @@ class FerrymanSpec extends FlatSpec with Matchers {
   implicit class Syntax[E, A](results: Set[Exit[E, A]]) {
     def could(matcher: Matcher[Any]): Assertion =
       atLeast(1, results) should matcher
-
   }
 
   it should "be possible to carry over everything" in {

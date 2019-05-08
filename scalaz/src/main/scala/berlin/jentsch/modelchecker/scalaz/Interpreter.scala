@@ -2,29 +2,16 @@ package berlin.jentsch.modelchecker.scalaz
 
 import java.util.WeakHashMap
 
-import berlin.jentsch.modelchecker.{
-  EveryPathTraverser,
-  RandomTraverser,
-  Traverser
-}
-import scalaz.zio.Exit.Cause
-import scalaz.zio._
-import scalaz.zio.internal.{Executor, Platform}
-import scalaz.zio.random.Random
+import _root_.scalaz.zio.Exit.Cause
+import _root_.scalaz.zio._
+import _root_.scalaz.zio.internal.{Executor, Platform}
+import berlin.jentsch.modelchecker.{EveryPathTraverser, RandomTraverser, Traverser, scalaz}
 
 import scala.concurrent.ExecutionContext
 
-/**
-  * @example using random
-  * {{{
-  * import scalaz.zio.random
-  *
-  * Interpreter.terminatesAlwaysSuccessfully(random.nextInt(3)) should be(Set(0, 1, 2))
-  * }}}
-  */
 class Interpreter(newTraverser: () => Traverser) {
 
-  def apply[E, A](zio: ZIO[Random, E, A]): Set[Option[Exit[E, A]]] = {
+  def apply[E, A](zio: ZIO[NonDeterministic, E, A]): Set[Option[Exit[E, A]]] = {
     val yielding = yieldingEffects(zio)
 
     val testRuntime = new TestRuntime
@@ -42,7 +29,7 @@ class Interpreter(newTraverser: () => Traverser) {
     * Interpreter.notFailing(prog) === Set(Some(1), Some(2))
     * }}}
     */
-  def notFailing[A](zio: ZIO[Random, Nothing, A]): Set[Option[A]] =
+  def notFailing[A](zio: ZIO[NonDeterministic, Nothing, A]): Set[Option[A]] =
     this.apply[Nothing, A](zio).map {
       case Some(Exit.Success(value)) => Some(value)
       case Some(_: Exit.Failure[Nothing]) =>
@@ -50,19 +37,19 @@ class Interpreter(newTraverser: () => Traverser) {
       case None => None
     }
 
-  def terminatesAlwaysSuccessfully[A](zio: ZIO[Random, Nothing, A]): Set[A] =
+  def terminatesAlwaysSuccessfully[A](zio: ZIO[NonDeterministic, Nothing, A]): Set[A] =
     notFailing[A](zio).map {
       case Some(value) => value
       case None        => sys.error("Doesn't terminate")
     }
 
-  def terminates[E, A](zio: ZIO[Random, E, A]): Set[Exit[E, A]] =
+  def terminates[E, A](zio: ZIO[NonDeterministic, E, A]): Set[Exit[E, A]] =
     this.apply[E, A](zio).map {
       case Some(error) => error
       case None        => sys.error("Was not terminated")
     }
 
-  private class TestRuntime extends Runtime[Random] {
+  private class TestRuntime extends Runtime[NonDeterministic] {
     private val traverser: Traverser = newTraverser()
     private val pendingRunnables = collection.mutable.Buffer.empty[Runnable]
     private val appendingExecutionContext = new ExecutionContext {
@@ -73,28 +60,7 @@ class Interpreter(newTraverser: () => Traverser) {
     private val neverYieldingExecutor: Executor =
       Executor.fromExecutionContext(Int.MaxValue)(appendingExecutionContext)
 
-    override val Environment: Random = new Random {
-      override val random: Random.Service[Any] =
-        new Random.Service[Any] {
-          private val notImplemented: UIO[Nothing] =
-            ZIO.effectTotal(sys.error("Not implemented"))
-
-          override val nextBoolean =
-            ZIO.effectTotal(traverser.choose(Seq(true, false)))
-          override def nextInt(n: Int): UIO[Int] =
-            ZIO.effectTotal(traverser.choose(0 until n))
-          override val nextInt: UIO[Int] =
-            ZIO.effectTotal(traverser.choose(Int.MinValue until Int.MaxValue))
-          override val nextLong =
-            ZIO.effectTotal(traverser.choose(Long.MinValue until Long.MaxValue))
-          override def nextBytes(length: Int): UIO[Nothing] = notImplemented
-          override val nextDouble = notImplemented
-          override val nextFloat = notImplemented
-          override val nextGaussian = notImplemented
-          override val nextPrintableChar = notImplemented
-          override def nextString(length: Int): UIO[String] = notImplemented
-        }
-    }
+    override val Environment: NonDeterministic = new scalaz.NonDeterministic.Model(traverser)
     override val Platform: Platform = new Platform {
       val executor = neverYieldingExecutor
 
@@ -108,7 +74,7 @@ class Interpreter(newTraverser: () => Traverser) {
         new WeakHashMap[A, B]()
     }
 
-    def ana[E, A](io: ZIO[Random, E, A]): Set[Option[Exit[E, A]]] = {
+    def ana[E, A](io: ZIO[NonDeterministic, E, A]): Set[Option[Exit[E, A]]] = {
       var results: Set[Option[Exit[E, A]]] = Set.empty
 
       do {

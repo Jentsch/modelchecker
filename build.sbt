@@ -78,7 +78,7 @@ lazy val scalaz = project
   .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalaz" %% "scalaz-zio" % "0.19",
+      "org.scalaz" %% "scalaz-zio" % "1.0-RC4",
       "org.scalatest" %% "scalatest" % scalaTestVersion(scalaVersion.value) % Test
     ),
     examplePackageRef := {

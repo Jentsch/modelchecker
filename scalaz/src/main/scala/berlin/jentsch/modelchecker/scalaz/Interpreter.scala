@@ -72,6 +72,8 @@ class Interpreter(newTraverser: () => Traverser) {
 
       def newWeakHashMap[A, B]() =
         new WeakHashMap[A, B]()
+
+      override def fatal(t: Throwable): Boolean = false
     }
 
     def ana[E, A](io: ZIO[NonDeterministic, E, A]): Set[Option[Exit[E, A]]] = {
@@ -104,25 +106,25 @@ class Interpreter(newTraverser: () => Traverser) {
       // Recursively apply the rewrite
       case value: ZIO.Succeed[A] => value
       case value: ZIO.Fork[_, _] =>
-        yieldingEffects(value.value).fork
+        new ZIO.Fork(yieldingEffects(value.value))
       case value: ZIO.FlatMap[R, E, _, A] =>
         yieldingEffects(value.zio).flatMap(x => yieldingEffects(value.k(x)))
-      case value: ZIO.Uninterruptible[R, E, A] =>
-        yieldingEffects(value.zio).uninterruptible
+      case value: ZIO.CheckInterrupt[R, E, A] =>
+        new ZIO.CheckInterrupt[R, E, A](value.k.andThen(yieldingEffects))
+      case value: ZIO.InterruptStatus[R, E, A] =>
+        new ZIO.InterruptStatus[R, E, A](yieldingEffects(value.zio), value.flag)
       case supervised: ZIO.Supervised[R, E, A] =>
         yieldingEffects(supervised.value).supervised
-      case fail: ZIO.Fail[E] => fail
-      case value: ZIO.Ensuring[R, E, A] =>
-        yieldingEffects(value.zio).ensuring(yieldingEffects(value.finalizer))
-      case d @ ZIO.Descriptor => d
+      case fail: ZIO.Fail[E, A] => fail
+      case d : ZIO.Descriptor[R, E, A] => d
       // Don't allow to change executor
       case lock: ZIO.Lock[R, E, A] => yieldingEffects(lock.zio)
       case y @ ZIO.Yield           => y
       case fold: ZIO.Fold[R, E, _, A, _] =>
         yieldingEffects(fold.value)
           .foldCauseM(
-            fold.err.andThen(yieldingEffects),
-            fold.succ.andThen(yieldingEffects)
+            fold.failure.andThen(yieldingEffects),
+            fold.success.andThen(yieldingEffects)
           )
       case provide: ZIO.Provide[_, E, A] =>
         yieldingEffects(provide.next).provide(provide.r)

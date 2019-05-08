@@ -1,7 +1,8 @@
 package berlin.jentsch.modelchecker.scalaz.example
 
 import berlin.jentsch.modelchecker.scalaz.Interpreter._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.Matcher
+import org.scalatest.{Assertion, FlatSpec, Matchers}
 import scalaz.zio.UIO._
 import scalaz.zio.{Semaphore, UIO}
 
@@ -37,13 +38,18 @@ object Philosophers {
 }
 
 class PhilosophersSpec extends FlatSpec with Matchers {
+  implicit class Syntax[E, A](results: Set[A]) {
+    def could(matcher: Matcher[A]): Assertion =
+      atLeast(1, results) should matcher
+  }
+
   behavior of "Philosophers"
 
   they should "sometimes deadlock in wrong configuration" in {
-    all(notFailing(Philosophers.run(3))) should (be(None) or be(Some(())))
+    notFailing(Philosophers.run(3)) could be(None)
   }
 
   they should "never deadlock" in {
-    all(notFailing(Philosophers.runOk(3))) should be(Some(()))
+    all(notFailing(Philosophers.runOk(3))) should not(be(None))
   }
 }

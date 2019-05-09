@@ -4,6 +4,7 @@ import akka.Done
 import akka.actor.typed._
 import akka.actor.typed.scaladsl.Behaviors._
 import berlin.jentsch.modelchecker.akka._
+import berlin.jentsch.modelchecker.akka.example.Philosophers.stickFree
 
 object Philosophers {
   def apply(): Behavior[Unit] = setup { ctx =>
@@ -80,8 +81,10 @@ object Philosophers {
 class PhilosophersSpec extends AkkaSpec {
   behavior of "philosophers"
 
-  Philosophers() should "always progress" in
-    invariantly(progressIsPossible)
+  Philosophers() should "always progress" in (
+    invariantly(progressIsPossible),
+    alwaysEventually(root / "Stick1" is stickFree)
+  )
 
   Philosophers.deadlock should "deadlock sometimes" in
     potentially(!progressIsPossible)

@@ -99,6 +99,9 @@ trait PropertySyntax {
 
   def root: ActorPath = berlin.jentsch.modelchecker.akka.root
 
+  def existsUntil(during: Property, until: Property): Property =
+    ExistsUntil(during, until)
+
   def potentially(property: Property): Property =
     ExistsEventually(property)
 

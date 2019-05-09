@@ -2,9 +2,9 @@ package berlin.jentsch.modelchecker
 
 /**
   * This [[Traverser]] is useful when the combinatorial explosion denies the usage of the [[EveryPathTraverser]].
-  * It only runs [[rounds]] times and returns random results.
+  * It only runs [[maxRounds]] times and returns random results.
   *
-  * @param rounds the number of times the loop will be executed
+  * @param maxRounds the number of times the loop will be executed
   * @example Returning 100 random results
   * {{{
   * val traverser = new RandomTraverser(100)
@@ -26,12 +26,13 @@ package berlin.jentsch.modelchecker
   * assert(traverser.getCurrentPath.length < 3)
   * }}}
   */
-private[modelchecker] final class RandomTraverser(private var rounds: Int)
+private[modelchecker] final class RandomTraverser(private var maxRounds: Int)
     extends Traverser {
 
   import scala.util.Random.nextInt
 
   private var currentPath: List[Int] = Nil
+  private var rounds: Int = maxRounds
 
   override def choose[E](choices: Seq[E]): E = {
     if (needToChoose(choices)) {
@@ -71,4 +72,9 @@ private[modelchecker] final class RandomTraverser(private var rounds: Int)
   override def getCurrentPath: Seq[Int] = currentPath.reverse
 
   override def getCurrentPathLength: Int = currentPath.length
+
+  override def reset(): Unit = {
+    currentPath = Nil
+    rounds = maxRounds
+  }
 }

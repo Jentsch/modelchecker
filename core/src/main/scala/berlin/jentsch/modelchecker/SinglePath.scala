@@ -36,4 +36,8 @@ private[modelchecker] final class SinglePath(path: Seq[Int]) extends Traverser {
   override def getCurrentPath: Seq[Int] = path
 
   override def getCurrentPathLength: Int = path.length
+
+  override def reset(): Unit = {
+    index = 0
+  }
 }

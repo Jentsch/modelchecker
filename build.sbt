@@ -95,6 +95,7 @@ lazy val scalaz = project
 
 lazy val akka = project
   .in(file("akka"))
+  .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % "2.5.22",

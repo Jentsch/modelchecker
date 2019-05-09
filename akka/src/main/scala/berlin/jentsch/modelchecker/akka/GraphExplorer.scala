@@ -8,6 +8,8 @@ import scala.collection.mutable
 import scala.reflect.ClassTag
 
 private[akka] object GraphExplorer {
+  private val maxNodes = 2000
+
   def explore[E: ClassTag](
       init: Traversable[E]
   )(successors: E => Traversable[E])(
@@ -28,9 +30,8 @@ private[akka] object GraphExplorer {
         val succs = successors(e)
         builder ++= succs.view.map(DiEdge(e, _))
 
-        val n = 2000
-        if (visited.size >= n) {
-          throw new OutOfMemoryError(s"More than $n nodes found")
+        if (visited.size >= maxNodes) {
+          throw new OutOfMemoryError(s"More than $maxNodes nodes found")
         }
         unvisited ++= succs.view.filterNot(visited)
       }

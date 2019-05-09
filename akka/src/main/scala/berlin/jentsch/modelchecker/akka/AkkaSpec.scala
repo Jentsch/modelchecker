@@ -81,12 +81,12 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
       case True =>
         transitions.nodes
 
-      case ExistsEventually(property) =>
+      case ExistsUntil(during, until) =>
+        val maximalReachable = check(during)
+
         @scala.annotation.tailrec
-        def expand(
-            set: collection.Set[transitions.NodeT]
-        ): collection.Set[transitions.NodeT] = {
-          val bigger = set.flatMap(_.diPredecessors) ++ set
+        def expand(set: collection.Set[transitions.NodeT]): collection.Set[transitions.NodeT] = {
+          val bigger = set.flatMap(_.diPredecessors.intersect(maximalReachable)) ++ set
 
           if (bigger.size == set.size)
             bigger
@@ -94,7 +94,10 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
             expand(bigger)
         }
 
-        expand(check(property))
+        expand(check(until))
+
+      case ExistsEventually(property) =>
+        check(ExistsUntil(true, property))
       case AlwaysEventually(property) =>
         @scala.annotation.tailrec
         def expand(
@@ -120,7 +123,7 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
       case Show(property) =>
         val pr = check(property)
         info(property.show ++ " matches " ++ pr.size.toString ++ ":")
-        pr.foreach { n =>
+        pr.value.take(100).foreach { n =>
           info(
             n.value
               .map {

@@ -14,7 +14,8 @@ import akka.actor.typed.internal.InternalRecipientRef
 import akka.actor.typed.scaladsl.Behaviors.ReceiveImpl
 import akka.actor.{ActorPath, ActorRefProvider, Cancellable}
 import akka.util.Timeout
-import berlin.jentsch.modelchecker.akka.{ActorState, root}
+import berlin.jentsch.modelchecker.EveryPathTraverser
+import berlin.jentsch.modelchecker.akka.{ActorState, NonDeterministic, root}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -26,7 +27,17 @@ final class TestSystem[R](
     atoms: Seq[Map[ActorPath, ActorState] => Boolean]
 ) {
 
-  var currentActor: ActorPath = _
+  private var currentActor: ActorPath = _
+  private val trav = new EveryPathTraverser
+
+  private object NonDet extends NonDeterministic {
+    def one[T](actions: (() => T)*): T = {
+      trav.choose(actions)()
+    }
+    def oneOf[T](traversable: Traversable[T]): T = {
+      trav.choose(traversable.toSeq)
+    }
+  }
 
   def nextStates: Set[Map[ActorPath, ActorState]] = {
 
@@ -39,6 +50,42 @@ final class TestSystem[R](
       case (path, ActorState(behavior, messages)) =>
         currentState = startState
         currentActor = path
+
+
+        def run[T](rec: ExtensibleBehavior[T]): Unit = messages.foreach {
+          case (sender, messages) =>
+            val message = messages.head
+            if (messages.tail == Nil) {
+              currentState = modify(startState, path)(
+                s => s.copy(messages = s.messages - sender)
+              )
+            } else {
+              currentState = modify(startState, path)(
+                s => s.copy(messages = modify(s.messages, sender)(_.tail))
+              )
+            }
+
+            val stateBefore = currentState
+            val ctx = MActorContext[T](path)
+            var max = 6
+
+            do {
+              currentState = stateBefore
+              val result = rec.receive(ctx, message.asInstanceOf[T])
+
+              currentState =
+                modify(currentState, path)(_.copy(behavior = result))
+
+              runDeferred()
+
+              next += currentState
+
+              max -= 1
+              if (max <= 0)
+                throw new RuntimeException("To many")
+            } while (trav.hasMoreOptions())
+        }
+
         behavior match {
           case deferred: DeferredBehavior[_] =>
             val result = deferred(MActorContext(path))
@@ -46,63 +93,9 @@ final class TestSystem[R](
             next += currentState
 
           case rec: ReceiveMessageBehavior[_] =>
-            def run[T](rec: ReceiveMessageBehavior[T]): Unit =
-              messages.foreach {
-                case (sender, messages) =>
-                  val message = messages.head
-                  if (messages.tail == Nil) {
-                    currentState = modify(startState, path)(
-                      s => s.copy(messages = s.messages - sender)
-                    )
-                  } else {
-                    currentState = modify(startState, path)(
-                      s => s.copy(messages = modify(s.messages, sender)(_.tail))
-                    )
-                  }
-
-                  val result = rec.receive(
-                    MActorContext(path),
-                    message.asInstanceOf[T]
-                  )
-                  currentState =
-                    modify(currentState, path)(_.copy(behavior = result))
-
-                  runDeferred()
-
-                  next += currentState
-              }
-
             run(rec)
 
           case rec: ReceiveImpl[_] =>
-            def run[T](rec: ReceiveImpl[T]) = messages.foreach {
-              case (sender, messages) =>
-                val message = messages.head
-                if (messages.tail == Nil) {
-                  currentState = modify(startState, path)(
-                    s => s.copy(messages = s.messages - sender)
-                  )
-                } else {
-                  currentState = modify(startState, path)(
-                    s => s.copy(messages = modify(s.messages, sender)(_.tail))
-                  )
-                }
-
-                val ctx = MActorContext[T](path)
-                var result =
-                  rec.receive(ctx, message.asInstanceOf[T])
-                while (result.isInstanceOf[DeferredBehavior[_]]) {
-                  result
-                }
-
-                currentState =
-                  modify(currentState, path)(_.copy(behavior = result))
-
-                runDeferred()
-
-                next += currentState
-            }
-
             run(rec)
 
           case Behavior.EmptyBehavior | Behavior.StoppedBehavior =>
@@ -155,7 +148,7 @@ final class TestSystem[R](
     override def asScala: scaladsl.ActorContext[T] = this
 
     override def getSelf: ActorRef[T] = MActorRef(path)
-    override def getSystem: ActorSystem[Void] = MActorSystem.asInstanceOf
+    override def getSystem: ActorSystem[Void] = MActorSystem
     override def getLog: Logger = log
     override def getChildren: util.List[ActorRef[Void]] = ???
     override def getChild(name: String): Optional[ActorRef[Void]] =
@@ -298,9 +291,9 @@ final class TestSystem[R](
   }
 
   object MActorSystem
-      extends ActorSystem[R]
-      with InternalRecipientRef[R]
-      with MActorRef[R] {
+      extends ActorSystem[Void]
+      with InternalRecipientRef[Void]
+      with MActorRef[Void] {
 
     import akka.actor.{DynamicAccess, Scheduler}
 
@@ -329,8 +322,10 @@ final class TestSystem[R](
       ???
     override def registerExtension[T <: Extension](ext: ExtensionId[T]): T =
       sys.error("Extensions are not supported")
-    override def extension[T <: Extension](ext: ExtensionId[T]): T =
-      sys.error("Extensions are not supported")
+    override def extension[T <: Extension](ext: ExtensionId[T]): T = ext match {
+      case NonDeterministic => NonDet: NonDeterministic
+      case _                => sys.error("Extensions are not supported")
+    }
     override def hasExtension(ext: ExtensionId[_ <: Extension]): Boolean = false
   }
 

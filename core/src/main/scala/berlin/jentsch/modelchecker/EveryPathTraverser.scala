@@ -22,7 +22,7 @@ import java.util.Arrays
   *
   * Should produce the output 1, 2, 3 (not separated by commas but in multiple lines)
   */
-private[modelchecker] final class EveryPathTraverser extends Traverser {
+final class EveryPathTraverser extends Traverser {
 
   /** Path in the tree of choices */
   private var path = Array.fill(50)(0)
@@ -92,6 +92,12 @@ private[modelchecker] final class EveryPathTraverser extends Traverser {
 
   /**
     * @return `false` if no next round could be generated
+    * @example returns false if no choice was made
+    * {{{
+    *   val trav = new EveryPathTraverser
+    *
+    *   trav.hasMoreOptions() should be(false)
+    * }}}
     */
   def hasMoreOptions(): Boolean = {
     currentDepth = 0
@@ -116,5 +122,11 @@ private[modelchecker] final class EveryPathTraverser extends Traverser {
     } else {
       return false
     }
+  }
+
+  override def reset(): Unit = {
+    path = Array.fill(50)(0)
+    pathLength = 0
+    currentDepth = 0
   }
 }

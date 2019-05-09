@@ -61,4 +61,6 @@ private[modelchecker] abstract class Traverser {
     */
   def getCurrentPathLength: Int
 
+  def reset(): Unit
+
 }

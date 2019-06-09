@@ -98,7 +98,7 @@ lazy val akka = project
   .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor-typed" % "2.5.22",
+      "com.typesafe.akka" %% "akka-actor-typed" % "2.5.23",
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "org.scalatest" %% "scalatest" % scalaTestVersion(scalaVersion.value),
       "org.scala-graph" %% "graph-core" % "1.12.5",

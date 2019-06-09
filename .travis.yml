@@ -4,7 +4,7 @@ scala:
 jdk:
   - openjdk11
 script:
-  - sbt clean test benchmarks/compile
+  - sbt clean "+compile" test benchmarks/compile
   - sbt scalafmtCheckAll
 
 sudo: false

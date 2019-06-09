@@ -2,7 +2,12 @@ package berlin.jentsch.modelchecker.futures
 
 import java.util.concurrent._
 
-import berlin.jentsch.modelchecker.{EveryPathTraverser, RandomTraverser, SinglePath, Traverser}
+import berlin.jentsch.modelchecker.{
+  EveryPathTraverser,
+  RandomTraverser,
+  SinglePath,
+  Traverser
+}
 import org.scalatest.exceptions.TestFailedException
 
 import scala.collection.mutable

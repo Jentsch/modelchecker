@@ -25,16 +25,17 @@ class CompareAtomic extends FlatSpec with EcSpec with Matchers {
     }
   }
 
-  "with uninterrupted" should "even faster" in everyInterleaving { implicit ec =>
-    var x = 1
-    uninterrupted {
-      Future {
-        x = 2
+  "with uninterrupted" should "even faster" in everyInterleaving {
+    implicit ec =>
+      var x = 1
+      uninterrupted {
+        Future {
+          x = 2
+        }
+        Future {
+          x = 3
+        }
       }
-      Future {
-        x = 3
-      }
-    }
   }
 
 }

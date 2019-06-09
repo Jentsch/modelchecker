@@ -13,7 +13,6 @@ cache:
     - $HOME/.ivy2/cache
     - $HOME/.sbt
     - $HOME/.cache/sbt-scalafmt
-    - $HOME/.coursier/cache
 before_cache:
   # Cleanup the cached directories to avoid unnecessary cache updates
   - find $HOME/.ivy2/cache -name "ivydata-*.properties" -print -delete

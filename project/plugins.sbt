@@ -1,4 +1,4 @@
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.0.0-RC5")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.0.1")
 
 addSbtPlugin("com.thoughtworks.example" % "sbt-example" % "6.0.0")
 

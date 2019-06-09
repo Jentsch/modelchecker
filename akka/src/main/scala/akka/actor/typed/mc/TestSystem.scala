@@ -51,7 +51,6 @@ final class TestSystem[R](
         currentState = startState
         currentActor = path
 
-
         def run[T](rec: ExtensibleBehavior[T]): Unit = messages.foreach {
           case (sender, messages) =>
             val message = messages.head

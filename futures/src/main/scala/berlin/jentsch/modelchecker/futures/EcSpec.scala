@@ -184,7 +184,9 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
     * @see [[berlin.jentsch.modelchecker.futures.EcSpec.increase]]
     */
   implicit class TimeWordShould[T](t: => T) {
-    def shouldOnly(timeWord: TimeWord[T])(implicit ec: ExecutionContext): Unit = {
+    def shouldOnly(
+        timeWord: TimeWord[T]
+    )(implicit ec: ExecutionContext): Unit = {
       timeWord(t)
     }
   }

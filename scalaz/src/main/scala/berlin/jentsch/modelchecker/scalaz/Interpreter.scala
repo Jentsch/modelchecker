@@ -5,7 +5,12 @@ import java.util.WeakHashMap
 import _root_.scalaz.zio.Exit.Cause
 import _root_.scalaz.zio._
 import _root_.scalaz.zio.internal.{Executor, Platform}
-import berlin.jentsch.modelchecker.{EveryPathTraverser, RandomTraverser, Traverser, scalaz}
+import berlin.jentsch.modelchecker.{
+  EveryPathTraverser,
+  RandomTraverser,
+  Traverser,
+  scalaz
+}
 
 import scala.concurrent.ExecutionContext
 
@@ -37,7 +42,9 @@ class Interpreter(newTraverser: () => Traverser) {
       case None => None
     }
 
-  def terminatesAlwaysSuccessfully[A](zio: ZIO[NonDeterministic, Nothing, A]): Set[A] =
+  def terminatesAlwaysSuccessfully[A](
+      zio: ZIO[NonDeterministic, Nothing, A]
+  ): Set[A] =
     notFailing[A](zio).map {
       case Some(value) => value
       case None        => sys.error("Doesn't terminate")
@@ -60,7 +67,8 @@ class Interpreter(newTraverser: () => Traverser) {
     private val neverYieldingExecutor: Executor =
       Executor.fromExecutionContext(Int.MaxValue)(appendingExecutionContext)
 
-    override val Environment: NonDeterministic = new scalaz.NonDeterministic.Model(traverser)
+    override val Environment: NonDeterministic =
+      new scalaz.NonDeterministic.Model(traverser)
     override val Platform: Platform = new Platform {
       val executor = neverYieldingExecutor
 
@@ -115,8 +123,8 @@ class Interpreter(newTraverser: () => Traverser) {
         new ZIO.InterruptStatus[R, E, A](yieldingEffects(value.zio), value.flag)
       case supervised: ZIO.Supervised[R, E, A] =>
         yieldingEffects(supervised.value).supervised
-      case fail: ZIO.Fail[E, A] => fail
-      case d : ZIO.Descriptor[R, E, A] => d
+      case fail: ZIO.Fail[E, A]       => fail
+      case d: ZIO.Descriptor[R, E, A] => d
       // Don't allow to change executor
       case lock: ZIO.Lock[R, E, A] => yieldingEffects(lock.zio)
       case y @ ZIO.Yield           => y

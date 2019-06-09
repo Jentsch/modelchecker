@@ -7,7 +7,6 @@ trait NonDeterministic {
   val nonDeterministic: NonDeterministic.Service[Any]
 }
 
-
 /**
   * @example using NonDeterministic
   * {{{

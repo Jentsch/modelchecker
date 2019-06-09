@@ -85,7 +85,9 @@ trait AkkaSpec extends FlatSpec with PropertySyntax {
         val maximalReachable = check(during)
 
         @scala.annotation.tailrec
-        def expand(set: collection.Set[transitions.NodeT]): collection.Set[transitions.NodeT] = {
+        def expand(
+            set: collection.Set[transitions.NodeT]
+        ): collection.Set[transitions.NodeT] = {
           val bigger = set.flatMap(_.diPredecessors.intersect(maximalReachable)) ++ set
 
           if (bigger.size == set.size)

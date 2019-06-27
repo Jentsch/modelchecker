@@ -26,8 +26,7 @@ package berlin.jentsch.modelchecker
   * assert(traverser.getCurrentPath.length < 3)
   * }}}
   */
-private[modelchecker] final class RandomTraverser(private var maxRounds: Int)
-    extends Traverser {
+final class RandomTraverser(private var maxRounds: Int) extends Traverser {
 
   import scala.util.Random.nextInt
 

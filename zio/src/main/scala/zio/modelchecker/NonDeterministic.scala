@@ -1,7 +1,7 @@
-package berlin.jentsch.modelchecker.scalaz
+package zio.modelchecker
 
 import berlin.jentsch.modelchecker.Traverser
-import scalaz.zio.{UIO, ZIO}
+import zio.{UIO, ZIO}
 
 trait NonDeterministic {
   val nonDeterministic: NonDeterministic.Service[Any]
@@ -10,8 +10,8 @@ trait NonDeterministic {
 /**
   * @example using NonDeterministic
   * {{{
-  * import berlin.jentsch.modelchecker.scalaz.NonDeterministic.doOneOf
-  * import scalaz.zio.UIO
+  * import zio.modelchecker.NonDeterministic.doOneOf
+  * import zio.UIO
   *
   * val program = doOneOf(
   *   UIO.succeed(true) -> UIO.succeed(1),
@@ -27,7 +27,8 @@ object NonDeterministic {
     def oneOf[E, A](actions: (UIO[Boolean], ZIO[Any, E, A])*): ZIO[R, E, A]
   }
 
-  private[scalaz] class Model(traverser: Traverser) extends NonDeterministic {
+  private[modelchecker] class Model(traverser: Traverser)
+      extends NonDeterministic {
     override val nonDeterministic: Service[Any] = new Service[Any] {
       override def oneOf[E, A](
           actions: (UIO[Boolean], ZIO[Any, E, A])*

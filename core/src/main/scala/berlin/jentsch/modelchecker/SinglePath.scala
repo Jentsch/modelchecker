@@ -3,7 +3,7 @@ package berlin.jentsch.modelchecker
 /**
   * @see [[EveryPathTraverser.getCurrentPath]] for how to use this class
   */
-private[modelchecker] final class SinglePath(path: Seq[Int]) extends Traverser {
+final class SinglePath(path: Seq[Int]) extends Traverser {
 
   private var index: Int = 0
 

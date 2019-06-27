@@ -73,16 +73,16 @@ lazy val zio = project
   .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalaz" %% "scalaz-zio" % "1.0-RC4",
+      "dev.zio" %% "zio" % "1.0.0-RC9",
       "org.scalatest" %% "scalatest" % "3.0.8" % Test
     ),
     examplePackageRef := {
       import scala.meta._
-      q"berlin.jentsch.modelchecker.scalaz"
+      q"zio.modelchecker"
     },
     exampleSuperTypes += {
       import scala.meta._
-      ctor"_root_.scalaz.zio.DefaultRuntime"
+      ctor"_root_.zio.DefaultRuntime"
     },
     crossScalaVersions ++= Seq("2.11.12")
   )

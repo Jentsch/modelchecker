@@ -1,7 +1,7 @@
 package berlin.jentsch.modelchecker
 import scala.collection.mutable
 
-private[modelchecker] abstract class Traverser {
+abstract class Traverser {
 
   /**
     * Remove and return 'randomly' one element of the given mutable sequence.

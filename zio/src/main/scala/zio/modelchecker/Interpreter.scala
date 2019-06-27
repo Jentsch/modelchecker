@@ -1,15 +1,14 @@
-package berlin.jentsch.modelchecker.scalaz
+package zio.modelchecker
 
 import java.util.WeakHashMap
 
-import _root_.scalaz.zio.Exit.Cause
-import _root_.scalaz.zio._
-import _root_.scalaz.zio.internal.{Executor, Platform}
+import zio.Exit.Cause
+import zio._
+import zio.internal.{Executor, Platform}
 import berlin.jentsch.modelchecker.{
   EveryPathTraverser,
   RandomTraverser,
-  Traverser,
-  scalaz
+  Traverser
 }
 
 import scala.concurrent.ExecutionContext
@@ -28,7 +27,7 @@ class Interpreter(newTraverser: () => Traverser) {
     * Returns a set of possible outcomes of `zio`.
     *
     * {{{
-    * import scalaz.zio.IO
+    * import zio.IO
     *
     * val prog = IO.succeed(1) race IO.succeed(1)
     * Interpreter.notFailing(prog) === Set(Some(1), Some(2))
@@ -68,21 +67,10 @@ class Interpreter(newTraverser: () => Traverser) {
       Executor.fromExecutionContext(Int.MaxValue)(appendingExecutionContext)
 
     override val Environment: NonDeterministic =
-      new scalaz.NonDeterministic.Model(traverser)
-    override val Platform: Platform = new Platform {
-      val executor = neverYieldingExecutor
+      new NonDeterministic.Model(traverser)
 
-      def nonFatal(t: Throwable): Boolean =
-        !t.isInstanceOf[VirtualMachineError]
-
-      def reportFailure(cause: Cause[_]): Unit =
-        ()
-
-      def newWeakHashMap[A, B]() =
-        new WeakHashMap[A, B]()
-
-      override def fatal(t: Throwable): Boolean = false
-    }
+    override val Platform: Platform =
+      zio.internal.PlatformLive.fromExecutor(neverYieldingExecutor)
 
     def ana[E, A](io: ZIO[NonDeterministic, E, A]): Set[Option[Exit[E, A]]] = {
       var results: Set[Option[Exit[E, A]]] = Set.empty
@@ -108,12 +96,15 @@ class Interpreter(newTraverser: () => Traverser) {
   private def yieldingEffects[R, E, A](zio: ZIO[R, E, A]): ZIO[R, E, A] = {
 
     zio match {
-      case value: ZIO.Effect[A]         => ZIO.yieldNow *> value
-      case value: ZIO.EffectAsync[E, A] => ZIO.yieldNow *> value
+      case effect: ZIO.EffectTotal[A]       => ZIO.yieldNow *> effect
+      case effect: ZIO.EffectPartial[A]     => ZIO.yieldNow *> effect
+      case effect: ZIO.EffectAsync[R, E, A] => ZIO.yieldNow *> effect
 
+      // Don't allow to change executor
+      case lock: ZIO.Lock[R, E, A] => yieldingEffects(lock.zio)
       // Recursively apply the rewrite
       case value: ZIO.Succeed[A] => value
-      case value: ZIO.Fork[_, _] =>
+      case value: ZIO.Fork[R, _, _] =>
         new ZIO.Fork(yieldingEffects(value.value))
       case value: ZIO.FlatMap[R, E, _, A] =>
         yieldingEffects(value.zio).flatMap(x => yieldingEffects(value.k(x)))
@@ -121,13 +112,11 @@ class Interpreter(newTraverser: () => Traverser) {
         new ZIO.CheckInterrupt[R, E, A](value.k.andThen(yieldingEffects))
       case value: ZIO.InterruptStatus[R, E, A] =>
         new ZIO.InterruptStatus[R, E, A](yieldingEffects(value.zio), value.flag)
-      case supervised: ZIO.Supervised[R, E, A] =>
-        yieldingEffects(supervised.value).supervised
+      case status: ZIO.SuperviseStatus[R, E, A] =>
+        new ZIO.SuperviseStatus(yieldingEffects(status.value), status.status)
       case fail: ZIO.Fail[E, A]       => fail
       case d: ZIO.Descriptor[R, E, A] => d
-      // Don't allow to change executor
-      case lock: ZIO.Lock[R, E, A] => yieldingEffects(lock.zio)
-      case y @ ZIO.Yield           => y
+      case y @ ZIO.Yield              => y
       case fold: ZIO.Fold[R, E, _, A, _] =>
         yieldingEffects(fold.value)
           .foldCauseM(
@@ -138,6 +127,18 @@ class Interpreter(newTraverser: () => Traverser) {
         yieldingEffects(provide.next).provide(provide.r)
       case read: ZIO.Read[R, E, A] =>
         ZIO.accessM(read.k.andThen(yieldingEffects))
+      case suspend: ZIO.SuspendWith[R, E, A] =>
+        new ZIO.SuspendWith(p => yieldingEffects(suspend.f(p)))
+      case newFib: ZIO.FiberRefNew[_] =>
+        newFib
+      case mod: ZIO.FiberRefModify[_, A] =>
+        mod
+      case ZIO.Trace =>
+        ZIO.Trace
+      case status: ZIO.TracingStatus[R, E, A] =>
+        new ZIO.TracingStatus(yieldingEffects(status.zio), status.flag)
+      case check: ZIO.CheckTracing[R, E, A] =>
+        new ZIO.CheckTracing(t => yieldingEffects(check.k(t)))
     }
   }
 

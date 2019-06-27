@@ -1,13 +1,14 @@
-package berlin.jentsch.modelchecker.scalaz.example
+package zio.modelchecker.example
 
-import berlin.jentsch.modelchecker.scalaz.Interpreter.everyPath
-import berlin.jentsch.modelchecker.scalaz.NonDeterministic
-import berlin.jentsch.modelchecker.scalaz.NonDeterministic.doOneOf
 import org.scalatest.matchers.Matcher
 import org.scalatest.{Assertion, FlatSpec, Matchers}
-import scalaz.zio.Exit.Success
-import scalaz.zio._
-import scalaz.zio.syntax._
+
+import zio._
+import zio.Exit.Success
+import zio.syntax._
+import zio.modelchecker.Interpreter.everyPath
+import zio.modelchecker.NonDeterministic
+import zio.modelchecker.NonDeterministic.doOneOf
 
 object Ferryman {
 

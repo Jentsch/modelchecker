@@ -8,7 +8,7 @@ This projects enables the power of model checking for Scala programs.
 
 See the examples in tests:
 * [Scala future](https://github.com/Jentsch/modelchecker/tree/master/futures/src/test/scala/berlin/jentsch/modelchecker/futures/example)
-* [ZIO](https://github.com/Jentsch/modelchecker/tree/master/zio/src/test/scala/berlin/jentsch/modelchecker/scalaz/example)
+* [ZIO](https://github.com/Jentsch/modelchecker/tree/master/zio/src/test/scala/zio/modelchecker/example)
 * [akka-typed](https://github.com/Jentsch/modelchecker/tree/master/akka/src/test/scala/berlin/jentsch/modelchecker/akka/example)
 
 ## Development

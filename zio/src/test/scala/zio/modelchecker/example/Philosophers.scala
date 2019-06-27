@@ -1,10 +1,10 @@
-package berlin.jentsch.modelchecker.scalaz.example
+package zio.modelchecker.example
 
-import berlin.jentsch.modelchecker.scalaz.Interpreter._
 import org.scalatest.matchers.Matcher
 import org.scalatest.{Assertion, FlatSpec, Matchers}
-import scalaz.zio.UIO._
-import scalaz.zio.{Semaphore, UIO}
+import zio.UIO._
+import zio.{Semaphore, UIO}
+import zio.modelchecker.Interpreter._
 
 object Philosophers {
 

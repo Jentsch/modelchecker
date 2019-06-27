@@ -1,12 +1,12 @@
-package berlin.jentsch.modelchecker.scalaz.example
+package zio.modelchecker.example
 
-import berlin.jentsch.modelchecker.scalaz.Interpreter
 import org.scalatest.{FlatSpec, Matchers}
-import scalaz.zio._
-import scalaz.zio.syntax._
+import zio._
+import zio.syntax._
+import zio.modelchecker.Interpreter
 
 object Cache {
-  def apply[I, O](cached: I => UIO[O]): ZIO[Any, Nothing, I => UIO[O]] =
+  def apply[I, O](cached: I => UIO[O]): UIO[I => UIO[O]] =
     for {
       c <- RefM.make(Map.empty[I, O])
     } yield { i: I =>

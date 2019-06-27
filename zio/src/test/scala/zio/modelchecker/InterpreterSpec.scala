@@ -1,6 +1,8 @@
-package berlin.jentsch.modelchecker.scalaz
+package zio.modelchecker
+
 import org.scalatest.{FlatSpec, Matchers}
-import scalaz.zio.{Ref, UIO}
+
+import zio.{Ref, UIO}
 
 class InterpreterSpec extends FlatSpec with Matchers {
 

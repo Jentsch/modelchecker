@@ -77,7 +77,7 @@ class FerrymanSpec extends FlatSpec with Matchers {
   }
 
   it should "be possible to carry over everything" in {
-    everyPath.terminates(Ferryman.ferryman) could be(a[Success[_]])
+    everyPath.notFailing(Ferryman.ferryman.run) could be(Some(Success(())))
   }
 
 }

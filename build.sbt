@@ -31,7 +31,7 @@ lazy val root = project
   .aggregate(
     core,
     futures,
-    scalaz,
+    zio,
     akka,
     benchmarks,
     jpf,
@@ -40,7 +40,7 @@ lazy val root = project
 lazy val core = project
   .in(file("core"))
   .settings(
-    description := "Internal common functionality shared by the futures and scalaz sub-project, no external API",
+    description := "Internal common functionality shared by the futures and zio sub-project, no external API",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.0.8" % Test
     ),
@@ -68,8 +68,8 @@ lazy val futures = project
   )
   .enablePlugins(Example)
 
-lazy val scalaz = project
-  .in(file("scalaz"))
+lazy val zio = project
+  .in(file("zio"))
   .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(

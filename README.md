@@ -8,7 +8,7 @@ This projects enables the power of model checking for Scala programs.
 
 See the examples in tests:
 * [Scala future](https://github.com/Jentsch/modelchecker/tree/master/futures/src/test/scala/berlin/jentsch/modelchecker/futures/example)
-* [ZIO](https://github.com/Jentsch/modelchecker/tree/master/scalaz/src/test/scala/berlin/jentsch/modelchecker/scalaz/example)
+* [ZIO](https://github.com/Jentsch/modelchecker/tree/master/zio/src/test/scala/berlin/jentsch/modelchecker/scalaz/example)
 * [akka-typed](https://github.com/Jentsch/modelchecker/tree/master/akka/src/test/scala/berlin/jentsch/modelchecker/akka/example)
 
 ## Development
@@ -17,8 +17,8 @@ See the examples in tests:
 
 This [sbt](https://www.scala-sbt.org/) project is separated into four sub projects:
 * *futures* contains a model checker for scala Futures and their ExecutionContext
-* *scalaz* contains a model checker for scalaz-io (coming soon)
-* *akka* contains a model checker for Akka (also coming soon)
+* *zio* contains a model checker for zio
+* *akka* contains a model checker for Akka
 * *benchmarks* helps to justify performance sensitive decisions
 
 ### Tests

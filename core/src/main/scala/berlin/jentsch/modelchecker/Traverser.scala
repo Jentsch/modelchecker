@@ -6,7 +6,7 @@ abstract class Traverser {
   /**
     * Remove and return 'randomly' one element of the given mutable sequence.
     *
-    * @throws IllegalArgumentException, if no choice is offered
+    * @throws IllegalArgumentException, if no `choices` is offered
     * @example
     * {{{
     *   val trav = new EveryPathTraverser

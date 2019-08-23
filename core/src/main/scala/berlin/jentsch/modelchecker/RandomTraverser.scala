@@ -2,7 +2,8 @@ package berlin.jentsch.modelchecker
 
 /**
   * This [[Traverser]] is useful when the combinatorial explosion denies the usage of the [[EveryPathTraverser]].
-  * It only runs [[maxRounds]] times and returns random results.
+  * It only runs `maxRounds` times and returns random results.
+  * Higher numbers will result in more stable results.
   *
   * @param maxRounds the number of times the loop will be executed
   * @example Returning 100 random results
@@ -45,7 +46,7 @@ final class RandomTraverser(private var maxRounds: Int) extends Traverser {
   }
 
   /**
-    * @return returns [[rounds]] times true and afterwards always false
+    * @return returns `rounds` times `true` and afterwards always `false`
     * @example of limited rounds
     * {{{
     * val traverser: Traverser = new RandomTraverser(4)

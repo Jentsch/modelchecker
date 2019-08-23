@@ -1,6 +1,6 @@
-name := "scala-modelchecker"
+name in ThisBuild:= "modelchecker"
 
-organization := "jentsch.berlin"
+organization in ThisBuild := "jentsch.berlin"
 
 homepage := Some(url("https://github.com/Jentsch/modelchecker"))
 
@@ -16,7 +16,7 @@ scalacOptions in ThisBuild ++= Seq(
   Opts.compile.deprecation,
   "-Xfuture",
   "-Ywarn-dead-code",
-  "-Ywarn-numeric-widen",
+  "-Ywarn-numeric-widen"
 )
 
 scalacOptions ++= {
@@ -34,12 +34,16 @@ lazy val root = project
     zio,
     akka,
     benchmarks,
-    jpf,
+    jpf
+  )
+  .settings(
+    skip in publish := true
   )
 
 lazy val core = project
   .in(file("core"))
   .settings(
+    name := "modelchecker-core",
     description := "Internal common functionality shared by the futures and zio sub-project, no external API",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.0.8" % Test
@@ -56,6 +60,7 @@ lazy val futures = project
   .in(file("futures"))
   .dependsOn(core)
   .settings(
+    name := "modelchecker-futures",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.0.8",
       "com.novocode" % "junit-interface" % "0.11" % Test
@@ -72,6 +77,7 @@ lazy val zio = project
   .in(file("zio"))
   .dependsOn(core)
   .settings(
+    name := "modelchecker-zio",
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % "1.0.0-RC11",
       "org.scalatest" %% "scalatest" % "3.0.8" % Test
@@ -92,11 +98,12 @@ lazy val akka = project
   .in(file("akka"))
   .dependsOn(core)
   .settings(
+    name := "modelchecker-akka",
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % "2.5.23",
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "org.scalatest" %% "scalatest" % "3.0.8",
-      "org.scala-graph" %% "graph-core" % "1.12.5",
+      "org.scala-graph" %% "graph-core" % "1.12.5"
     ),
     examplePackageRef := {
       import scala.meta._
@@ -123,5 +130,5 @@ lazy val jpf = project
     description := "Generates that can be used by the JavaPathfinder",
     // JavaPathfinder can't parse newer Byte-Code
     crossScalaVersions += "2.10.7",
-    skip in publish := true,
+    skip in publish := true
   )

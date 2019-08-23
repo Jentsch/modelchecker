@@ -7,9 +7,9 @@ import zio.{Semaphore, UIO}
 import zio.modelchecker.Interpreter._
 
 /**
- * The dining philosophers:
- * https://en.wikipedia.org/wiki/Dining_philosophers_problem
- */
+  * The dining philosophers:
+  * https://en.wikipedia.org/wiki/Dining_philosophers_problem
+  */
 object Philosophers {
 
   private def philosopher(

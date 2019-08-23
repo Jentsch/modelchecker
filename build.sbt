@@ -100,7 +100,7 @@ lazy val akka = project
   .settings(
     name := "modelchecker-akka",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor-typed" % "2.5.23",
+      "com.typesafe.akka" %% "akka-actor-typed" % "2.5.25",
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "org.scalatest" %% "scalatest" % "3.0.8",
       "org.scala-graph" %% "graph-core" % "1.12.5"

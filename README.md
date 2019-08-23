@@ -20,6 +20,7 @@ This [sbt](https://www.scala-sbt.org/) project is separated into four sub projec
 * *zio* contains a model checker for zio
 * *akka* contains a model checker for Akka
 * *benchmarks* helps to justify performance sensitive decisions
+* *jpf* helps to compare this project to [Java Pathfinder](https://github.com/javapathfinder/jpf-core)
 
 ### Tests
 

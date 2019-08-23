@@ -127,8 +127,10 @@ class Interpreter(newTraverser: () => Traverser) {
         yieldingEffects(provide.next).provide(provide.r)
       case read: ZIO.Read[R, E, A] =>
         ZIO.accessM(read.k.andThen(yieldingEffects))
-      case suspend: ZIO.SuspendWith[R, E, A] =>
-        new ZIO.SuspendWith(p => yieldingEffects(suspend.f(p)))
+      case suspend: ZIO.EffectSuspendTotalWith[R, E, A] =>
+        new ZIO.EffectSuspendTotalWith(p => yieldingEffects(suspend.f(p)))
+      case suspend: ZIO.EffectSuspendPartialWith[R, A] =>
+        new ZIO.EffectSuspendPartialWith(p => yieldingEffects(suspend.f(p)))
       case newFib: ZIO.FiberRefNew[_] =>
         newFib
       case mod: ZIO.FiberRefModify[_, A] =>

@@ -73,7 +73,7 @@ lazy val zio = project
   .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio" % "1.0.0-RC9",
+      "dev.zio" %% "zio" % "1.0.0-RC11",
       "org.scalatest" %% "scalatest" % "3.0.8" % Test
     ),
     examplePackageRef := {
@@ -84,7 +84,7 @@ lazy val zio = project
       import scala.meta._
       ctor"_root_.zio.DefaultRuntime"
     },
-    crossScalaVersions ++= Seq("2.11.12")
+    crossScalaVersions ++= Seq("2.11.12", "2.13.0")
   )
   .enablePlugins(Example)
 

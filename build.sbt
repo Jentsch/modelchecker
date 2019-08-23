@@ -10,7 +10,7 @@ version := "0.1.0-SNAPSHOT"
 
 scalaVersion in ThisBuild := "2.12.8"
 
-scalacOptions ++= Seq(
+scalacOptions in ThisBuild ++= Seq(
   Opts.compile.unchecked,
   "-feature",
   Opts.compile.deprecation,

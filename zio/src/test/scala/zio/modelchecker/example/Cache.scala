@@ -25,14 +25,14 @@ class CacheSpec extends FlatSpec with Matchers {
   behavior of "a cache"
 
   private val runCache: UIO[Int] = for {
-    counter <- Ref.make(0)
-    cache <- Cache[Int, Int](i => counter.update(_ + 1).const(i))
+    invocationCount <- Ref.make(0)
+    cache <- Cache[Int, Int](i => invocationCount.update(_ + 1).const(i))
     f1 <- cache(2).fork
     _ <- cache(2).fork
     _ <- cache(1).fork
     _ <- cache(1).fork
     _ <- f1.join // TODO: Why is this line necessary?
-    r <- counter.get
+    r <- invocationCount.get
   } yield r
 
   it should "rewritable by the interpreter" in {

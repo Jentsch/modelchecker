@@ -53,8 +53,8 @@ object Ferryman {
       zio.zipWith(other)(_ != _)
   }
 
-  def carry(ref: Ref[Boolean]): ZIO[Any, Nothing, Unit] =
-    ref.update(!_).void
+  def carry(ref: Ref[Boolean]): UIO[Unit] =
+    ref.update(!_).unit
 
   def repeatUntil[R, E](
       condition: UIO[Boolean]
@@ -69,14 +69,14 @@ object Ferryman {
 }
 
 class FerrymanSpec extends FlatSpec with Matchers {
-  behavior of "ferryman"
+  behavior of "The Ferryman"
 
   implicit class Syntax[A](results: Set[A]) {
     def could(matcher: Matcher[A]): Assertion =
       atLeast(1, results) should matcher
   }
 
-  it should "be possible to carry over everything" in {
+  it should "be able to carry over everything" in {
     everyPath.notFailing(Ferryman.ferryman.run) could be(Some(Success(())))
   }
 

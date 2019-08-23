@@ -31,4 +31,3 @@ case class ActorState(
       }
       .mkString(", ") ++ ")"
 }
-

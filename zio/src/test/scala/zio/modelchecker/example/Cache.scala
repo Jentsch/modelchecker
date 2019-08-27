@@ -31,7 +31,7 @@ class CacheSpec extends FlatSpec with Matchers {
     _ <- cache(2).fork
     _ <- cache(1).fork
     _ <- cache(1).fork
-    _ <- f1.join // TODO: Why is this line necessary?
+    _ <- f1.join // On why this line is necessary see the LostFiberSpec
     r <- invocationCount.get
   } yield r
 

@@ -1,10 +1,6 @@
 package akka.actor.typed.mc
 
-import java.time.Duration
-import java.util
 import java.util.concurrent.{CompletionStage, ThreadFactory}
-import java.util.function.BiFunction
-import java.util.{Optional, function}
 
 import akka.Done
 import akka.actor.typed.Behavior.DeferredBehavior
@@ -141,55 +137,12 @@ final class TestSystem[R](
 
   class MActorContext[T](path: ActorPath)
       extends TypedActorContext[T]
-      with javadsl.ActorContext[T]
       with scaladsl.ActorContext[T] {
-    override def asJava: javadsl.ActorContext[T] = this
+    override def asJava: javadsl.ActorContext[T] = JavaContextAdapter(this)
     override def asScala: scaladsl.ActorContext[T] = this
 
-    override def getSelf: ActorRef[T] = MActorRef(path)
-    override def getSystem: ActorSystem[Void] = MActorSystem
-    override def getLog: Logger = log
-    override def getChildren: util.List[ActorRef[Void]] = ???
-    override def getChild(name: String): Optional[ActorRef[Void]] =
-      child(name) match {
-        case Some(value) => Optional.of(value).asInstanceOf
-        case None        => Optional.empty()
-      }
-    override def spawnAnonymous[U](behavior: Behavior[U]): ActorRef[U] = ???
-    override def spawn[U](behavior: Behavior[U], name: String): ActorRef[U] = {
-      val childPath = path / name
-
-      require(!currentState.isDefinedAt(childPath))
-
-      currentState += (childPath -> ActorState(behavior))
-
-      MActorRef(childPath)
-    }
-    override def setReceiveTimeout(timeout: Duration, msg: T): Unit = ???
-    override def scheduleOnce[U](
-        delay: Duration,
-        target: ActorRef[U],
-        msg: U
-    ): Cancellable = ???
-    override def getExecutionContext: ExecutionContextExecutor = ???
-    override def messageAdapter[U](
-        messageClass: Class[U],
-        f: function.Function[U, T]
-    ): ActorRef[U] =
-      ???
-    override def ask[Req, Res](
-        resClass: Class[Res],
-        target: RecipientRef[Req],
-        responseTimeout: Duration,
-        createRequest: function.Function[ActorRef[Res], Req],
-        applyToResponse: BiFunction[Res, Throwable, T]
-    ): Unit = ???
-    override def pipeToSelf[Value](
-        future: CompletionStage[Value],
-        applyToResult: BiFunction[Value, Throwable, T]
-    ): Unit = ???
-    override def self: ActorRef[T] = getSelf
-    override def system: ActorSystem[Nothing] = getSystem
+    override def self: ActorRef[T] = MActorRef(path)
+    override def system: ActorSystem[Nothing] = MActorSystem
     override def log: Logger = ???
     override def setLoggerClass(clazz: Class[_]): Unit = ???
     override def children: Iterable[ActorRef[Nothing]] = ???
@@ -205,6 +158,7 @@ final class TestSystem[R](
         behavior: Behavior[U],
         props: Props
     ): ActorRef[U] = ???
+
     override def spawn[U](
         behavior: Behavior[U],
         name: String,
@@ -212,7 +166,13 @@ final class TestSystem[R](
     ): ActorRef[U] = {
       require(props == Props.empty)
 
-      spawn(behavior, name)
+      val childPath = path / name
+
+      require(!currentState.isDefinedAt(childPath))
+
+      currentState += (childPath -> ActorState(behavior))
+
+      MActorRef(childPath)
     }
     override def stop[U](child: ActorRef[U]): Unit = ???
     override def watch[U](other: ActorRef[U]): Unit =

@@ -152,7 +152,7 @@ final class TestSystem[R](
     override def getChildren: util.List[ActorRef[Void]] = ???
     override def getChild(name: String): Optional[ActorRef[Void]] =
       child(name) match {
-        case Some(value) => Optional.of(value.asInstanceOf)
+        case Some(value) => Optional.of(value).asInstanceOf
         case None        => Optional.empty()
       }
     override def spawnAnonymous[U](behavior: Behavior[U]): ActorRef[U] = ???

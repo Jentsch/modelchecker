@@ -26,7 +26,7 @@ class CacheSpec extends FlatSpec with Matchers {
 
   private val runCache: UIO[Int] = for {
     invocationCount <- Ref.make(0)
-    cache <- Cache[Int, Int](i => invocationCount.update(_ + 1).const(i))
+    cache <- Cache[Int, Int](i => invocationCount.update(_ + 1).as(i))
     f1 <- cache(2).fork
     _ <- cache(2).fork
     _ <- cache(1).fork

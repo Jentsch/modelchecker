@@ -1,4 +1,4 @@
-name in ThisBuild:= "modelchecker"
+name in ThisBuild := "modelchecker"
 
 organization in ThisBuild := "jentsch.berlin"
 
@@ -14,14 +14,19 @@ scalacOptions in ThisBuild ++= Seq(
   Opts.compile.unchecked,
   "-feature",
   Opts.compile.deprecation,
-  "-Xfuture",
+  Opts.compile.explaintypes,
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen"
 )
 
 scalacOptions ++= {
   if (scalaVersion.value startsWith "2.12")
-    Seq("-Yno-adapted-args", "-Ywarn-unused-import", "-Ywarn-unused")
+    Seq(
+      "-Xfuture",
+      "-Yno-adapted-args",
+      "-Ywarn-unused-import",
+      "-Ywarn-unused"
+    )
   else
     Seq()
 }

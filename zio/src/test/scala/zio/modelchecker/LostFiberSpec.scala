@@ -1,11 +1,7 @@
 package zio.modelchecker
 
-import org.scalatest.matchers.Matcher
-import org.scalatest.{Assertion, FlatSpec, Matchers}
-
+import org.scalatest.{FlatSpec, Matchers}
 import zio._
-import zio.Exit.Success
-import zio.syntax._
 import zio.modelchecker.Interpreter.terminatesAlwaysSuccessfully
 
 class LostFiberSpec extends FlatSpec with Matchers {

@@ -1,15 +1,12 @@
 package zio.modelchecker
 
-import java.util.WeakHashMap
-
-import zio.Exit.Cause
-import zio._
-import zio.internal.{Executor, Platform}
 import berlin.jentsch.modelchecker.{
   EveryPathTraverser,
   RandomTraverser,
   Traverser
 }
+import zio._
+import zio.internal.{Executor, Platform}
 
 import scala.concurrent.ExecutionContext
 
@@ -93,8 +90,7 @@ class Interpreter(newTraverser: () => Traverser) {
     }
   }
 
-  private def yieldingEffects[R, E, A](zio: ZIO[R, E, A]): ZIO[R, E, A] = {
-
+  private def yieldingEffects[R, E, A](zio: ZIO[R, E, A]): ZIO[R, E, A] =
     zio match {
       case effect: ZIO.EffectTotal[A]       => ZIO.yieldNow *> effect
       case effect: ZIO.EffectPartial[A]     => ZIO.yieldNow *> effect
@@ -116,7 +112,7 @@ class Interpreter(newTraverser: () => Traverser) {
         new ZIO.SuperviseStatus(yieldingEffects(status.value), status.status)
       case fail: ZIO.Fail[E, A]       => fail
       case d: ZIO.Descriptor[R, E, A] => d
-      case y @ ZIO.Yield              => y
+      case ZIO.Yield                  => ZIO.Yield
       case fold: ZIO.Fold[R, E, _, A, _] =>
         yieldingEffects(fold.value)
           .foldCauseM(
@@ -142,7 +138,6 @@ class Interpreter(newTraverser: () => Traverser) {
       case check: ZIO.CheckTracing[R, E, A] =>
         new ZIO.CheckTracing(t => yieldingEffects(check.k(t)))
     }
-  }
 
 }
 

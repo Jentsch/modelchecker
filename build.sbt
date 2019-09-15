@@ -17,7 +17,7 @@ scalacOptions in ThisBuild ++= Seq(
   Opts.compile.explaintypes,
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
-  "-Xlint:doc-detached"
+  "-Xlint"
 )
 
 scalacOptions ++= {

@@ -47,7 +47,7 @@ class AsyncCacheSpec extends FlatSpec with EcSpec with Matchers {
     val cache = AsyncCache(f)
 
     cache(1).onComplete { r =>
-      r should be (a[Failure[_]])
+      r should be(a[Failure[_]])
       response = Success("Foo")
 
       cache(1) will be("Foo")

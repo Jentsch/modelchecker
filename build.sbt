@@ -86,8 +86,8 @@ lazy val zio = project
     name := "modelchecker-zio",
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % "1.0.0-RC12",
+      "dev.zio" %% "zio-test" % "1.0.0-RC12-1",
       "org.scalatest" %% "scalatest" % "3.0.8" % Test,
-      "dev.zio" %% "zio-test" % "1.0.0-RC12-1" % Test,
       "dev.zio" %% "zio-test-sbt" % "1.0.0-RC12-1" % Test
     ),
     examplePackageRef := {

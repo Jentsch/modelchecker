@@ -24,24 +24,27 @@ trait NonDeterministic {
   */
 object NonDeterministic {
   trait Service[R] {
-    def oneOf[E, A](actions: (UIO[Boolean], ZIO[Any, E, A])*): ZIO[R, E, A]
+    def oneOf[A](options: Seq[A]): ZIO[R, Nothing, A]
+    def doOneOf[E, A](actions: (UIO[Boolean], ZIO[Any, E, A])*): ZIO[R, E, A]
   }
 
   private[modelchecker] class Model(traverser: Traverser)
       extends NonDeterministic {
     override val nonDeterministic: Service[Any] = new Service[Any] {
-      override def oneOf[E, A](
+      override def oneOf[A](options: Seq[A]): UIO[A] =
+        ZIO.effectTotal(traverser.choose(options))
+
+      override def doOneOf[E, A](
           actions: (UIO[Boolean], ZIO[Any, E, A])*
       ): ZIO[Any, E, A] = {
         for {
           evaluatedGuard <- ZIO.foreach(actions) {
-            case (guard, action) =>
-              guard.map(_ -> action)
+            case (guard, action) => guard.map(_ -> action)
           }
           availableActions = evaluatedGuard.collect {
             case (true, action) => action
           }
-          a <- ZIO.effectTotal(traverser.choose(availableActions)).flatten
+          a <- oneOf(availableActions).flatten
         } yield a
       }
     }
@@ -50,5 +53,11 @@ object NonDeterministic {
   def doOneOf[E, A](
       actions: (UIO[Boolean], ZIO[Any, E, A])*
   ): ZIO[NonDeterministic, E, A] =
-    ZIO.accessM(_.nonDeterministic.oneOf(actions: _*))
+    ZIO.accessM(_.nonDeterministic.doOneOf(actions: _*))
+
+  def doAnyOf[E, A](actions: ZIO[Any, E, A]*): ZIO[NonDeterministic, E, A] =
+    oneOf(actions).flatten
+
+  def oneOf[A](options: Seq[A]): ZIO[NonDeterministic, Nothing, A] =
+    ZIO.accessM(_.nonDeterministic.oneOf(options))
 }

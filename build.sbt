@@ -86,7 +86,9 @@ lazy val zio = project
     name := "modelchecker-zio",
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % "1.0.0-RC12",
-      "org.scalatest" %% "scalatest" % "3.0.8" % Test
+      "org.scalatest" %% "scalatest" % "3.0.8" % Test,
+      "dev.zio" %% "zio-test" % "1.0.0-RC12-1" % Test,
+      "dev.zio" %% "zio-test-sbt" % "1.0.0-RC12-1" % Test
     ),
     examplePackageRef := {
       import scala.meta._
@@ -96,6 +98,7 @@ lazy val zio = project
       import scala.meta._
       ctor"_root_.zio.DefaultRuntime"
     },
+    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     crossScalaVersions ++= Seq("2.11.12", "2.13.0")
   )
   .enablePlugins(Example)

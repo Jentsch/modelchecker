@@ -1,12 +1,14 @@
 package zio.modelchecker.example
 
-import org.scalatest.{FlatSpec, Matchers}
-import zio.{Ref, UIO, ZIO}
 import zio.ZIO.foreach
-import zio.modelchecker.{Interpreter, NonDeterministic}
+import zio.modelchecker.Interpreter.everyPath.terminatesAlwaysSuccessfully
+import zio.modelchecker.NonDeterministic
+import zio.test.Assertion._
+import zio.test._
+import zio.{Ref, UIO, ZIO}
 
 object Kafka {
-  def apply(): ZIO[NonDeterministic, Nothing, Seq[Int]] =
+  def apply(): ZIO[NonDeterministic, Nothing, List[Int]] =
     for {
       k <- kafka
       _ <- foreach(1 to 2)(k.offer(partition = 1))
@@ -46,28 +48,28 @@ object Kafka {
   }
 }
 
-class KafkaSpec extends FlatSpec with Matchers {
-  behavior of "Read kafka messages"
-
-  private val results =
-    Interpreter.everyPath.terminatesAlwaysSuccessfully(Kafka())
-
-  they can "come in perfect order" in {
-    results should contain(List(1, 2, 3, 4))
-  }
-
-  they should "keep order in the same partition" in {
-    results.foreach { seq =>
-      if (seq.indexOf(2) >= 0)
-        assert(seq.indexOf(1) <= seq.indexOf(2))
-    }
-  }
-
-  they can "produce the same value twice" in {
-    results should contain(List(1, 1, 2, 3))
-  }
-
-  they can "produce the same value many times" in {
-    results should contain(List(3, 1, 1, 1))
-  }
-}
+object KafkaSpec
+    extends DefaultRunnableSpec(
+      suite("Read kafka messages")(
+        test("messages can be consumed in serial order") {
+          val results: Iterable[List[Int]] =
+            terminatesAlwaysSuccessfully(Kafka())
+          assert(results, contains(List(1, 2, 3, 4)))
+        },
+        test("messages in same topic are consumed in serial order") {
+          val results: Iterable[List[Int]] =
+            terminatesAlwaysSuccessfully(Kafka())
+          assert(results, not(contains(List(2, 1, 3, 4))))
+        },
+        test("messages can arrive twice") {
+          val results: Iterable[List[Int]] =
+            terminatesAlwaysSuccessfully(Kafka())
+          assert(results, contains(List(1, 1, 3, 4)))
+        },
+        test("messages can arrive many times") {
+          val results: Iterable[List[Int]] =
+            terminatesAlwaysSuccessfully(Kafka())
+          assert(results, contains(List(1, 1, 1, 1)))
+        }
+      )
+    )

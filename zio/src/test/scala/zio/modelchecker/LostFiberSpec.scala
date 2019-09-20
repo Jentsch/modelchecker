@@ -8,16 +8,16 @@ class LostFiberSpec extends FlatSpec with Matchers {
   behavior of "RefM"
 
   val refM: UIO[Set[Int]] = for {
-    invocated <- Ref.make(Set.empty[Int])
-    incCount = (i: Int) => invocated.update(s => s + i).unit
+    invocations <- Ref.make(Set.empty[Int])
+    incCount = (i: Int) => invocations.update(s => s + i).unit
     cache <- RefM.make(())
     invoke = (i: Int) => cache.update(_ => incCount(i))
     _ <- invoke(1).fork
     _ <- invoke(2).fork
-    r <- invocated.get
+    r <- invocations.get
   } yield r
 
-  val results = terminatesAlwaysSuccessfully(refM)
+  private val results = terminatesAlwaysSuccessfully(refM)
 
   it can "be that we read before any invocation" in {
     results should contain(Set.empty)
@@ -34,8 +34,10 @@ class LostFiberSpec extends FlatSpec with Matchers {
   }
 
   // My hypnosis is that this test is also flaky but it's very unlikely that it
-  // will ever succeed. It this is the case, than it shows the issues with a
-  // random traverser
+  // will ever succeed. If this is the case, than it shows an issues with the
+  // random traverser.
+  //
+  // It succeeded once.
   it can "be that we read after both invocations" in {
     pendingUntilFixed {
       results should contain(Set(1, 2))

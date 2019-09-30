@@ -2,7 +2,7 @@ package zio.modelchecker
 
 import zio.ZIO
 import zio.test.Assertion.equalTo
-import zio.test.{AssertResult, FailureDetails, TestResult, ZSpec, assert, testM}
+import zio.test.{TestResult, ZSpec, assert, testM}
 
 object NonDeterministicSpec {
   def testAlways[L](label: L)(
@@ -11,8 +11,7 @@ object NonDeterministicSpec {
 
     val results =
       Interpreter.everyPath.terminatesAlwaysSuccessfully(nonDeterministic)
-    val ok: AssertResult[Either[FailureDetails, Unit]] =
-      AssertResult.success(())
+    val ok: TestResult = assert(1, equalTo(1))
     val assertions = results.filter(_.isFailure).take(10).foldLeft(ok)(_ && _)
 
     testM(label)(ZIO.succeed(assertions))

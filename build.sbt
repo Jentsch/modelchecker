@@ -58,7 +58,7 @@ lazy val core = project
       import scala.meta._
       q"berlin.jentsch.modelchecker"
     },
-    crossScalaVersions ++= Seq("2.10.7", "2.11.12", "2.13.0")
+    crossScalaVersions ++= Seq("2.10.7", "2.11.12", "2.13.1")
   )
   .enablePlugins(Example)
 
@@ -75,7 +75,7 @@ lazy val futures = project
       import scala.meta._
       q"berlin.jentsch.modelchecker.futures"
     },
-    crossScalaVersions ++= Seq("2.10.7", "2.11.12", "2.13.0")
+    crossScalaVersions ++= Seq("2.10.7", "2.11.12", "2.13.1")
   )
   .enablePlugins(Example)
 
@@ -85,8 +85,8 @@ lazy val zio = project
   .settings(
     name := "modelchecker-zio",
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio" % "1.0.0-RC12",
-      "dev.zio" %% "zio-test" % "1.0.0-RC12-1",
+      "dev.zio" %% "zio" % "1.0.0-RC13",
+      "dev.zio" %% "zio-test" % "1.0.0-RC13",
       "org.scalatest" %% "scalatest" % "3.0.8" % Test,
       "dev.zio" %% "zio-test-sbt" % "1.0.0-RC12-1" % Test
     ),
@@ -99,7 +99,7 @@ lazy val zio = project
       ctor"_root_.zio.DefaultRuntime"
     },
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-    crossScalaVersions ++= Seq("2.11.12", "2.13.0")
+    crossScalaVersions ++= Seq("2.11.12", "2.13.1")
   )
   .enablePlugins(Example)
 

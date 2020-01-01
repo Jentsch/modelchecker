@@ -171,7 +171,7 @@ class FuncEqualsBenchmarks {
         var i = 0
         while (i < fields.length) {
           val f = fields(i)
-          if (!f.isAccessible)
+          if (!f.canAccess())
             f.setAccessible(true)
 
           f.getType match {

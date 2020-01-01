@@ -156,7 +156,7 @@ trait EcSpec extends ExecutionContextOps { self: Matchers =>
                 (_: StackDepthException) =>
                   Some(" couldn't " + rightMatcher.toString()),
                 None,
-                Left(position),
+                position,
                 None
               )
             )

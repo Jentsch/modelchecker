@@ -9,4 +9,4 @@ jobs:
       - name: Run Tests
         uses: lokkju/github-action-sbt@v0.2.2
         with:
-          commands: +compile test benchmarks/compile
+          commands: "+compile test benchmarks/compile"

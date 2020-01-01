@@ -1,7 +1,5 @@
 package berlin.jentsch.modelchecker
 
-import java.util.Arrays
-
 /**
   * @example usage
   * {{{
@@ -25,9 +23,9 @@ import java.util.Arrays
 final class EveryPathTraverser extends Traverser {
 
   /** Path in the tree of choices */
-  private var path = Array.fill(50)(0)
-  private var pathLength = 0
-  private var currentDepth = 0
+  private[this] var path = Array.fill(50)(0)
+  private[this] var pathLength = 0
+  private[this] var currentDepth = 0
 
   /**
     * Choose 'randomly' one option.
@@ -39,7 +37,7 @@ final class EveryPathTraverser extends Traverser {
     if (needToChoose(choices)) {
       val choiceIndex = if (currentDepth >= pathLength) {
         if (pathLength == path.length) {
-          path = Arrays.copyOf(path, pathLength * 4)
+          path = java.util.Arrays.copyOf(path, pathLength * 4)
         }
         val max = choices.length - 1
         path(currentDepth) = max
@@ -118,9 +116,9 @@ final class EveryPathTraverser extends Traverser {
     if (depth >= 0) {
       path(depth) -= 1
 
-      return true
+      true
     } else {
-      return false
+      false
     }
   }
 

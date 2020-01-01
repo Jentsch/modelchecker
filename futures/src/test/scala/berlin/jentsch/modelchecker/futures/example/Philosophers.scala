@@ -4,7 +4,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 import berlin.jentsch.modelchecker.futures.EcSpec
 import berlin.jentsch.modelchecker.futures.ExecutionContextOps.uninterrupted
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
@@ -46,7 +47,7 @@ class Philosophers(n: Int)(implicit ec: ExecutionContext) {
     }
 }
 
-class PhilosophersSpec extends FlatSpec with EcSpec with Matchers {
+class PhilosophersSpec extends AnyFlatSpec with EcSpec with Matchers {
   behavior of "Philosophers"
 
   they should "not starve" in pendingUntilFixed(everyInterleaving {

@@ -5,7 +5,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 import berlin.jentsch.modelchecker.futures.EcSpec
 import org.openjdk.jmh.annotations._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
@@ -18,7 +19,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 @Fork(value = 3)
 @Measurement(time = 20, iterations = 5)
 @Warmup(time = 10, iterations = 3)
-class FutureBenchmarks extends FlatSpec with Matchers with EcSpec {
+class FutureBenchmarks extends AnyFlatSpec with Matchers with EcSpec {
 
   @Benchmark
   def speed(): Unit = everyInterleaving { implicit ec =>

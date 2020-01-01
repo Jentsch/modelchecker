@@ -1,6 +1,7 @@
 package zio.modelchecker.example
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import zio._
 import zio.syntax._
 import zio.modelchecker.Interpreter
@@ -21,7 +22,7 @@ object Cache {
     }
 }
 
-class CacheSpec extends FlatSpec with Matchers {
+class CacheSpec extends AnyFlatSpec with Matchers {
   behavior of "a cache"
 
   private val runCache: UIO[Int] = for {

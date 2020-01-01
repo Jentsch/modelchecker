@@ -1,11 +1,12 @@
 package berlin.jentsch.modelchecker.futures.example
 
 import berlin.jentsch.modelchecker.futures.EcSpec
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.Future
 
-class CompareAtomic extends FlatSpec with EcSpec with Matchers {
+class CompareAtomic extends AnyFlatSpec with EcSpec with Matchers {
 
   "without atomic" should "be slower" in everyInterleaving { implicit ec =>
     var x = 1

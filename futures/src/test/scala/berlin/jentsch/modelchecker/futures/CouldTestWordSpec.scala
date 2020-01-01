@@ -1,8 +1,10 @@
 package berlin.jentsch.modelchecker.futures
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class CouldTestWordSpec extends FlatSpec with Matchers with EcSpec {
+
+class CouldTestWordSpec extends AnyFlatSpec with Matchers with EcSpec {
   behavior of "Could word"
 
   it should "not capture statements outside the interleaving context" in pendingUntilFixed {

@@ -1,10 +1,11 @@
 package berlin.jentsch.modelchecker.akka
 
-import org.scalatest.{Matchers, PropSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.propspec.AnyPropSpec
 import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
 
-class GraphExplorerSpec extends PropSpec with Matchers {
+class GraphExplorerSpec extends AnyPropSpec with Matchers {
 
   property("don't go into an infinite loop") {
     val one = GraphExplorer.explore(Set(1))(i => Set(i))

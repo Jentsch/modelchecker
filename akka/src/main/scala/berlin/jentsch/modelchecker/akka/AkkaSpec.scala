@@ -5,11 +5,11 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.mc.{BehaviorsEquals, TestSystem}
 import akka.actor.typed.scaladsl.Behaviors
 import org.scalactic.source.Position
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
 
-trait AkkaSpec extends FlatSpec with PropertySyntax {
+trait AkkaSpec extends AnyFlatSpec with PropertySyntax {
 
   type SystemState = Map[ActorPath, ActorState]
 

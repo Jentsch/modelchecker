@@ -52,7 +52,7 @@ lazy val core = project
     name := "modelchecker-core",
     description := "Internal common functionality shared by the futures and zio sub-project, no external API",
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.0.8" % Test
+      "org.scalatest" %% "scalatest" % "3.1.0" % Test
     ),
     examplePackageRef := {
       import scala.meta._
@@ -68,7 +68,7 @@ lazy val futures = project
   .settings(
     name := "modelchecker-futures",
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.0.8",
+      "org.scalatest" %% "scalatest" % "3.1.0",
       "com.novocode" % "junit-interface" % "0.11" % Test
     ),
     examplePackageRef := {
@@ -87,7 +87,7 @@ lazy val zio = project
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % "1.0.0-RC13",
       "dev.zio" %% "zio-test" % "1.0.0-RC13",
-      "org.scalatest" %% "scalatest" % "3.0.8" % Test,
+      "org.scalatest" %% "scalatest" % "3.1.0" % Test,
       "dev.zio" %% "zio-test-sbt" % "1.0.0-RC12-1" % Test
     ),
     examplePackageRef := {
@@ -111,7 +111,7 @@ lazy val akka = project
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % "2.5.25",
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scalatest" %% "scalatest" % "3.0.8",
+      "org.scalatest" %% "scalatest" % "3.1.0",
       "org.scala-graph" %% "graph-core" % "1.13.0"
     ),
     examplePackageRef := {

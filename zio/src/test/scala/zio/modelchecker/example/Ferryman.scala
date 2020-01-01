@@ -1,8 +1,9 @@
 package zio.modelchecker.example
 
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.Matcher
-import org.scalatest.{Assertion, FlatSpec, Matchers}
-
+import org.scalatest.Assertion
+import org.scalatest.matchers.should.Matchers
 import zio._
 import zio.Exit.Success
 import zio.syntax._
@@ -68,7 +69,7 @@ object Ferryman {
     IO.whenM(predicate.map(!_))(IO.fail(Error))
 }
 
-class FerrymanSpec extends FlatSpec with Matchers {
+class FerrymanSpec extends AnyFlatSpec with Matchers {
   behavior of "The Ferryman"
 
   implicit class Syntax[A](results: Set[A]) {

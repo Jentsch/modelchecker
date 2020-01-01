@@ -3,7 +3,8 @@ package berlin.jentsch.modelchecker.futures
 import org.scalactic.source.Position
 import org.scalatest.exceptions.{StackDepthException, TestFailedException}
 import org.scalatest.matchers.{MatchFailed, Matcher}
-import org.scalatest.{Informer, Matchers}
+import org.scalatest.Informer
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}

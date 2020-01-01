@@ -1,7 +1,9 @@
 package zio.modelchecker.example
 
 import org.scalatest.matchers.Matcher
-import org.scalatest.{Assertion, FlatSpec, Matchers}
+import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import zio.UIO._
 import zio.{Semaphore, UIO}
 import zio.modelchecker.Interpreter._
@@ -41,7 +43,7 @@ object Philosophers {
     } yield ()
 }
 
-class PhilosophersSpec extends FlatSpec with Matchers {
+class PhilosophersSpec extends AnyFlatSpec with Matchers {
   implicit class Syntax[E, A](results: Set[A]) {
     def could(matcher: Matcher[A]): Assertion =
       atLeast(1, results) should matcher

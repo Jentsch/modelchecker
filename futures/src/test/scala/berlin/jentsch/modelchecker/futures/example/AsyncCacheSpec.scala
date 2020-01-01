@@ -1,11 +1,12 @@
 package berlin.jentsch.modelchecker.futures.example
 import berlin.jentsch.modelchecker.futures.EcSpec
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-class AsyncCacheSpec extends FlatSpec with EcSpec with Matchers {
+class AsyncCacheSpec extends AnyFlatSpec with EcSpec with Matchers {
 
   behavior of "Async Cache"
 

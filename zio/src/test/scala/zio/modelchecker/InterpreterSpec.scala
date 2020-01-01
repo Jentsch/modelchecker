@@ -1,10 +1,11 @@
 package zio.modelchecker
 
-import org.scalatest.{FlatSpec, Matchers}
 
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import zio.{Ref, UIO}
 
-class InterpreterSpec extends FlatSpec with Matchers {
+class InterpreterSpec extends AnyFlatSpec with Matchers {
 
   behavior of "InterpreterSpec"
 

@@ -1,8 +1,8 @@
 package berlin.jentsch.modelchecker.example
 import berlin.jentsch.modelchecker.{EveryPathTraverser, Traverser}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class FerrymanSpec extends FlatSpec {
+class FerrymanSpec extends AnyFlatSpec {
 
   it should "be possible to carry over all parts" in {
     val traverser: Traverser = new EveryPathTraverser

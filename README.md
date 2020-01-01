@@ -1,4 +1,4 @@
-# Model checker (Work in progress)
+# Model checker (Prototype)
 
 Prototype of three explicit state model checker for Scala-Futures, [ZIO](https://zio.dev) and a subset of [akka typed](https://doc.akka.io/docs/akka/current/typed/index.html).
 

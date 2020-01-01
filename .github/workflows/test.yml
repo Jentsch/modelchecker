@@ -1,0 +1,10 @@
+name: CI
+on:
+  push:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Run Tests
+        uses: lokkju/github-action-sbt@v0.2.2

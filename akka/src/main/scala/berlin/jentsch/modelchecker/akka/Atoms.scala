@@ -19,9 +19,8 @@ private[akka] object Atoms {
           )
       case ProgressIsPossible =>
         state: Map[ActorPath, ActorState] =>
-          state.values.forall(
-            actor =>
-              actor.messages.isEmpty && IsDeferredBehavior(actor.behavior)
+          state.values.forall(actor =>
+            actor.messages.isEmpty && IsDeferredBehavior(actor.behavior)
           )
     }
 

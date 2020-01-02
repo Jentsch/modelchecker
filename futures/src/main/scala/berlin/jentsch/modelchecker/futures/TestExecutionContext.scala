@@ -68,19 +68,18 @@ class TestExecutionContext(
       if (foundException.nonEmpty)
         info("Bal")
       foundException.foreach(throw _)
-      finalChecks.foreach(
-        check =>
-          try {
-            check()
-          } catch {
-            case failed: TestFailedException =>
-              info("Tested paths: " ++ pathCount.toString)
-              info(
-                "Path to reproduce this failure: " ++ traverser.getCurrentPath
-                  .mkString("Seq(", ",", ")")
-              )
-              throw failed
-          }
+      finalChecks.foreach(check =>
+        try {
+          check()
+        } catch {
+          case failed: TestFailedException =>
+            info("Tested paths: " ++ pathCount.toString)
+            info(
+              "Path to reproduce this failure: " ++ traverser.getCurrentPath
+                .mkString("Seq(", ",", ")")
+            )
+            throw failed
+        }
       )
       finalChecks.clear()
     } while (traverser.hasMoreOptions())

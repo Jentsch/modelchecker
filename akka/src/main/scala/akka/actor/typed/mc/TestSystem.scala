@@ -51,12 +51,12 @@ final class TestSystem[R](
           case (sender, messages) =>
             val message = messages.head
             if (messages.tail == Nil) {
-              currentState = modify(startState, path)(
-                s => s.copy(messages = s.messages - sender)
+              currentState = modify(startState, path)(s =>
+                s.copy(messages = s.messages - sender)
               )
             } else {
-              currentState = modify(startState, path)(
-                s => s.copy(messages = modify(s.messages, sender)(_.tail))
+              currentState = modify(startState, path)(s =>
+                s.copy(messages = modify(s.messages, sender)(_.tail))
               )
             }
 
@@ -219,15 +219,14 @@ final class TestSystem[R](
       ???
 
     override def tell(msg: T): Unit = {
-      currentState = modify(currentState, path)(
-        s =>
-          s.copy(messages = modify(s.messages, currentActor) { msgs =>
-            assert(
-              msgs.size <= 5,
-              "To many messages in queue for actor " ++ path.toString
-            )
-            msgs :+ msg
-          })
+      currentState = modify(currentState, path)(s =>
+        s.copy(messages = modify(s.messages, currentActor) { msgs =>
+          assert(
+            msgs.size <= 5,
+            "To many messages in queue for actor " ++ path.toString
+          )
+          msgs :+ msg
+        })
       )
     }
     override def narrow[U <: T]: ActorRef[U] = this.asInstanceOf

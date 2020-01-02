@@ -73,12 +73,13 @@ object ReflectiveEquals {
                       | }
               """.stripMargin
 
-      val tree = try {
-        tb.parse(code)
-      } catch {
-        case t: ToolBoxError =>
-          println("Code was:"); println(code); throw t
-      }
+      val tree =
+        try {
+          tb.parse(code)
+        } catch {
+          case t: ToolBoxError =>
+            println("Code was:"); println(code); throw t
+        }
 
       tb.compile(tree)()
         .asInstanceOf[Class[_] => ReflectiveEquals](aClass)

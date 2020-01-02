@@ -44,8 +44,8 @@ private object JavaContextAdapter {
       override def getChild(name: String): Optional[ActorRef[Void]] =
         scalaVariant
           .child(name)
-          .fold(Optional.empty[ActorRef[Void]]())(
-            ref => Optional.of(ref: ActorRef[Void])
+          .fold(Optional.empty[ActorRef[Void]]())(ref =>
+            Optional.of(ref: ActorRef[Void])
           )
 
       override def spawnAnonymous[U](behavior: Behavior[U]): ActorRef[U] =

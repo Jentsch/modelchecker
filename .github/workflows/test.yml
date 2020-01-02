@@ -9,7 +9,7 @@ jobs:
         with:
           fetch-depth: 1
       - name: Run Tests
-        uses: lokkju/github-action-sbt@v0.2.2
+        uses: lokkju/github-action-sbt@11-1.3.0-2.12.10
         with:
           commands: ;+compile;test;benchmarks/compile;scalafmt
 
